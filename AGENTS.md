@@ -4,6 +4,14 @@
 
 Personal NFL redraft tool. Sleeper league ID in; recommendations out. The human acts in the platform UI.
 
+## TDD
+
+FAIL_TO_PASS first. Write the test. Run it. Confirm it fails for the reason you intend. Then implement. Then run it again and confirm it passes.
+
+Do not implement first and backfill tests. Do not write a test that already passes.
+
+99% line coverage is a CI gate. If it is missing, add it. Do not lower it. Do not exclude new code to keep the number.
+
 ## Do not
 
 - Write to Sleeper, scrape, drive a browser, or reverse-engineer internal APIs. The public API is read-only.
