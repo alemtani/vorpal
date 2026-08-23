@@ -9,8 +9,10 @@ you make every move.
 
 Pre-implementation. See [docs/SPEC.md](docs/SPEC.md).
 
-Configured by league ID. Reads format, scoring, and roster shape from the
-platform API — nothing about any league is hardcoded.
+Configured by draft ID and operator identity. Scoring is read from a league —
+the draft's own, or a borrowed one for standalone mocks. Projections and ADP
+come from the platform, keyed by its player IDs. Nothing about any league is
+hardcoded.
 
 ## Principles
 
@@ -19,9 +21,10 @@ platform API — nothing about any league is hardcoded.
 2. **Decision quality over outcomes.** A season is one noisy sample. Evals
    separate decision error from projection error, and only claim the ones the
    available data actually supports.
-3. **Buy the forecast, build the scoring.** Projections come from a file you
-   supply. The league-specific work — scoring, replacement levels, roster
-   construction — is what the tool does.
+3. **Buy the forecast, build the scoring.** Counting-stat projections come
+   from the platform. The league-specific work — scoring, replacement levels,
+   roster construction — is what the tool does. A user-supplied file can
+   override the platform forecast.
 4. **NFL redraft first.** Other sports and formats are a documented
    constraint on the architecture, not current scope.
 
