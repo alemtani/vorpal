@@ -1,7 +1,6 @@
 # vorpal
 
-Fantasy sports decision support. Projections, valuation, and recommendations —
-you make every move.
+Fantasy draft agent. Code builds the board. The model recommends. You click.
 
 > *"One, two! One, two! And through and through / The vorpal blade went snicker-snack!"*
 
@@ -9,22 +8,17 @@ you make every move.
 
 Pre-implementation. See [docs/SPEC.md](docs/SPEC.md).
 
-Configured by league ID. Reads format, scoring, and roster shape from the
-platform API — nothing about any league is hardcoded.
+Configured by draft ID and operator identity. Scoring from a league (the
+draft's own, or a borrowed one for mocks). Stats and ADP from the platform.
+ECR from FantasyPros. Nothing about any league is hardcoded.
 
 ## Principles
 
-1. **Recommendations, not actions.** The tool emits proposals. You act in the
-   platform. Nothing is automated on your behalf.
-2. **Decision quality over outcomes.** A season is one noisy sample. Evals
-   separate decision error from projection error, and only claim the ones the
-   available data actually supports.
-3. **Buy the forecast, build the scoring.** Projections come from a file you
-   supply. The league-specific work — scoring, replacement levels, roster
-   construction — is what the tool does.
-4. **NFL redraft first.** Other sports and formats are a documented
-   constraint on the architecture, not current scope.
-
-## License
-
-MIT
+1. **Recommend, don't click.** The model emits a proposal. You act in
+   Sleeper. The API is read-only.
+2. **Numbers in, judgment out.** VOLS, ADP, ECR, spread, roster needs are
+   computed. The model picks. Evals gate that pick.
+3. **Buy the forecast, apply this league.** Counting stats, not someone
+   else's fantasy-point total. A CSV can override the forecast.
+4. **NFL redraft first.** Other sports are a constraint on what may be
+   shared later, not current scope.
