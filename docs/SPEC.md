@@ -14,18 +14,20 @@ flowchart LR
     E[ECR + spread]
     S[League scoring]
     V[VOLS]
+    W[Weekly lineup / byes]
     D --> P[Payload]
     F --> P
     E --> P
     S --> P
     V --> P
+    W --> P
   end
   P --> M[Model]
   M --> R[Proposal]
   R --> H[You click]
 ```
 
-v1 is the draft loop. Lineup, waivers, trades: later, same payload shape.
+v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 
 ---
 
@@ -35,9 +37,10 @@ v1 is the draft loop. Lineup, waivers, trades: later, same payload shape.
 |---|---|
 | Documented Sleeper reads | Any write / browser automation |
 | Counting stats → this league's points → VOLS | Ingesting `pts_*` / fantasy-point columns |
-| [FantasyPros ECR](https://www.fantasypros.com/api-data/) + `rank_std` as model inputs | ECR as the pick |
+| [FantasyPros ECR](https://www.fantasypros.com/api-data/) + `rank_std` as inputs **and** a sanity eval | ECR as the pick |
+| Weekly starter points (bye = 0) | True weekly projections (v2) |
 | Model recommendation | Argmax(VOLS) as the pick |
-| Schema + golden set + dissent log | Fitting a league-history market model |
+| Binary evals only | Soft scores, “lean”, calibrated probabilities |
 | Human executes | Multi-step search, run detector, VONA |
 
 ---
@@ -103,6 +106,7 @@ flowchart LR
   ADP[adp_*] --> PAY
   ECR[ecr + rank_std] --> PAY
   STATE[live draft] --> PAY
+  BYE[bye → weekly starters] --> PAY
   VOLS --> PAY[Payload]
 ```
 
@@ -121,7 +125,9 @@ Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
 **ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `adp_2qb`; else `rec ≥ 0.75` → `adp_ppr`; `0.25–0.75` → `adp_half_ppr`; else `adp_std`. Banner when `rec` is not exactly `1/0.5/0`.
 
-**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). Scoring param STD/PPR/HALF follows the same `rec` rule. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR.
+**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). Scoring param STD/PPR/HALF follows the same `rec` rule. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
+
+**Weekly / byes.** Sleeper `/players` carries `bye`. v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 
 **Override columns:** `player_id` (required), counting stats the scoring keys need, `adp`. Optional: `adp_stdev`, name/team/pos. Endpoint down and no override → data refuse.
 
@@ -160,7 +166,8 @@ Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “ba
     pick_no, next_user_pick?, picks_until_next?,
     user_roster: [{ player_id, name, position, bye }],
     needs: { [slot]: { filled, required } },
-    recent: [{ player_id, position, pick_no }],   // last ~5
+    weekly: [{ week, starter_points, empty: [slot] }],  // bye → 0
+    recent: [{ player_id, position, pick_no }],         // last ~5
     available: [player_id]
   },
   replacement: { [pos]: { player_id, points } },
@@ -178,35 +185,44 @@ Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “ba
 
 ```
 {
-  player_id,                    // ∈ available
-  alternatives: [player_id],    // ∈ available
+  player_id,                 // ∈ available
+  alternatives: [player_id], // ∈ available
   slot_filled,
-  confidence: "clear" | "lean" | "coin_flip",
-  why: string,
-  flags: []                     // ECR_DISAGREE | BYE_STACK | POSITION_RUN
-                                // | EMPTY_STARTER | UPSIDE | COIN_FLIP | …
+  coin_flip: bool,           // only extra bit. true ⇒ skip stability
+  why: string,               // human; not scored
+  flags: []                  // closed enum. presence is the eval
 }
 ```
 
-- New `player_id`s are a failed call.
-- The model may beat `hint_argmax_vols`. Silent dissent is a fail: set a flag and say why in `why`.
-- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the override has it). That is the upside shift. Not a second scoring function.
+`flags` ∈ `ECR_DISAGREE | BYE_STACK | POSITION_RUN | EMPTY_STARTER | UPSIDE | VOLS_DISSENT`.
+
+- New `player_id`s → fail the call.
+- Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → fail.
+- Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin` → fail. The flag does not save it.
+- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the override has it). Not a second scorer.
 
 ---
 
 ## 5. Evals
 
-The model is the policy. “Did we match argmax(VOLS)?” is not the gate.
+Every gate is **pass or fail**. No scores, no “lean”, no margin-as-a-grade. Skip a gate when its input is missing (`NOT_PERFORMED`) — that is not a fail.
 
-| Gate | Pass |
+Let `T = config.teams`. `ecr_best` = min ECR among available players that have an ECR. `margin = T` in the first half of the draft, else `2T` (one round, then two).
+
+| Gate | Pass iff |
 |---|---|
-| Schema | Rec ∈ `available`; `alternatives` ⊆ `available` |
-| Golden set | Human labels are **sets** / forbids. Kicker round 3 = fail. Third TE while a starter slot is empty = fail. SF QB when two remain and eight teams need one = pass if that id is rec or alternative. No LLM-as-judge |
-| Dissent | Rec ≠ `hint_argmax_vols` ⇒ a flag + a reason |
-| Stability | Same payload, N samples: rec stays in a small set. Coin flips may move; golden forbids may not |
-| Replay | Dated `StatTable` + frozen others' picks. Score both rosters on **those same projections** (optimal lineup). Actuals are luck. No dated file → `NOT_PERFORMED` |
+| Schema | Rec ∈ `available` ∧ alternatives ⊆ `available` ∧ `slot_filled` is legal for rec |
+| Golden forbid | Rec is not in the forbid set (kicker rounds 1–3; third TE while a dedicated starter slot is empty; …) |
+| Golden require | Rec or an alternative **is** in the require set (e.g. SF QB when two remain and eight teams need one) |
+| VOLS dissent | Rec = `hint_argmax_vols` **xor** `VOLS_DISSENT` ∈ flags |
+| ECR dissent | No ECR → skip. Else rec is `ecr_best` **xor** `ECR_DISAGREE` ∈ flags |
+| ECR sanity | No ECR on rec → skip. Else `ecr(rec) ≤ ecr_best + margin`. Floor, not a target: one round off early, two late |
+| Bye hole | Adding rec does not create a new empty startable slot on `rec.bye` when an alternative with a different bye exists on the board |
+| Stability | `coin_flip` → skip. Else ≥ 3 of 5 identical payloads return the same `player_id` |
+| VOLS invariant | Hypothetical pass 2 moves no position's replacement rank by more than 2 |
+| Replay | No dated file → skip. Else policy's projected-lineup sum ≥ user's, same dated stats. Actuals are luck |
 
-Sampler for golden / stability boards: ADP order + noise, plus hostile states (a position emptied, flex full, last pick). Do not sample from the model.
+No LLM-as-judge. Sampler for golden/stability: ADP order + noise, plus hostile states. Do not sample from the model.
 
 ---
 
@@ -223,12 +239,31 @@ Local display, documented draft API only.
 
 ## 7. Later
 
+```mermaid
+flowchart LR
+  subgraph det [Deterministic]
+    R[Roster + FAAB]
+    A[Waivers / free agents]
+    Q[Weekly points]
+    V[VOLS / waiver VORP]
+    R --> P[Payload]
+    A --> P
+    Q --> P
+    V --> P
+  end
+  P --> M[Model]
+  M --> B[add / drop / bid]
+  B --> H[You click]
+```
+
+Same contract as draft: numbers in, binary-gated rec out, you click. v2 swaps the bye-rate weekly vector for real weekly stats (start/sit). v3 is the diagram above. v4 is two roster valuations, inbound then outbound.
+
 | Phase | What |
 |---|---|
-| v2 | Weekly lineup |
+| v2 | Weekly lineup from weekly projections |
 | v3 | Waivers / FAAB |
 | v4 | Trades |
-| — | Waiver VORP; VONA if we ever *measure* survival; fitted market model (needs many seasons) |
+| — | Waiver VORP; VONA if we ever *measure* survival; fitted market model |
 
 Not a product: executing picks, outbound trades without review, multi-sport in v1. Shared layer if/when NBA/FPL/brackets exist: ingestion + projections only. Each sport keeps its own decision prompt.
 
@@ -237,8 +272,10 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 ## 8. Risks and ethics
 
 - The model is the policy. Golden set is small and human. That is the main eval limit.
+- Weekly strength in v1 is season rate with bye = 0, not a real week-17 forecast.
 - Default stats host is unofficial and can vanish. Override only helps if it already exists. Draft night is the worst time to learn this.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
+- ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`.
 - Superflex is where two-pass VOLS is most likely to move. The rank-2 invariant is an eval, not a solver.
 - Disclose to the league that you use a tool. Also disclose Rotowire-via-unofficial-Sleeper and FantasyPros ECR — “I used a public cheat sheet” does not cover it.
 - Do not commit league data (other managers, transactions) to a shared repo.
