@@ -129,6 +129,12 @@ Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
 **Weekly / byes.** Sleeper `/players` carries `bye`. v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 
+**Marginal value.** Recompute that vector with a candidate added and ship the
+difference as `delta_starter_points` on each board row. `vols` is global — the
+same number whether you hold zero RBs or four. This is the same player against
+*your* roster. Byes are already zeros in the vector, so a bye stack shows up as
+a smaller delta instead of as arithmetic the model has to do in its head.
+
 **Override columns:** `player_id` (required), counting stats the scoring keys need, `adp`. Optional: `adp_stdev`, name/team/pos. Endpoint down and no override → data refuse.
 
 ### Scoring
@@ -155,7 +161,13 @@ Replacement = first player at that position **not absorbed into starting slots**
 
 One call per board change. No tools. Closed world.
 
-Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “band”; wait-vs-take is the model's.
+**The board is the world.** Rec and alternatives must be on `board` — not merely
+undrafted. Order by `vols` descending. Cap: top 50 overall, plus top 10 per
+position, plus every player whose `adp` falls inside the next two rounds. State
+in the payload that the board is capped, so the model does not read scarcity off
+a truncated list.
+
+Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a survival “band”; wait-vs-take is the model's.
 
 **In**
 
@@ -168,13 +180,13 @@ Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “ba
     needs: { [slot]: { filled, required } },
     weekly: [{ week, starter_points, empty: [slot] }],  // bye → 0
     recent: [{ player_id, position, pick_no }],         // last ~5
-    available: [player_id]
+    between: [{ slot, roster: { [pos]: n }, needs }]    // teams picking before next_user_pick
   },
   replacement: { [pos]: { player_id, points } },
   hint_argmax_vols: player_id,                    // calculator, not the answer
-  board: [{
+  board: [{                                       // vols desc, capped
     player_id, name, position, bye?,
-    points, vols, adp,
+    points, vols, delta_starter_points, adp,      // vols is global; delta is vs your roster
     ecr?, ecr_min?, ecr_max?, ecr_std?,           // upside = wide std late
     legal_slots[]
   }]
@@ -196,7 +208,7 @@ Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “ba
 
 `flags` ∈ `ECR_DISAGREE | BYE_STACK | POSITION_RUN | EMPTY_STARTER | UPSIDE | VOLS_DISSENT`.
 
-- New `player_id`s → fail the call.
+- Ids not on `board` → fail the call.
 - Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → fail.
 - Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin` → fail. The flag does not save it.
 - Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the override has it). Not a second scorer.
@@ -207,11 +219,11 @@ Omit `next_user_pick` when the seat is unknown. Do **not** ship a survival “ba
 
 Every gate is **pass or fail**. No scores, no “lean”, no margin-as-a-grade. Skip a gate when its input is missing (`NOT_PERFORMED`) — that is not a fail.
 
-Let `T = config.teams`. `ecr_best` = min ECR among available players that have an ECR. `margin = T` in the first half of the draft, else `2T` (one round, then two).
+Let `T = config.teams`. `ecr_best` = min ECR among `board` players that have an ECR (overall consensus list, not positional). `margin = T` in the first half of the draft, else `2T` (one round, then two).
 
 | Gate | Pass iff |
 |---|---|
-| Schema | Rec ∈ `available` ∧ alternatives ⊆ `available` ∧ `slot_filled` is legal for rec |
+| Schema | Rec ∈ `board` ∧ alternatives ⊆ `board` ∧ `slot_filled` is legal for rec |
 | Golden forbid | Rec is not in the forbid set (kicker rounds 1–3; third TE while a dedicated starter slot is empty; …) |
 | Golden require | Rec or an alternative **is** in the require set (e.g. SF QB when two remain and eight teams need one) |
 | VOLS dissent | Rec = `hint_argmax_vols` **xor** `VOLS_DISSENT` ∈ flags |
@@ -220,9 +232,31 @@ Let `T = config.teams`. `ecr_best` = min ECR among available players that have a
 | Bye hole | Adding rec does not create a new empty startable slot on `rec.bye` when an alternative with a different bye exists on the board |
 | Stability | `coin_flip` → skip. Else ≥ 3 of 5 identical payloads return the same `player_id` |
 | VOLS invariant | Hypothetical pass 2 moves no position's replacement rank by more than 2 |
+| Regret | No completed-draft fixture → skip. Else fail iff rec was still available at `next_user_pick` **and** a listed alternative was not |
 | Replay | No dated file → skip. Else policy's projected-lineup sum ≥ user's, same dated stats. Actuals are luck |
 
 No LLM-as-judge. Sampler for golden/stability: ADP order + noise, plus hostile states. Do not sample from the model.
+
+**Regret fixtures.** Completed public drafts, read through the same documented
+API, replayed to a user pick with the board frozen. Who survived to that user's
+next turn is a matter of record — no survival model, no judge. This is the only
+gate on wait-vs-take, which §1 hands to the model outright.
+
+### Baselines
+
+Every fixture also runs through three fixed policies. Report four pass rates per
+gate, side by side.
+
+| Policy | Rule |
+|---|---|
+| `argmax_vols` | `hint_argmax_vols`; flags set mechanically |
+| `adp_follow` | best available `adp` |
+| `ecr_follow` | best available `ecr` |
+
+`argmax_vols` passes most gates above as written. That is the point. A gate where
+the model and `argmax_vols` post the same rate has no discriminating power, and
+§1 already puts argmax-as-the-pick out of scope. The model separates or it is not
+paying for its tokens.
 
 ---
 
@@ -263,7 +297,7 @@ Same contract as draft: numbers in, binary-gated rec out, you click. v2 swaps th
 | v2 | Weekly lineup from weekly projections |
 | v3 | Waivers / FAAB |
 | v4 | Trades |
-| — | Waiver VORP; VONA if we ever *measure* survival; fitted market model |
+| — | Waiver VORP; VONA once the regret set holds enough drafts to fit survival; fitted market model |
 
 Not a product: executing picks, outbound trades without review, multi-sport in v1. Shared layer if/when NBA/FPL/brackets exist: ingestion + projections only. Each sport keeps its own decision prompt.
 
@@ -271,12 +305,13 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 
 ## 8. Risks and ethics
 
-- The model is the policy. Golden set is small and human. That is the main eval limit.
+- The model is the policy. Golden set is small and human. That is the main eval limit. Baselines and the regret set bound it; neither replaces it.
 - Weekly strength in v1 is season rate with bye = 0, not a real week-17 forecast.
 - Default stats host is unofficial and can vanish. Override only helps if it already exists. Draft night is the worst time to learn this.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
 - ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`.
 - Superflex is where two-pass VOLS is most likely to move. The rank-2 invariant is an eval, not a solver.
 - Disclose to the league that you use a tool. Also disclose Rotowire-via-unofficial-Sleeper and FantasyPros ECR — “I used a public cheat sheet” does not cover it.
+- Regret fixtures are other people's completed drafts. Survival in them is fact, not forecast — but their board is their ADP era, not yours. Same no-commit rule as league data.
 - Do not commit league data (other managers, transactions) to a shared repo.
 - A market model on *this league's* history is a different disclosure if it is ever built.
