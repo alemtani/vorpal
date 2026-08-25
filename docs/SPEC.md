@@ -127,7 +127,7 @@ Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
 **ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). Scoring param STD/PPR/HALF follows the same `rec` rule. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
 
-**Weekly / byes.** Sleeper `/players` carries `bye`. v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
+**Weekly / byes / absence.** Sleeper `/players` carries `bye`. v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 
 **Marginal value.** Recompute that vector with a candidate added and ship the
 difference as `delta_starter_points` on each board row. `vols` is global — the
@@ -161,6 +161,21 @@ Replacement = first player at that position **not absorbed into starting slots**
 
 One call per board change. No tools. Closed world.
 
+**No tools is a draft-phase constraint, not an architecture.** Two reasons, both
+local to draft night: every round trip runs against the pick timer, and the
+stability gate needs identical payloads to converge. Sampling parameters cannot
+be used to force that — `temperature` is rejected on current models — so
+determinism has to come from a closed input.
+
+Later phases have hours, not seconds. When they admit tools, the rule is a
+split by kind, not a cap on count: a tool that is a **pure function of the board**
+(depth chart, bye, any snapshot the payload could have carried) keeps the same
+payload converging on the same call and the same data, so stability survives. A
+tool that reaches into a **changing world** (live news, search) does not, and
+worse, lets the model act on data no gate ever sees — which is what hollows out
+`VOLS_DISSENT`. Admit the first kind. A tool that is down gets the `ecr_missing`
+treatment: banner and proceed, never block.
+
 **The board is the world.** Rec and alternatives must be on `board` — not merely
 undrafted. Order by `vols` descending. Cap: top 50 overall, plus top 10 per
 position, plus every player whose `adp` falls inside the next two rounds. State
@@ -186,7 +201,8 @@ Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a 
   hint_argmax_vols: player_id,                    // calculator, not the answer
   board: [{                                       // vols desc, capped
     player_id, name, position, bye?,
-    points, vols, delta_starter_points, adp,      // vols is global; delta is vs your roster
+    points, gp?, vols, delta_starter_points, adp, // vols is global; delta is vs your roster
+                                                  // gp < 17 ⇒ season points understate per-game value
     ecr?, ecr_min?, ecr_max?, ecr_std?,           // upside = wide std late
     legal_slots[]
   }]
@@ -228,7 +244,7 @@ Let `T = config.teams`. `ecr_best` = min ECR among `board` players that have an 
 | Golden require | Rec or an alternative **is** in the require set (e.g. SF QB when two remain and eight teams need one) |
 | VOLS dissent | Rec = `hint_argmax_vols` **xor** `VOLS_DISSENT` ∈ flags |
 | ECR dissent | No ECR → skip. Else rec is `ecr_best` **xor** `ECR_DISAGREE` ∈ flags |
-| ECR sanity | No ECR on rec → skip. Else `ecr(rec) ≤ ecr_best + margin`. Floor, not a target: one round off early, two late |
+| ECR sanity | No ECR on rec → skip. Else `ecr(rec) ≤ ecr_best + margin` **or** `ecr_min(rec) ≤ ecr_best + margin`. Floor, not a target: one round off early, two late |
 | Bye hole | Adding rec does not create a new empty startable slot on `rec.bye` when an alternative with a different bye exists on the board |
 | Stability | `coin_flip` → skip. Else ≥ 3 of 5 identical payloads return the same `player_id` |
 | VOLS invariant | Hypothetical pass 2 moves no position's replacement rank by more than 2 |
@@ -295,9 +311,9 @@ Same contract as draft: numbers in, binary-gated rec out, you click. v2 swaps th
 | Phase | What |
 |---|---|
 | v2 | Weekly lineup from weekly projections |
-| v3 | Waivers / FAAB |
+| v3 | Waivers / FAAB. First tool phase: depth chart (backups, handcuffs) |
 | v4 | Trades |
-| — | Waiver VORP; VONA once the regret set holds enough drafts to fit survival; fitted market model |
+| — | Waiver VORP; VONA once the regret set holds enough drafts to fit survival; fitted market model; playoff-week schedule strength |
 
 Not a product: executing picks, outbound trades without review, multi-sport in v1. Shared layer if/when NBA/FPL/brackets exist: ingestion + projections only. Each sport keeps its own decision prompt.
 
@@ -306,10 +322,11 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 ## 8. Risks and ethics
 
 - The model is the policy. Golden set is small and human. That is the main eval limit. Baselines and the regret set bound it; neither replaces it.
-- Weekly strength in v1 is season rate with bye = 0, not a real week-17 forecast.
+- Weekly strength in v1 is season rate with bye and known-out weeks at 0, not a real week-17 forecast.
+- Every gate is a floor or a consistency check. None of them scores *riskiness*, so nothing catches a recommendation that should have chased variance and did not. This matters once the objective shifts from `max E[points]` toward `max P(beat opponent)` — a v2/v3 concern, unaddressed here.
 - Default stats host is unofficial and can vanish. Override only helps if it already exists. Draft night is the worst time to learn this.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
-- ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`.
+- ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`. The `ecr_min` escape exists so the gate catches incoherence rather than contrarianism: a returning starter the consensus discounts but one expert ranks highly is a fact on the board, not a taste. It widens the floor — a player no expert likes still fails.
 - Superflex is where two-pass VOLS is most likely to move. The rank-2 invariant is an eval, not a solver.
 - Disclose to the league that you use a tool. Also disclose Rotowire-via-unofficial-Sleeper and FantasyPros ECR — “I used a public cheat sheet” does not cover it.
 - Regret fixtures are other people's completed drafts. Survival in them is fact, not forecast — but their board is their ADP era, not yours. Same no-commit rule as league data.
