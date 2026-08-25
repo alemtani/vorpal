@@ -1,0 +1,57 @@
+[project]
+name = "vorpal"
+version = "0.1.0"
+description = "Personal NFL redraft tool. The model recommends; you click in Sleeper."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic",
+    "httpx",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "respx",
+    "ruff",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vorpal"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tools"]
+addopts = [
+    "--cov=vorpal",
+    "--cov-report=term-missing",
+    "--cov-fail-under=99",
+]
+markers = [
+    "invariant: VOLS replacement-rank invariant (a failure is a model problem, not a code bug)",
+    "golden: golden-set verdicts (a failure is a model problem, not a code bug)",
+    "live: hits a live network; never selected in CI",
+]
+
+[tool.coverage.run]
+source = ["vorpal"]
+
+[tool.coverage.report]
+fail_under = 99
+show_missing = true
+exclude_lines = [
+    "if __name__ == .__main__.:",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+src = ["src", "tests", "tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

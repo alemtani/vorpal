@@ -5,7 +5,14 @@ __pycache__/
 .DS_Store
 data/cache/
 *.parquet
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.egg-info/
 
 # league data / anything identifying a specific league
 private/
 *.local.json
+tools/record_sources.local.json
