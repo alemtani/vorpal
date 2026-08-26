@@ -1,0 +1,8 @@
+{
+  "player_id": "4866",
+  "alternatives": ["7564"],
+  "slot_filled": "RB",
+  "coin_flip": false,
+  "why": "highest VOLS and fills an empty RB starter",
+  "flags": ["EMPTY_STARTER"]
+}
