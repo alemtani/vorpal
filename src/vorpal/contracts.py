@@ -7,8 +7,24 @@ from enum import StrEnum
 from typing import Any
 
 
+class Host(StrEnum):
+    """League platform. v1 implements Sleeper; ESPN is a later adapter."""
+
+    SLEEPER = "sleeper"
+    ESPN = "espn"
+
+
+class LeagueFormat(StrEnum):
+    """Scoring-league format. Adapters map host-specific codes onto this."""
+
+    REDRAFT = "redraft"
+    KEEPER = "keeper"
+    DYNASTY = "dynasty"
+    UNKNOWN = "unknown"
+
+
 class Slot(StrEnum):
-    """Roster slot codes as they appear on the wire (`DEF`, not `DST`)."""
+    """Canonical slot codes. Adapters map host wire (`DEF`, `D/ST`) onto these."""
 
     QB = "QB"
     RB = "RB"
@@ -118,6 +134,8 @@ class Player:
     number: int | None
     search_rank: int | None
     bye: int | None
+    espn_id: str | None = None
+    host: str = Host.SLEEPER.value
 
 
 @dataclass(frozen=True, slots=True)
@@ -177,7 +195,26 @@ class Pick:
 
 
 @dataclass(frozen=True, slots=True)
+class SlotCounts:
+    """Starter and bench counts. `bn` is None when the host omitted it."""
+
+    qb: int = 0
+    rb: int = 0
+    wr: int = 0
+    te: int = 0
+    k: int = 0
+    defense: int = 0
+    flex: int = 0
+    super_flex: int = 0
+    op: int = 0
+    bn: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Draft:
+    """Host-agnostic draft. A LeagueHost adapter fills this from wire JSON."""
+
+    host: str
     draft_id: str
     type: str
     status: str
@@ -186,14 +223,21 @@ class Draft:
     season_type: str
     league_id: str | None
     start_time: int | None
-    settings: dict[str, int]
-    metadata: dict[str, str]
+    teams: int
+    rounds: int
+    pick_timer: int | None
+    reversal_round: int
+    slot_counts: SlotCounts
+    scoring_label: str | None
     draft_order: dict[str, int] | None
-    slot_to_roster_id: dict[str, int]
+    slot_to_roster_id: dict[int, int]
 
 
 @dataclass(frozen=True, slots=True)
 class League:
+    """Host-agnostic league. Scoring and roster slots are already tables."""
+
+    host: str
     league_id: str
     draft_id: str
     season: str
@@ -202,8 +246,8 @@ class League:
     season_type: str
     total_rosters: int
     roster_positions: tuple[Slot, ...]
-    scoring_settings: dict[str, float]
-    settings_type: int | None
+    scoring: dict[str, float]
+    format: LeagueFormat
     max_keepers: int
     taxi_slots: int
     num_teams: int

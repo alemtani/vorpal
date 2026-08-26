@@ -23,8 +23,10 @@ from vorpal.contracts import (
     Gate,
     GateOutcome,
     GateResult,
+    Host,
     League,
     LeagueConfig,
+    LeagueFormat,
     Need,
     OverrideRow,
     Payload,
@@ -36,6 +38,7 @@ from vorpal.contracts import (
     RosterPlayer,
     Seat,
     Slot,
+    SlotCounts,
     StatRow,
     User,
     WeeklyCell,
@@ -260,23 +263,33 @@ def test_types_are_frozen_and_slotted() -> None:
         player.team = "DAL"  # type: ignore[misc]
 
 
-def test_recorded_boundary_types_expose_wire_field_names() -> None:
+def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
     assert {
+        "host",
         "draft_id",
         "type",
         "status",
         "league_id",
-        "settings",
+        "slot_counts",
         "draft_order",
     } <= _fields(Draft)
     assert {
+        "host",
         "league_id",
         "roster_positions",
-        "scoring_settings",
-        "settings_type",
+        "scoring",
+        "format",
         "max_keepers",
         "taxi_slots",
     } <= _fields(League)
+    assert {"espn_id", "yahoo_id"} <= _fields(Player)
+    assert set(Host) == {Host.SLEEPER, Host.ESPN}
+    assert set(LeagueFormat) == {
+        LeagueFormat.REDRAFT,
+        LeagueFormat.KEEPER,
+        LeagueFormat.DYNASTY,
+        LeagueFormat.UNKNOWN,
+    }
     assert {"user_id", "username", "display_name", "is_bot"} <= _fields(User)
     assert {
         "player_id",
@@ -425,6 +438,7 @@ def test_banner_serialises_code_and_message() -> None:
 
 def test_draft_and_league_and_user_construct_from_recorded_names() -> None:
     draft = Draft(
+        host=Host.SLEEPER.value,
         draft_id="draft_snake_redraft",
         type="snake",
         status="complete",
@@ -433,18 +447,17 @@ def test_draft_and_league_and_user_construct_from_recorded_names() -> None:
         season_type="regular",
         league_id="league_snake_redraft",
         start_time=1756858531257,
-        settings={
-            "teams": 12,
-            "rounds": 15,
-            "slots_k": 1,
-            "reversal_round": 0,
-            "pick_timer": 60,
-        },
-        metadata={"scoring_type": "ppr", "name": "Draft"},
+        teams=12,
+        rounds=15,
+        pick_timer=60,
+        reversal_round=0,
+        slot_counts=SlotCounts(k=1, defense=1, bn=5),
+        scoring_label="ppr",
         draft_order={"user_operator": 2},
-        slot_to_roster_id={"1": 2},
+        slot_to_roster_id={1: 2},
     )
     league = League(
+        host=Host.SLEEPER.value,
         league_id="league_snake_redraft",
         draft_id="draft_snake_redraft",
         season="2025",
@@ -453,8 +466,8 @@ def test_draft_and_league_and_user_construct_from_recorded_names() -> None:
         season_type="regular",
         total_rosters=12,
         roster_positions=(Slot.QB, Slot.RB, Slot.K, Slot.DEF, Slot.BN),
-        scoring_settings={"rec": 1.0},
-        settings_type=0,
+        scoring={"rec": 1.0},
+        format=LeagueFormat.REDRAFT,
         max_keepers=1,
         taxi_slots=0,
         num_teams=12,

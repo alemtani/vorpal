@@ -157,22 +157,49 @@ def redact_user(user: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def keep_then_cap_by_group(
+    items: list[Any],
+    *,
+    id_of: Any,
+    group_of: Any,
+    keep_ids: set[str],
+    per_group: int,
+    sort_key: Any = None,
+) -> list[Any]:
+    """Keep every item whose id is in keep_ids, then up to N more per group.
+
+    Used by both player and projection fixture subsets.
+    """
+    ordered = sorted(items, key=sort_key) if sort_key is not None else list(items)
+    out: list[Any] = []
+    seen: set[str] = set()
+    for item in ordered:
+        ident = id_of(item)
+        if not ident:
+            continue
+        if ident in keep_ids and ident not in seen:
+            seen.add(ident)
+            out.append(item)
+    added: dict[Any, int] = {}
+    for item in ordered:
+        ident = id_of(item)
+        if not ident or ident in seen:
+            continue
+        group = group_of(item)
+        if added.get(group, 0) >= per_group:
+            continue
+        seen.add(ident)
+        out.append(item)
+        added[group] = added.get(group, 0) + 1
+    return out
+
+
 def subset_players(
     players: dict[str, Any],
     keep_ids: set[str],
     per_position: int = 8,
 ) -> dict[str, Any]:
-    out: dict[str, Any] = {}
-    for pid in keep_ids:
-        row = players.get(pid)
-        if row is not None:
-            out[pid] = row
-    by_pos: dict[str, list[tuple[str, dict[str, Any]]]] = {}
-    for pid, row in players.items():
-        if not isinstance(row, dict):
-            continue
-        pos = str(row.get("position") or "")
-        by_pos.setdefault(pos, []).append((pid, row))
+    """Keep drafted ids, then up to ``per_position`` extra players per position."""
 
     def sort_key(item: tuple[str, dict[str, Any]]) -> tuple[int, int]:
         _pid, row = item
@@ -181,16 +208,16 @@ def subset_players(
         search_rank = rank if isinstance(rank, int) else 999_999
         return (yahoo, search_rank)
 
-    for pos in POSITIONS:
-        added = 0
-        for pid, row in sorted(by_pos.get(pos, []), key=sort_key):
-            if pid in out:
-                continue
-            out[pid] = row
-            added += 1
-            if added >= per_position:
-                break
-    return out
+    rows = [(pid, row) for pid, row in players.items() if isinstance(row, dict)]
+    picked = keep_then_cap_by_group(
+        rows,
+        id_of=lambda item: item[0],
+        group_of=lambda item: str(item[1].get("position") or ""),
+        keep_ids=keep_ids,
+        per_group=per_position,
+        sort_key=sort_key,
+    )
+    return {pid: row for pid, row in picked}
 
 
 def _is_market_only(stats: dict[str, Any]) -> bool:
@@ -206,34 +233,20 @@ def subset_projections(
     keep_ids: set[str],
     per_position: int = 8,
 ) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    """Keep drafted ids, then up to N counting and N market-only rows per position."""
 
-    def add(row: dict[str, Any]) -> None:
-        pid = str(row.get("player_id") or "")
-        if not pid or pid in seen:
-            return
-        seen.add(pid)
-        out.append(row)
-
-    for row in rows:
-        if str(row.get("player_id") or "") in keep_ids:
-            add(row)
-
-    counting_added: dict[str, int] = {}
-    market_added: dict[str, int] = {}
-    for row in rows:
-        pid = str(row.get("player_id") or "")
-        if pid in seen:
-            continue
+    def group_of(row: dict[str, Any]) -> tuple[str, str]:
         pos = str((row.get("player") or {}).get("position") or "")
-        stats = row.get("stats") or {}
-        bucket = market_added if _is_market_only(stats) else counting_added
-        if bucket.get(pos, 0) >= per_position:
-            continue
-        add(row)
-        bucket[pos] = bucket.get(pos, 0) + 1
-    return out
+        kind = "market" if _is_market_only(row.get("stats") or {}) else "counting"
+        return (pos, kind)
+
+    return keep_then_cap_by_group(
+        rows,
+        id_of=lambda row: str(row.get("player_id") or ""),
+        group_of=group_of,
+        keep_ids=keep_ids,
+        per_group=per_position,
+    )
 
 
 def redact_fantasypros(payload: dict[str, Any]) -> dict[str, Any]:

@@ -56,13 +56,14 @@ zero is the failure mode — it means someone bent their module around a bad typ
 
 ### D5 — Shared files are enumerated and neutralised
 
-Merge conflicts between agents are the whole risk of this approach. There are
-exactly four shared files, and each has a rule:
+Merge conflicts between agents are the whole risk of this approach. Shared
+files, each with a rule:
 
 | File | Rule |
 |---|---|
 | `pyproject.toml` | All v1 deps declared in the seed. Sessions add none. |
 | `src/vorpal/contracts.py` | Frozen. D4. |
+| `src/vorpal/platform/base.py` | Frozen. New hosts are new files, not edits here. |
 | `src/vorpal/errors.py` | Frozen. Taxonomy is complete in the seed. |
 | `docs/PLAN.md` | A session edits only its own status row. |
 
@@ -128,7 +129,7 @@ session; start it first.
 
 | ID | Scope | Owns | Depends | Status |
 |---|---|---|---|---|
-| S0 | Seed: contracts, errors, fixtures, CI, docs | root, `contracts.py`, `errors.py`, `tests/fixtures/`, `tools/` | — | DONE |
+| S0 | Seed: contracts, errors, fixtures, CI, docs | root, `contracts.py`, `errors.py`, `platform/`, `tests/fixtures/`, `tools/` | — | DONE |
 | S1 | Sleeper documented reads | `src/vorpal/sleeper/**` | S0 | NOT STARTED |
 | S2 | Projections, ECR, override CSV | `src/vorpal/ingest/**` | S0 | NOT STARTED |
 | S3 | Slots, scoring source, seat, refusals | `src/vorpal/resolve/**` | S0 | NOT STARTED |
@@ -140,7 +141,7 @@ session; start it first.
 | S9 | Golden set + regret fixtures | `tests/golden/**`, `tests/regret/**` | S0 | NOT STARTED |
 | S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | NOT STARTED |
 
-Prompts: `docs/prompts/S0.md` … `docs/prompts/S10.md`.
+Prompts: `docs/prompts/S1.md` … `docs/prompts/S10.md`.
 
 ---
 
