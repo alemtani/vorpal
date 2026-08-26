@@ -2,58 +2,81 @@
 
 `docs/SPEC.md` is the contract. Do not invent behavior it does not specify.
 
-Personal NFL redraft tool. Sleeper league ID in; recommendations out. The human acts in the platform UI.
+Personal NFL redraft tool. A `LeagueHost` adapter reads the platform.
+v1 implements Sleeper. ESPN would be another adapter, not a rewrite.
+Forecast (stats, ADP, ECR) stays in ingest. Valuation never imports a host.
 
 ## TDD
 
-FAIL_TO_PASS first. Write the test. Run it. Confirm it fails for the reason you intend. Then implement. Then run it again and confirm it passes.
+FAIL_TO_PASS first. Write the test. Run it. Confirm it fails for the reason
+you intend. Then implement. Then run it again and confirm it passes.
 
-Do not implement first and backfill tests. Do not write a test that already passes.
+Do not implement first and backfill tests. Do not write a test that already
+passes.
 
-99% line coverage is a CI gate. If it is missing, add it. Do not lower it. Do not exclude new code to keep the number.
+99% line coverage is a CI gate. If it is missing, add it. Do not lower it.
+Do not exclude new code to keep the number.
+
+Non-obvious helpers get a short docstring (what they keep, what they cap).
+
+## Session protocol
+
+From `docs/PLAN.md` section 5.
+
+Start in a worktree: `git worktree add ../vorpal-sN -b feat/<scope> main`.
+Touch only the files your prompt says you own.
+
+If a generic type must change, stop and open a small PR against
+`src/vorpal/contracts.py` / `src/vorpal/platform/`. Do not silently fork
+the type in your package. Rebase after it merges.
+
+Before you open the PR: write `docs/handoffs/SN.md`, set your PLAN.md
+row to DONE, update prompts of sessions that depend on you. A PR that
+skips those is not finished.
 
 ## Do not
 
-- Write to Sleeper, scrape, drive a browser, or reverse-engineer internal APIs. The public API is read-only.
-- Hardcode any league's settings, scoring, or roster. Read them at runtime.
-- Commit `private/`, `*.local.json`, or anything that identifies a league or its managers.
-- Ingest a fantasy-points column. Apply the league's scoring to counting stats.
-- Silent-zero an unmatched nonzero scoring key. Report it before the board renders.
-- Add an executor or write-plugin. One implementation is not an interface.
-- Fit a market model on this league's draft history (deferred, SPEC.md §4).
-- Build lineup, waiver, or trade policy in v1. Draft only.
+- Write to a host, scrape, or drive a browser.
+- Hardcode a league's settings, scoring, or roster.
+- Commit `private/`, `*.local.json`, or anything that identifies a league
+  or its managers.
+- Ingest a fantasy-points column. Apply this league's scoring to counting
+  stats.
+- Silent-zero an unmatched nonzero scoring key.
+- Add an executor. The human clicks in the host UI.
+- Fit a market model on this league's draft history.
+- Build lineup, waiver, or trade policy in v1.
+- Add a chance-to-last-until-the-next-pick number.
 
 ## Facts agents miss
 
-- **Slots, not scoring, decide what starts.** A league can store K/DST scoring with no K/DST slot.
-- **Refuse, do not degrade:** keeper/dynasty (`max_keepers > 0` or taxi), IDP, auction. Linear draft is in scope but must not use snake pick spacing.
-- **Unknown draft slot:** hide survival entirely. Do not guess it.
-- **Mapping fail-closed:** match name+pos+team, then name+pos (flag team mismatch). If match rate on the top 300 by ADP is below 98%, refuse and print the report.
-- **K/DST rows** are required when those slots exist. If a slot exists and the file has no rows, use a flat baseline and state that on the board.
-- **Replacement (SPEC.md §7):** two passes (points, then VORP). Bench is not absorbed. Fill flexible slots most-restrictive first. A hypothetical pass 2 must not move any position's replacement rank by more than 2 — that is a failing eval, not a comment.
-- **Pick objective:** one-step lookahead that maximizes expected starting-lineup VORP, discounted by survival to the user's next pick. Not static VORP. Not myopic take-best.
-- **Survival:** placeholder `σ = max(4, 0.30 × ADP)` unless the file supplies `adp_stdev`. Show coarse bands, not decimals. Independence is known-wrong. Already-drafted = 0.
-- **Evals:** decision error (SPEC.md §9.2) is internal consistency — same projections on both sides. Do not generate board states from the survival model. The golden set (SPEC.md §9.3) is the only v1 check that can catch a bad value *model*. Outcome replay without a pre-draft projection file is `NOT PERFORMED`, never a caveated number.
-- **Draft-night poll:** 3s while active; backoff 5/15/45s. Always show data age. Past 15s, degrade visibly. Older than one pick interval: grey the recommendation. Never present a stale board as current.
-- **Shared layer across sports is ingest + projections only.** Do not generalize the player-value model. FPL and brackets are different problems.
-- **Rate limit:** stay under 1000 calls/min. Fetch `/players` at most once per day (~5MB).
+- **Slots, not scoring, decide what starts.** Canonical defense slot is
+  `DEF`. Canonical superflex slot is `SUPER_FLEX`. Hosts map their wire
+  onto those.
+- **Refuse, do not degrade:** `LeagueFormat` keeper/dynasty, taxi slots,
+  IDP slot codes, auction, linear, `reversal_round != 0`. `max_keepers > 0`
+  on redraft is a banner, not a refusal.
+- **Unknown seat:** omit `next_user_pick`, `picks_until_next`, `between`.
+- **`/players` has no bye.** Take bye from FantasyPros `player_bye_week`.
+- **VOLS is last starter, two passes.** Bench is not absorbed. Spec
+  section 3. The pick is the model's; `hint_argmax_vols` is a calculator.
+- **ECR is not the pick** and is not a valuation input. S2 then S5.
+- **Standalone mocks:** `league_id` is JSON `null`. Slots from the mock,
+  scoring from a borrowed league.
+- **Poll:** 3s while `drafting`, else 15s until `complete`. Observed
+  statuses include `paused`. Never poll projections or FantasyPros.
+- **Rate limit:** under 1000/min. `/players` at most once per day.
 
-## Layout and toolchain
+## Errors
 
-`main` is spec-only. Reuse `chore/project-skeleton` rather than inventing packaging.
+All are `VorpalError`. Print to stderr, exit 2. Do not collapse them.
 
-Intended tree, matching SPEC.md §5:
-
-- `src/vorpal/sleeper` — platform read
-- `src/vorpal/ingest` — user files from `private/`
-- `src/vorpal/valuation` — scoring, replacement, VORP
-- `src/vorpal/policy` — draft (v1)
-- `src/vorpal/board` — local page
-- `evals/` — decision quality, not outcomes
-
-Refusal taxonomy (load-bearing): `UnsupportedLeague` is permanent; `DataRefusal` is fixable by a better file; `PlatformError` is the API. All are `VorpalError`. CLI prints them to stderr and exits 2. Do not collapse the two refusal types.
-
-Intended commands (skeleton, not yet on `main`):
+| Class | Meaning |
+|---|---|
+| `UnsupportedLeague` | Permanent. Format is out of v1. |
+| `DataRefusal` | Fixable by a better file. |
+| `PlatformError` | The host or projections API. |
+| `UserRefusal` | Operator identity or seat. |
 
 ```
 uv sync
@@ -64,6 +87,5 @@ uv run ruff check .
 uv run ruff format .
 ```
 
-Python >=3.12. CI is 3.12 and 3.13. Runtime deps arrive with the PR that needs them.
-
-Pytest markers: `invariant` (SPEC.md §7), `golden` (SPEC.md §9.3). A marker failure is a model problem, not a code bug.
+Python >= 3.12. CI is 3.12 and 3.13. Marker `live` is off in CI.
+`invariant` / `golden` failures are model problems, not code bugs.
