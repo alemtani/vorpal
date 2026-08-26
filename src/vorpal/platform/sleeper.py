@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from typing import Any, cast
 
 from vorpal.contracts import (
+    AdpVariant,
     Draft,
     Host,
     League,
@@ -18,6 +19,13 @@ from vorpal.contracts import (
 )
 from vorpal.errors import PlatformError
 from vorpal.platform.base import LeagueHost
+
+ADP_WIRE_KEYS: dict[AdpVariant, str] = {
+    AdpVariant.TWO_QB: "adp_2qb",
+    AdpVariant.PPR: "adp_ppr",
+    AdpVariant.HALF_PPR: "adp_half_ppr",
+    AdpVariant.STD: "adp_std",
+}
 
 _SLEEPER_FORMAT = {
     0: LeagueFormat.REDRAFT,
@@ -262,6 +270,5 @@ class SleeperHost(LeagueHost):
             injury_status=_optional_str(row.get("injury_status")),
             years_exp=_as_int_or_none(row.get("years_exp")),
             number=_as_int_or_none(row.get("number")),
-            search_rank=_as_int_or_none(row.get("search_rank")),
             bye=None,
         )

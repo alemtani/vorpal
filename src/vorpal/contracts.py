@@ -23,6 +23,15 @@ class LeagueFormat(StrEnum):
     UNKNOWN = "unknown"
 
 
+class AdpVariant(StrEnum):
+    """Which ADP board to read. Hosts map this onto their wire keys."""
+
+    TWO_QB = "2qb"
+    PPR = "ppr"
+    HALF_PPR = "half_ppr"
+    STD = "std"
+
+
 class Slot(StrEnum):
     """Canonical slot codes. Adapters map host wire (`DEF`, `D/ST`) onto these."""
 
@@ -79,8 +88,6 @@ IDP_SLOTS: tuple[str, ...] = (
     Slot.DB.value,
     Slot.IDP_FLEX.value,
 )
-ADP_KEYS: tuple[str, ...] = ("adp_2qb", "adp_ppr", "adp_half_ppr", "adp_std")
-
 PAYLOAD_KEYS = {"config", "state", "replacement", "hint_argmax_vols", "board"}
 PAYLOAD_CONFIG_KEYS = {"teams", "rounds", "slot", "slots", "scoring_summary", "banners"}
 PROPOSAL_KEYS = {
@@ -134,33 +141,30 @@ class Player:
     injury_status: str | None
     years_exp: int | None
     number: int | None
-    search_rank: int | None
     bye: int | None
 
 
 @dataclass(frozen=True, slots=True)
 class StatRow:
     player_id: str
-    company: str
+    source: str
     week: int | None
     season: str
     stats: dict[str, float]
-    adp_std: float | None
-    adp_ppr: float | None
-    adp_half_ppr: float | None
-    adp_2qb: float | None
+    adp: float | None
     gp: float | None
     market_only: bool
 
 
 @dataclass(frozen=True, slots=True)
 class EcrRow:
-    player_yahoo_id: str
-    player_id: int | None
-    player_name: str
-    player_team_id: str | None
-    player_position_id: str
-    player_bye_week: int | None
+    """Ranks after join to a host player id. Yahoo ids stay on the FP JSON."""
+
+    player_id: str
+    name: str
+    team: str | None
+    position: str
+    bye: int | None
     rank_ecr: int
     rank_min: int
     rank_max: int
@@ -270,7 +274,7 @@ class LeagueConfig:
     status: str = "pre_draft"
     pick_timer: int | None = None
     reversal_round: int = 0
-    adp_key: str = "adp_ppr"
+    adp_variant: AdpVariant = AdpVariant.PPR
     ecr_scoring: str = "PPR"
 
 

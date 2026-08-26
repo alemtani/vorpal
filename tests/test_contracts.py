@@ -8,11 +8,11 @@ from typing import get_args
 import pytest
 
 from vorpal.contracts import (
-    ADP_KEYS,
     IDP_SLOTS,
     PAYLOAD_CONFIG_KEYS,
     PAYLOAD_KEYS,
     PROPOSAL_KEYS,
+    AdpVariant,
     Banner,
     BetweenTeam,
     BoardRow,
@@ -129,7 +129,7 @@ def _config(*, slot: int | None = 2) -> LeagueConfig:
         status="complete",
         pick_timer=60,
         reversal_round=0,
-        adp_key="adp_ppr",
+        adp_variant=AdpVariant.PPR,
         ecr_scoring="PPR",
     )
 
@@ -235,9 +235,8 @@ def test_slot_codes_come_from_the_wire_not_the_prose() -> None:
         assert code in {slot.value for slot in Slot}
 
 
-def test_adp_keys_match_recorded_projection_variants() -> None:
-    assert ADP_KEYS == ("adp_2qb", "adp_ppr", "adp_half_ppr", "adp_std")
-    assert "adp_2qb_ppr" not in ADP_KEYS
+def test_adp_variant_is_host_agnostic() -> None:
+    assert {item.value for item in AdpVariant} == {"2qb", "ppr", "half_ppr", "std"}
 
 
 def test_types_are_frozen_and_slotted() -> None:
@@ -255,7 +254,6 @@ def test_types_are_frozen_and_slotted() -> None:
         injury_status=None,
         years_exp=7,
         number=26,
-        search_rank=1,
         bye=None,
     )
     assert player.__slots__
@@ -307,19 +305,22 @@ def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
         "host",
         "position",
         "team",
-        "search_rank",
         "bye",
     } <= _fields(Player)
-    assert {"player_id", "company", "week", "stats", "gp", "market_only"} <= _fields(
-        StatRow
+    assert "search_rank" not in _fields(Player)
+    assert {"player_id", "source", "week", "stats", "adp", "gp", "market_only"} <= (
+        _fields(StatRow)
     )
+    assert "adp_ppr" not in _fields(StatRow)
     assert {
-        "player_yahoo_id",
+        "player_id",
+        "name",
         "rank_ecr",
         "rank_min",
         "rank_max",
         "rank_std",
     } <= _fields(EcrRow)
+    assert "player_yahoo_id" not in _fields(EcrRow)
     assert {"player_id", "stats", "adp"} <= _fields(OverrideRow)
     assert {"user_id", "slot", "roster_id"} <= _fields(Seat)
 
@@ -327,27 +328,21 @@ def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
 def test_stat_row_can_hold_counting_keys_and_mark_market_only() -> None:
     counting = StatRow(
         player_id="10213",
-        company="rotowire",
+        source="rotowire",
         week=None,
         season="2026",
         stats={"rec": 46.0, "rec_yd": 582.0, "rec_td": 3.0},
-        adp_std=187.5,
-        adp_ppr=203.7,
-        adp_half_ppr=193.5,
-        adp_2qb=213.3,
+        adp=203.7,
         gp=18.0,
         market_only=False,
     )
     market = StatRow(
         player_id="2",
-        company="rotowire",
+        source="rotowire",
         week=None,
         season="2026",
         stats={},
-        adp_std=200.0,
-        adp_ppr=200.0,
-        adp_half_ppr=200.0,
-        adp_2qb=200.0,
+        adp=200.0,
         gp=17.0,
         market_only=True,
     )
@@ -356,20 +351,19 @@ def test_stat_row_can_hold_counting_keys_and_mark_market_only() -> None:
     assert "pts_ppr" not in counting.stats
 
 
-def test_ecr_row_keeps_yahoo_id_as_string_and_ranks_from_documented_shape() -> None:
+def test_ecr_row_is_joined_to_a_host_player_id() -> None:
     row = EcrRow(
-        player_yahoo_id="32692",
-        player_id=6794,
-        player_name="Justin Jefferson",
-        player_team_id="MIN",
-        player_position_id="WR",
-        player_bye_week=None,
+        player_id="6794",
+        name="Justin Jefferson",
+        team="MIN",
+        position="WR",
+        bye=None,
         rank_ecr=1,
         rank_min=1,
         rank_max=4,
         rank_std=0.43,
     )
-    assert row.player_yahoo_id == "32692"
+    assert row.player_id == "6794"
     assert row.rank_ecr == 1
 
 

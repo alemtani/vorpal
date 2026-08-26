@@ -8,9 +8,10 @@ from typing import Any
 
 import pytest
 
-from vorpal.contracts import Draft, Host, LeagueFormat, Player, Slot
+from vorpal.contracts import AdpVariant, Draft, Host, LeagueFormat, Player, Slot
 from vorpal.errors import PlatformError
 from vorpal.platform import LeagueHost, SleeperHost
+from vorpal.platform.sleeper import ADP_WIRE_KEYS
 
 FIXTURES = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "sleeper"
 
@@ -27,6 +28,14 @@ def _parse_draft(host: LeagueHost, payload: dict[str, Any]) -> Draft:
 def test_league_host_cannot_be_constructed() -> None:
     with pytest.raises(TypeError):
         LeagueHost()  # type: ignore[abstract]
+
+
+def test_sleeper_adp_wire_keys_stay_on_the_adapter() -> None:
+    assert ADP_WIRE_KEYS[AdpVariant.PPR] == "adp_ppr"
+    assert ADP_WIRE_KEYS[AdpVariant.TWO_QB] == "adp_2qb"
+    assert ADP_WIRE_KEYS[AdpVariant.HALF_PPR] == "adp_half_ppr"
+    assert ADP_WIRE_KEYS[AdpVariant.STD] == "adp_std"
+    assert "adp_2qb_ppr" not in ADP_WIRE_KEYS.values()
 
 
 def test_sleeper_host_is_a_league_host() -> None:
