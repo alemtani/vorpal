@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="3">
+<title>vorpal — pick 48</title>
+<style>
+:root { color-scheme: dark; }
+body {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  background: #111;
+  color: #f5f5f5;
+  margin: 0;
+  padding: 1rem;
+}
+body[data-degraded="true"] { box-shadow: inset 0 0 0 8px #fc0; }
+body[data-greyed="true"] .recommendation,
+body[data-greyed="true"] .weekly,
+body[data-greyed="true"] .board { filter: grayscale(1); opacity: 0.65; }
+.banner {
+  background: #c00;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  padding: 0.8rem 1rem;
+  margin: 0.6rem 0;
+  border: 4px solid #fff;
+}
+.age.stale { color: #fc0; font-weight: 800; }
+.timer { font-size: 1.25rem; }
+.rec { font-size: 1.8rem; margin: 0.2rem 0; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border-bottom: 1px solid #444; padding: 0.3rem 0.5rem; text-align: left; }
+td.gp { font-weight: 800; color: #fc0; }
+.empty-slot {
+  background: #c00;
+  color: #fff;
+  font-weight: 800;
+  padding: 0 0.35rem;
+}
+</style>
+</head>
+<body data-degraded="false" data-greyed="false">
+<header>
+<div class="timer" data-pick-timer="60">Pick timer: 60s</div>
+<div class="age" data-age-seconds="0">Data age: 0s</div>
+<div class="status" data-status="drafting">drafting · pick 48 · next 49 · in 1</div>
+</header>
+<section class="banners" role="alert">
+<div class="banner" data-code="unsupported_league">dynasty is out of v1</div>
+<div class="banner" data-code="data_refusal">projections host is down and no override</div>
+<div class="banner" data-code="platform_error">sleeper returned 500</div>
+<div class="banner" data-code="user_refusal">operator is not in draft_order</div>
+<div class="banner" data-code="board_capped">board is capped</div>
+</section>
+<section class="recommendation">
+<h1 class="rec" data-player-id="p1">A Back</h1>
+<p class="slot-filled">fills RB</p>
+<p class="pos">RB</p>
+<p class="why">fills the empty RB and beats replacement</p>
+<ul class="alternatives">
+<li data-player-id="p2">B Receiver</li>
+</ul>
+<p class="coin-flip" data-coin-flip="false">coin_flip: no</p>
+<ul class="flags">
+<li class="flag">VOLS_DISSENT</li>
+<li class="flag">BYE_STACK</li>
+</ul>
+</section>
+<section class="weekly">
+<h2>Starter points by week</h2>
+<ol>
+<li data-week="1">W1: 81.0</li>
+<li data-week="2">W2: 82.0</li>
+<li data-week="3">W3: 83.0</li>
+<li data-week="4">W4: 84.0</li>
+<li data-week="5">W5: 85.0</li>
+<li data-week="6">W6: 86.0</li>
+<li data-week="7">W7: 87.0</li>
+<li data-week="8">W8: 88.0</li>
+<li data-week="9" class="has-empty">W9: 0.0 · empty: <span class="empty-slot">RB</span><span class="empty-slot">FLEX</span></li>
+<li data-week="10">W10: 90.0</li>
+<li data-week="11">W11: 91.0</li>
+<li data-week="12">W12: 92.0</li>
+<li data-week="13">W13: 93.0</li>
+<li data-week="14">W14: 94.0</li>
+<li data-week="15">W15: 95.0</li>
+<li data-week="16">W16: 96.0</li>
+<li data-week="17">W17: 97.0</li>
+<li data-week="18">W18: 98.0</li>
+</ol>
+</section>
+<section class="board">
+<h2>Board</h2>
+<table>
+<thead>
+<tr><th>name</th><th>pos</th><th class="vols">vols</th><th class="delta">delta_starter_points</th><th>points</th><th>adp</th><th>gp</th></tr>
+</thead>
+<tbody>
+<tr data-player-id="p1" data-gp="16.0"><td>A Back</td><td>RB</td><td class="vols">40.0</td><td class="delta">12.0</td><td>280.0</td><td>1.5</td><td class="gp">16.0</td></tr>
+<tr data-player-id="p2"><td>B Receiver</td><td>WR</td><td class="vols">30.0</td><td class="delta">8.0</td><td>240.0</td><td>12.0</td><td class="gp"></td></tr>
+<tr data-player-id="p3"><td>C Tight</td><td>TE</td><td class="vols">10.0</td><td class="delta">3.0</td><td>140.0</td><td>40.0</td><td class="gp"></td></tr>
+</tbody>
+</table>
+</section>
+</body>
+</html>
