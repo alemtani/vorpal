@@ -17,6 +17,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -31,8 +32,11 @@ BROWSER_UA = (
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
 POSITIONS = ("QB", "RB", "WR", "TE", "K", "DEF")
+FP_PPR_POSITIONS = ("QB", "RB", "WR", "TE", "K", "DST")
+FP_IMAGE_KEYS = ("player_image_url", "player_square_image_url")
 ADP_PREFIX = "adp"
 PTS_PREFIX = "pts_"
+FP_MIN_INTERVAL_S = 1.1
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = REPO_ROOT / "tests" / "fixtures"
@@ -232,6 +236,15 @@ def subset_projections(
     return out
 
 
+def redact_fantasypros(payload: dict[str, Any]) -> dict[str, Any]:
+    out = json.loads(json.dumps(payload))
+    for row in out.get("players") or []:
+        if isinstance(row, dict):
+            for key in FP_IMAGE_KEYS:
+                row.pop(key, None)
+    return out
+
+
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -396,49 +409,86 @@ def record(args: argparse.Namespace) -> list[str]:
             subset_projections(projections, keep_ids=keep_ids, per_position=6),
         )
 
-        fp_key = args.fp_key or os.environ.get("FANTASYPROS_API_KEY")
-        fp_ok = False
-        if fp_key:
-            try:
-                fp_headers = {**headers, "x-api-key": fp_key}
-                for scoring, position, filename in (
-                    ("PPR", "ALL", "consensus_rankings_ppr.json"),
-                    ("PPR", "OP", "consensus_rankings_op.json"),
-                ):
-                    url = (
-                        f"{FANTASYPROS}/nfl/{args.season}/consensus-rankings"
-                        f"?position={position}&scoring={scoring}"
-                    )
-                    response = client.get(url, headers=fp_headers, timeout=60.0)
-                    response.raise_for_status()
-                    write_json(fixtures / "fantasypros" / filename, response.json())
-                fp_ok = True
-            except httpx.HTTPError as exc:
-                notes.append(
-                    f"FantasyPros live fetch failed ({exc}). Wrote unverified fixtures."
+        fp_notes = record_fantasypros(
+            client,
+            fixtures=fixtures,
+            season=args.season,
+            fp_key=args.fp_key or os.environ.get("FANTASYPROS_API_KEY"),
+            headers=headers,
+            player_subset=player_subset,
+        )
+        notes.extend(fp_notes)
+    return notes
+
+
+def record_fantasypros(
+    client: httpx.Client,
+    *,
+    fixtures: Path,
+    season: str,
+    fp_key: str | None,
+    headers: dict[str, str],
+    player_subset: dict[str, Any] | None,
+) -> list[str]:
+    notes: list[str] = []
+    jobs = [
+        ("PPR", pos, f"consensus_rankings_ppr_{pos.lower()}.json")
+        for pos in FP_PPR_POSITIONS
+    ]
+    jobs.append(("PPR", "OP", "consensus_rankings_op.json"))
+    fp_ok = False
+    if fp_key:
+        try:
+            fp_headers = {**headers, "x-api-key": fp_key}
+            for i, (scoring, position, filename) in enumerate(jobs):
+                if i:
+                    time.sleep(FP_MIN_INTERVAL_S)
+                url = (
+                    f"{FANTASYPROS}/nfl/{season}/consensus-rankings"
+                    f"?position={position}&scoring={scoring}"
                 )
-        if not fp_ok:
-            if not fp_key:
-                notes.append(
-                    "FantasyPros returned no live payload (no FANTASYPROS_API_KEY). "
-                    "Wrote unverified fixtures from the documented v2 shape."
+                print(f"fetching {url}", file=sys.stderr)
+                response = client.get(url, headers=fp_headers, timeout=60.0)
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    raise SystemExit(f"FantasyPros {position} was not an object")
+                write_json(
+                    fixtures / "fantasypros" / filename,
+                    redact_fantasypros(payload),
                 )
-            write_json(
-                fixtures / "fantasypros" / "consensus_rankings_ppr.json",
-                _unverified_ecr(player_subset, scoring="PPR", position="ALL"),
+            unverified = fixtures / "fantasypros" / "UNVERIFIED"
+            if unverified.exists():
+                unverified.unlink()
+            stale = fixtures / "fantasypros" / "consensus_rankings_ppr.json"
+            if stale.exists():
+                stale.unlink()
+            fp_ok = True
+        except httpx.HTTPError as exc:
+            notes.append(
+                f"FantasyPros live fetch failed ({exc}). Wrote unverified fixtures."
             )
-            write_json(
-                fixtures / "fantasypros" / "consensus_rankings_op.json",
-                _unverified_ecr(player_subset, scoring="PPR", position="OP"),
+    if not fp_ok:
+        if not fp_key:
+            notes.append(
+                "FantasyPros returned no live payload (no FANTASYPROS_API_KEY). "
+                "Wrote unverified fixtures from the documented v2 shape."
             )
-            (fixtures / "fantasypros" / "UNVERIFIED").write_text(
-                "Hand-written from the documented FantasyPros v2 "
-                "consensus-rankings shape.\n"
-                "Live fetch was not possible in the seed session. "
-                "Join keys are yahoo ids copied from the recorded "
-                "Sleeper player subset. Do not treat ranks as live ECR.\n",
-                encoding="utf-8",
-            )
+        subset = player_subset or {}
+        write_json(
+            fixtures / "fantasypros" / "consensus_rankings_ppr_qb.json",
+            _unverified_ecr(subset, scoring="PPR", position="QB"),
+        )
+        write_json(
+            fixtures / "fantasypros" / "consensus_rankings_op.json",
+            _unverified_ecr(subset, scoring="PPR", position="OP"),
+        )
+        (fixtures / "fantasypros" / "UNVERIFIED").write_text(
+            "Hand-written from the documented FantasyPros v2 "
+            "consensus-rankings shape.\n"
+            "Live fetch was not possible. Do not treat ranks as live ECR.\n",
+            encoding="utf-8",
+        )
     return notes
 
 
@@ -470,7 +520,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--season", default="2026")
     parser.add_argument("--fp-key", default=os.environ.get("FANTASYPROS_API_KEY"))
     parser.add_argument("--out", default=str(FIXTURES))
+    parser.add_argument(
+        "--fp-only",
+        action="store_true",
+        help="Record only FantasyPros fixtures. Skips Sleeper and projections.",
+    )
     args = parser.parse_args(argv)
+    if args.fp_only:
+        return args
     args.snake_draft = _env_or_arg(
         args.snake_draft, "VORPAL_SNAKE_DRAFT", "--snake-draft"
     )
@@ -493,7 +550,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    notes = record(args)
+    if args.fp_only:
+        fixtures = Path(args.out).resolve()
+        headers = {"User-Agent": BROWSER_UA}
+        with httpx.Client(headers=headers, follow_redirects=True) as client:
+            notes = record_fantasypros(
+                client,
+                fixtures=fixtures,
+                season=args.season,
+                fp_key=args.fp_key or os.environ.get("FANTASYPROS_API_KEY"),
+                headers=headers,
+                player_subset=None,
+            )
+    else:
+        notes = record(args)
     for note in notes:
         print(note, file=sys.stderr)
     return 0

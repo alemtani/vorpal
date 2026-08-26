@@ -3,6 +3,7 @@
 from record_fixtures import (
     OPERATOR_USER_ID,
     redact_draft,
+    redact_fantasypros,
     redact_league,
     redact_picks,
     redact_user,
@@ -238,3 +239,28 @@ def test_subset_projections_keeps_counting_and_market_only_rows() -> None:
     assert "2" in ids
     assert "3" in ids
     assert all(row["week"] is None for row in out)
+
+
+def test_redact_fantasypros_drops_image_urls() -> None:
+    out = redact_fantasypros(
+        {
+            "position_id": "QB",
+            "public_api_limited": True,
+            "players": [
+                {
+                    "player_name": "Josh Allen",
+                    "player_yahoo_id": "30977",
+                    "player_bye_week": "7",
+                    "rank_ecr": 1,
+                    "rank_std": "0.17",
+                    "player_image_url": "https://images.example/a.jpg",
+                    "player_square_image_url": "https://images.example/b.jpg",
+                }
+            ],
+        }
+    )
+    row = out["players"][0]
+    assert "player_image_url" not in row
+    assert "player_square_image_url" not in row
+    assert row["player_yahoo_id"] == "30977"
+    assert row["player_bye_week"] == "7"

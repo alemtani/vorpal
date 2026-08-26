@@ -14,4 +14,5 @@ not stored here. Player ids are Sleeper ids (NFL players, not managers).
 | `sleeper/user_operator.json` | Synthetic operator only. |
 | `sleeper/players.json` | Subset of `GET /players/nfl`. No `bye` field on the wire. |
 | `projections/season_regular.json` | Season totals (`week` null), `company=rotowire`. Still contains `pts_*`. |
-| `fantasypros/consensus_rankings_*.json` | Documented v2 shape. See `fantasypros/UNVERIFIED`. |
+| `fantasypros/consensus_rankings_ppr_{qb,rb,wr,te,k,dst}.json` | Live PPR positional lists. Free tier: 10 rows each (`public_api_limited`). |
+| `fantasypros/consensus_rankings_op.json` | Live superflex (`position=OP`). Same 10-row cap. |

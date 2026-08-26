@@ -98,6 +98,31 @@ def test_players_include_yahoo_id_and_no_bye_field() -> None:
     assert all(not any("bye" in key.lower() for key in row) for row in players.values())
 
 
+def test_fantasypros_live_rows_have_yahoo_std_and_bye() -> None:
+    fp = FIXTURES / "fantasypros"
+    assert not (fp / "UNVERIFIED").exists()
+    qb = _load(fp / "consensus_rankings_ppr_qb.json")
+    op = _load(fp / "consensus_rankings_op.json")
+    assert isinstance(qb, dict)
+    assert isinstance(op, dict)
+    assert qb["position_id"] == "QB"
+    assert op["position_id"] == "OP"
+    assert qb["public_api_limited"] is True
+    assert qb["limit"] == 10
+    players = qb["players"]
+    assert isinstance(players, list)
+    assert players
+    row = players[0]
+    assert "rank_ecr" in row
+    assert "rank_std" in row
+    assert "rank_min" in row
+    assert "rank_max" in row
+    assert row.get("player_yahoo_id") not in (None, "")
+    assert row.get("player_bye_week") not in (None, "")
+    assert "player_image_url" not in row
+    assert "player_square_image_url" not in row
+
+
 def test_fixtures_do_not_identify_a_league_or_manager() -> None:
     for path in FIXTURES.rglob("*.json"):
         text = path.read_text(encoding="utf-8")
