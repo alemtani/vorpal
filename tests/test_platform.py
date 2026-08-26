@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from vorpal.contracts import Draft, LeagueFormat, Player, Slot
+from vorpal.contracts import Draft, Host, LeagueFormat, Player, Slot
 from vorpal.errors import PlatformError
 from vorpal.platform import LeagueHost, SleeperHost
 
@@ -38,7 +38,7 @@ def test_sleeper_host_is_a_league_host() -> None:
 def test_parse_snake_redraft_draft_from_fixture() -> None:
     host = SleeperHost()
     draft = _parse_draft(host, _load("draft_snake_redraft.json"))
-    assert draft.host == "sleeper"
+    assert draft.host is Host.SLEEPER
     assert draft.draft_id == "draft_snake_redraft"
     assert draft.league_id == "league_snake_redraft"
     assert draft.type == "snake"
@@ -79,7 +79,7 @@ def test_parse_mid_draft_absent_bench_and_zero_k() -> None:
 
 def test_parse_league_maps_sleeper_type_zero_to_redraft() -> None:
     league = SleeperHost().parse_league(_load("league_snake_redraft.json"))
-    assert league.host == "sleeper"
+    assert league.host is Host.SLEEPER
     assert league.format is LeagueFormat.REDRAFT
     assert league.max_keepers == 1
     assert league.taxi_slots == 0
@@ -112,13 +112,13 @@ def test_parse_user_and_players_from_fixtures() -> None:
     players = host.parse_players(_load("players.json"))
     kupp = players["4039"]
     assert isinstance(kupp, Player)
-    assert kupp.yahoo_id == "30182"
-    assert kupp.espn_id == "2977187"
+    assert kupp.host is Host.SLEEPER
+    assert kupp.player_id == "4039"
     assert kupp.position == "WR"
     assert kupp.bye is None
     assert "ARI" in players
     assert players["ARI"].position == "DEF"
-    assert players["ARI"].yahoo_id is None
+    assert players["ARI"].host is Host.SLEEPER
 
 
 def test_parse_rejects_wrong_shape() -> None:
@@ -204,13 +204,10 @@ def test_parse_league_format_and_odd_player_rows() -> None:
                 "player_id": "x",
                 "first_name": "A",
                 "last_name": "B",
-                "yahoo_id": "",
-                "espn_id": "",
                 "fantasy_positions": "QB",
             }
         }
     )
     assert players["x"].name == "A B"
-    assert players["x"].yahoo_id is None
-    assert players["x"].espn_id is None
+    assert players["x"].host is Host.SLEEPER
     assert players["x"].fantasy_positions == ()

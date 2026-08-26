@@ -50,12 +50,6 @@ def _optional_str(value: Any) -> str | None:
     return str(value)
 
 
-def _optional_id(value: Any) -> str | None:
-    if value is None or value == "":
-        return None
-    return str(value)
-
-
 def _as_int(value: Any, what: str, default: int | None = None) -> int:
     if value is None:
         if default is None:
@@ -120,7 +114,7 @@ class SleeperHost(LeagueHost):
         }
         league_id = raw.get("league_id")
         return Draft(
-            host=self.name,
+            host=Host.SLEEPER,
             draft_id=str(raw.get("draft_id") or ""),
             type=str(raw.get("type") or ""),
             status=str(raw.get("status") or ""),
@@ -178,7 +172,7 @@ class SleeperHost(LeagueHost):
             raise PlatformError("Sleeper scoring_settings is not an object")
         scoring = {str(key): float(value) for key, value in scoring_raw.items()}
         return League(
-            host=self.name,
+            host=Host.SLEEPER,
             league_id=str(raw.get("league_id") or ""),
             draft_id=str(raw.get("draft_id") or ""),
             season=str(raw.get("season") or ""),
@@ -256,13 +250,13 @@ class SleeperHost(LeagueHost):
             fantasy = []
         return Player(
             player_id=str(row.get("player_id") or ""),
+            host=Host.SLEEPER,
             first_name=first,
             last_name=last,
             name=name,
             position=str(row.get("position") or ""),
             team=_optional_str(row.get("team")),
             fantasy_positions=tuple(str(item) for item in fantasy),
-            yahoo_id=_optional_id(row.get("yahoo_id")),
             active=row.get("active") if isinstance(row.get("active"), bool) else None,
             status=_optional_str(row.get("status")),
             injury_status=_optional_str(row.get("injury_status")),
@@ -270,6 +264,4 @@ class SleeperHost(LeagueHost):
             number=_as_int_or_none(row.get("number")),
             search_rank=_as_int_or_none(row.get("search_rank")),
             bye=None,
-            espn_id=_optional_id(row.get("espn_id")),
-            host=self.name,
         )

@@ -119,14 +119,16 @@ class User:
 
 @dataclass(frozen=True, slots=True)
 class Player:
+    """Host-native id plus which league host it belongs to."""
+
     player_id: str
+    host: Host
     first_name: str
     last_name: str
     name: str
     position: str
     team: str | None
     fantasy_positions: tuple[str, ...]
-    yahoo_id: str | None
     active: bool | None
     status: str | None
     injury_status: str | None
@@ -134,8 +136,6 @@ class Player:
     number: int | None
     search_rank: int | None
     bye: int | None
-    espn_id: str | None = None
-    host: str = Host.SLEEPER.value
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,7 +214,7 @@ class SlotCounts:
 class Draft:
     """Host-agnostic draft. A LeagueHost adapter fills this from wire JSON."""
 
-    host: str
+    host: Host
     draft_id: str
     type: str
     status: str
@@ -237,7 +237,7 @@ class Draft:
 class League:
     """Host-agnostic league. Scoring and roster slots are already tables."""
 
-    host: str
+    host: Host
     league_id: str
     draft_id: str
     season: str

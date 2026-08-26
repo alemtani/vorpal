@@ -243,13 +243,13 @@ def test_adp_keys_match_recorded_projection_variants() -> None:
 def test_types_are_frozen_and_slotted() -> None:
     player = Player(
         player_id="4866",
+        host=Host.SLEEPER,
         first_name="Saquon",
         last_name="Barkley",
         name="Saquon Barkley",
         position="RB",
         team="PHI",
         fantasy_positions=("RB",),
-        yahoo_id="30123",
         active=True,
         status="Active",
         injury_status=None,
@@ -282,7 +282,9 @@ def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
         "max_keepers",
         "taxi_slots",
     } <= _fields(League)
-    assert {"espn_id", "yahoo_id"} <= _fields(Player)
+    assert {"player_id", "host"} <= _fields(Player)
+    assert "yahoo_id" not in _fields(Player)
+    assert "espn_id" not in _fields(Player)
     assert set(Host) == {Host.SLEEPER, Host.ESPN}
     assert set(LeagueFormat) == {
         LeagueFormat.REDRAFT,
@@ -302,7 +304,7 @@ def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
     } <= _fields(Pick)
     assert {
         "player_id",
-        "yahoo_id",
+        "host",
         "position",
         "team",
         "search_rank",
@@ -438,7 +440,7 @@ def test_banner_serialises_code_and_message() -> None:
 
 def test_draft_and_league_and_user_construct_from_recorded_names() -> None:
     draft = Draft(
-        host=Host.SLEEPER.value,
+        host=Host.SLEEPER,
         draft_id="draft_snake_redraft",
         type="snake",
         status="complete",
@@ -457,7 +459,7 @@ def test_draft_and_league_and_user_construct_from_recorded_names() -> None:
         slot_to_roster_id={1: 2},
     )
     league = League(
-        host=Host.SLEEPER.value,
+        host=Host.SLEEPER,
         league_id="league_snake_redraft",
         draft_id="draft_snake_redraft",
         season="2025",
