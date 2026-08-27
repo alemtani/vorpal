@@ -36,8 +36,8 @@ v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 | In v1 | Out |
 |---|---|
 | Documented Sleeper reads | Any write / browser automation |
-| Counting stats → this league's points → VOLS | Ingesting `pts_*` / fantasy-point columns |
-| [FantasyPros ECR](https://www.fantasypros.com/api-data/) + `rank_std` as inputs **and** a sanity eval | ECR as the pick |
+| Counting stats → this league's points → VOLS | Ingesting fantasy-point columns (`points`, `pts_*`) |
+| [FantasyPros](https://www.fantasypros.com/api-data/) stats, ADP, ECR + `rank_std` as inputs **and** a sanity eval | ECR as the pick |
 | Weekly starter points (bye = 0) | True weekly projections (v2) |
 | Model recommendation | Argmax(VOLS) as the pick |
 | Binary evals only | Soft scores, “lean”, calibrated probabilities |
@@ -114,20 +114,20 @@ flowchart LR
 
 | Feature | Source | Notes |
 |---|---|---|
-| League / draft / picks / players / user | Documented [`api.sleeper.app`](https://docs.sleeper.com/) | Stay under 1000 calls/min |
-| Counting stats + ADP | Undocumented `GET https://api.sleeper.com/projections/nfl/{season}?season_type=regular&position[]=` | Same risk class as an internal API, **accepted**. Keyed by Sleeper `player_id`. Fetch **once per process**. Never poll. |
-| ECR + spread | [FantasyPros consensus-rankings](https://api.fantasypros.com/public/v2/docs) | Required input. Join on `yahoo_id`. Superflex: `position=OP`. |
-| Override | CSV keyed by `player_id` | Replaces stats + ADP if the projections host is down. No name match. |
+| League / draft / picks / players / user | Host. v1: documented [`api.sleeper.app`](https://docs.sleeper.com/) | Stay under 1000 calls/min. `/players` is the join directory (host id, `yahoo_id`, name, pos, team). |
+| Counting stats + ADP + bye | [FantasyPros](https://api.fantasypros.com/public/v2/docs) projections and ADP | Host-neutral forecast. Fetch **once per process**. Never poll. Join to host `player_id`. |
+| ECR + spread | FantasyPros consensus-rankings | Required input. One overall list: `position=ALL` (1QB) or `OP` (superflex). Join on `yahoo_id`, then name. `rank_ecr` is overall draft order, not positional. |
+| Override | CSV keyed by host `player_id` | Replaces stats + ADP if FantasyPros projections are down. No name match. |
 
 Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
-**Stats contract (Sleeper projections):** one `company` (currently `rotowire`) or data-refuse. Season totals (`week` null). Counting keys only — never ingest `pts_ppr` / `pts_std` / `pts_half_ppr`. Rows with ADP and no stats are market-only: exclude from VOLS, keep on the board. No `adp_2qb_ppr`.
+**Stats contract (FantasyPros):** season totals (`week=0`). Counting keys only — never ingest `points` / `points_ppr` / `points_half` / `pts_ppr` / `pts_std` / `pts_half_ppr`. Map FP stat names onto this **host's** scoring keys (`pass_yds` → Sleeper `pass_yd`). ESPN has no rows yet. Do not invent kicker distance buckets or `pts_allow_*` from coarse FP fields (`fg`, `pa`). Unmatched nonzero scoring keys banner; they must not silent-zero. Rows with ADP and no stats are market-only: exclude from VOLS, keep on the board.
 
-**ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `adp_2qb`; else `rec ≥ 0.75` → `adp_ppr`; `0.25–0.75` → `adp_half_ppr`; else `adp_std`. Banner when `rec` is not exactly `1/0.5/0`.
+**ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `2qb`; else `rec ≥ 0.75` → `ppr`; `0.25–0.75` → `half_ppr`; else `std`. Banner when `rec` is not exactly `1/0.5/0`. Ingest maps that onto FantasyPros ADP (`2qb` → `position=OP`; else `ALL` with STD/PPR/HALF). If OP ADP is empty, use 1QB ADP and banner `adp_1qb_market`. There is no `adp_2qb_ppr`.
 
-**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). Scoring param STD/PPR/HALF follows the same `rec` rule. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
+**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). One overall consensus list: `ALL` in 1QB, `OP` in superflex. Scoring param STD/PPR/HALF follows the same `rec` rule. Do not stitch positional lists — those ranks all start at 1 and are not `ecr_best`. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
 
-**Weekly / byes / absence.** Sleeper `/players` carries `bye`. v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
+**Weekly / byes / absence.** Host `/players` has no bye. Take bye from FantasyPros (`player_bye_week`). v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 
 **Marginal value.** Recompute that vector with a candidate added and ship the
 difference as `delta_starter_points` on each board row. `vols` is global — the
@@ -324,11 +324,11 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 - The model is the policy. Golden set is small and human. That is the main eval limit. Baselines and the regret set bound it; neither replaces it.
 - Weekly strength in v1 is season rate with bye and known-out weeks at 0, not a real week-17 forecast.
 - Every gate is a floor or a consistency check. None of them scores *riskiness*, so nothing catches a recommendation that should have chased variance and did not. This matters once the objective shifts from `max E[points]` toward `max P(beat opponent)` — a v2/v3 concern, unaddressed here.
-- Default stats host is unofficial and can vanish. Override only helps if it already exists. Draft night is the worst time to learn this.
+- FantasyPros can be down. Override only helps if it already exists. Draft night is the worst time to learn this.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
 - ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`. The `ecr_min` escape exists so the gate catches incoherence rather than contrarianism: a returning starter the consensus discounts but one expert ranks highly is a fact on the board, not a taste. It widens the floor — a player no expert likes still fails.
 - Superflex is where two-pass VOLS is most likely to move. The rank-2 invariant is an eval, not a solver.
-- Disclose to the league that you use a tool. Also disclose Rotowire-via-unofficial-Sleeper and FantasyPros ECR — “I used a public cheat sheet” does not cover it.
+- Disclose to the league that you use a tool. Also disclose FantasyPros projections and ECR — “I used a public cheat sheet” does not cover it.
 - Regret fixtures are other people's completed drafts. Survival in them is fact, not forecast — but their board is their ADP era, not yours. Same no-commit rule as league data.
 - Do not commit league data (other managers, transactions) to a shared repo.
 - A market model on *this league's* history is a different disclosure if it is ever built.
