@@ -6,11 +6,12 @@ from helpers import (
     COLUMNS,
     OPERATOR,
     SCORING,
+    load_league,
     make_draft,
     make_league,
 )
 
-from vorpal.contracts import Slot
+from vorpal.contracts import Host, Slot
 from vorpal.resolve import classify_key, resolve
 
 
@@ -27,6 +28,22 @@ def test_pass_int_is_qb_not_dst() -> None:
     assert classify_key("idp_tkl") == "IDP"
     assert classify_key("bonus_rec_te") == "OFF"
     assert classify_key("not_a_real_key") is None
+
+
+def test_unmapped_sleeper_shaped_key_is_not_classified() -> None:
+    # Prefix guessing would call this QB. The map must not.
+    assert classify_key("pass_invented") is None
+
+
+def test_classification_is_per_host() -> None:
+    assert classify_key("pass_int", Host.SLEEPER) == "QB"
+    assert classify_key("pass_int", Host.ESPN) is None
+
+
+def test_recorded_sleeper_scoring_keys_are_on_the_map() -> None:
+    league = load_league("league_snake_redraft.json")
+    missing = [key for key in league.scoring if classify_key(key, league.host) is None]
+    assert missing == []
 
 
 def test_missing_rec_key_is_standard_not_a_banner() -> None:

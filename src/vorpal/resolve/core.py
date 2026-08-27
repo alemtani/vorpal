@@ -277,5 +277,7 @@ def _banners(
                 ),
             )
         )
-    banners.extend(scoring_key_banners(source.scoring, slots, stat_columns))
+    banners.extend(
+        scoring_key_banners(source.scoring, slots, stat_columns, host=source.host)
+    )
     return tuple(banners)
