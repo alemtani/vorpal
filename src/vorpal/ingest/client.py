@@ -15,8 +15,8 @@ from vorpal.ingest.fp import fp_player_list
 
 DEFAULT_BASE_URL = "https://api.fantasypros.com/public/v2/json"
 PROJECTION_POSITIONS = ("QB", "RB", "WR", "TE", "K", "DST")
-ECR_POSITIONS = ("QB", "RB", "WR", "TE", "K", "DST")
-SUPERFLEX_ECR_POSITIONS = ("OP", "K", "DST")
+ECR_OVERALL = "ALL"
+ECR_SUPERFLEX = "OP"
 
 
 class FantasyProsClient:
@@ -95,10 +95,21 @@ class FantasyProsClient:
     def get_ecr_payloads(
         self, season: str, *, scoring: str, superflex: bool
     ) -> list[Any]:
-        positions = SUPERFLEX_ECR_POSITIONS if superflex else ECR_POSITIONS
+        """One overall list. rank_ecr is draft order, not positional rank.
+
+        1QB uses ``ALL``. Superflex uses ``OP``. Do not stitch QB/RB/WR
+        lists: those ranks all start at 1 and break ecr_best.
+        """
+        position = ECR_SUPERFLEX if superflex else ECR_OVERALL
+        # ALL without type is HTTP 400. type=draft is the overall cheat sheet.
+        ranking_type = "draft" if position == ECR_OVERALL else None
         return [
-            self.get_consensus_rankings(season, position=pos, scoring=scoring)
-            for pos in positions
+            self.get_consensus_rankings(
+                season,
+                position=position,
+                scoring=scoring,
+                ranking_type=ranking_type,
+            )
         ]
 
     def get_adp(self, season: str, *, scoring: str, position: str) -> Any:

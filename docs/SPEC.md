@@ -116,7 +116,7 @@ flowchart LR
 |---|---|---|
 | League / draft / picks / players / user | Host. v1: documented [`api.sleeper.app`](https://docs.sleeper.com/) | Stay under 1000 calls/min. `/players` is the join directory (host id, `yahoo_id`, name, pos, team). |
 | Counting stats + ADP + bye | [FantasyPros](https://api.fantasypros.com/public/v2/docs) projections and ADP | Host-neutral forecast. Fetch **once per process**. Never poll. Join to host `player_id`. |
-| ECR + spread | FantasyPros consensus-rankings | Required input. Join on `yahoo_id`, then name. Superflex: `position=OP`. |
+| ECR + spread | FantasyPros consensus-rankings | Required input. One overall list: `position=ALL` (1QB) or `OP` (superflex). Join on `yahoo_id`, then name. `rank_ecr` is overall draft order, not positional. |
 | Override | CSV keyed by host `player_id` | Replaces stats + ADP if FantasyPros projections are down. No name match. |
 
 Do not filter `/players` by `active=true`. `search_rank` is not ADP.
@@ -125,7 +125,7 @@ Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
 **ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `2qb`; else `rec ≥ 0.75` → `ppr`; `0.25–0.75` → `half_ppr`; else `std`. Banner when `rec` is not exactly `1/0.5/0`. Ingest maps that onto FantasyPros ADP (`2qb` → `position=OP`; else `ALL` with STD/PPR/HALF). If OP ADP is empty, use 1QB ADP and banner `adp_1qb_market`. There is no `adp_2qb_ppr`.
 
-**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). Scoring param STD/PPR/HALF follows the same `rec` rule. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
+**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). One overall consensus list: `ALL` in 1QB, `OP` in superflex. Scoring param STD/PPR/HALF follows the same `rec` rule. Do not stitch positional lists — those ranks all start at 1 and are not `ecr_best`. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
 
 **Weekly / byes / absence.** Host `/players` has no bye. Take bye from FantasyPros (`player_bye_week`). v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 

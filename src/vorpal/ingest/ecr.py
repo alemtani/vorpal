@@ -32,7 +32,11 @@ def parse_ecr(
     payloads: Sequence[Any],
     host_players: Mapping[str, Any],
 ) -> tuple[tuple[EcrRow, ...], tuple[Banner, ...]]:
-    """Join FP ranks onto host ids. First list wins when the same host id repeats."""
+    """Join FP overall ranks onto host ids.
+
+    ``rank_ecr`` is overall draft order from the ALL or OP list. First
+    payload wins when the same host id repeats.
+    """
     index = HostPlayerIndex(host_players)
     rows: dict[str, EcrRow] = {}
     join_misses = 0

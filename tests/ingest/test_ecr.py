@@ -211,9 +211,11 @@ def test_fetch_ecr_uses_scoring_and_positions(
         host_players=host_players,
         client=_client(),
     )
-    positions = {call.request.url.params.get("position") for call in route.calls}
-    assert positions == {"QB", "RB", "WR", "TE", "K", "DST"}
-    assert "OP" not in positions
+    positions = [call.request.url.params.get("position") for call in route.calls]
+    types = [call.request.url.params.get("type") for call in route.calls]
+    assert positions == ["ALL"]
+    assert types == ["draft"]
+    assert "QB" not in positions
 
 
 @respx.mock
@@ -230,9 +232,10 @@ def test_superflex_fetches_op_not_skill_positions(
         host_players=host_players,
         client=_client(),
     )
-    positions = {call.request.url.params.get("position") for call in route.calls}
-    assert positions == {"OP", "K", "DST"}
-    assert "QB" not in positions
+    positions = [call.request.url.params.get("position") for call in route.calls]
+    assert positions == ["OP"]
+    assert "K" not in positions
+    assert "DST" not in positions
 
 
 @respx.mock
@@ -257,7 +260,7 @@ def test_fetch_ecr_is_cached(
         host_players=host_players,
         client=client,
     )
-    assert route.call_count == 6
+    assert route.call_count == 1
 
 
 @respx.mock
@@ -281,18 +284,18 @@ def test_fetch_ecr_spaces_calls_when_asked(
             clock=lambda: 0.0,
         ),
     )
-    assert slept == [1.1, 1.1]
+    assert slept == []
 
 
 @respx.mock
 def test_fetch_then_parse_live_fixture_shape(
     host_players: dict[str, Any],
 ) -> None:
-    qb = _fp("consensus_rankings_ppr_qb.json")
+    overall = _fp("consensus_rankings_ppr_qb.json")
 
     def _reply(request: httpx.Request) -> httpx.Response:
-        if request.url.params.get("position") == "QB":
-            return httpx.Response(200, json=qb)
+        if request.url.params.get("position") == "ALL":
+            return httpx.Response(200, json=overall)
         return httpx.Response(200, json={"players": []})
 
     respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(side_effect=_reply)

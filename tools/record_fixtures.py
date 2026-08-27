@@ -478,22 +478,27 @@ def record_fantasypros(
     player_subset: dict[str, Any] | None,
 ) -> list[str]:
     notes: list[str] = []
-    jobs = [
-        ("PPR", pos, f"consensus_rankings_ppr_{pos.lower()}.json")
-        for pos in FP_PPR_POSITIONS
+    jobs: list[tuple[str, str, str, str | None]] = [
+        ("PPR", "ALL", "consensus_rankings_ppr.json", "draft"),
     ]
-    jobs.append(("PPR", "OP", "consensus_rankings_op.json"))
+    jobs.extend(
+        ("PPR", pos, f"consensus_rankings_ppr_{pos.lower()}.json", None)
+        for pos in FP_PPR_POSITIONS
+    )
+    jobs.append(("PPR", "OP", "consensus_rankings_op.json", None))
     fp_ok = False
     if fp_key:
         try:
             fp_headers = {**headers, "x-api-key": fp_key}
-            for i, (scoring, position, filename) in enumerate(jobs):
+            for i, (scoring, position, filename, ranking_type) in enumerate(jobs):
                 if i:
                     time.sleep(FP_MIN_INTERVAL_S)
                 url = (
                     f"{FANTASYPROS}/nfl/{season}/consensus-rankings"
                     f"?position={position}&scoring={scoring}"
                 )
+                if ranking_type:
+                    url += f"&type={ranking_type}"
                 print(f"fetching {url}", file=sys.stderr)
                 response = client.get(url, headers=fp_headers, timeout=60.0)
                 response.raise_for_status()
@@ -507,9 +512,6 @@ def record_fantasypros(
             unverified = fixtures / "fantasypros" / "UNVERIFIED"
             if unverified.exists():
                 unverified.unlink()
-            stale = fixtures / "fantasypros" / "consensus_rankings_ppr.json"
-            if stale.exists():
-                stale.unlink()
             merged_players: list[Any] = []
             proj_envelope: dict[str, Any] = {}
             for pos in FP_PPR_POSITIONS:

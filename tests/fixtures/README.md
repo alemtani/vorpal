@@ -16,5 +16,6 @@ not stored here. Player ids are Sleeper ids (NFL players, not managers).
 | `projections/season_regular.json` | Legacy Sleeper/Rotowire season totals. Not the v1 stats source. |
 | `fantasypros/projections_week0.json` | FantasyPros season totals (`week=0`). Counting stats plus `points_*` to refuse. |
 | `fantasypros/adp_ppr.json` | FantasyPros ADP (`type=ADP`, PPR, `position=ALL`). |
-| `fantasypros/consensus_rankings_ppr_{qb,rb,wr,te,k,dst}.json` | Live PPR positional lists. Free tier: 10 rows each (`public_api_limited`). |
-| `fantasypros/consensus_rankings_op.json` | Live superflex (`position=OP`). Same 10-row cap. |
+| `fantasypros/consensus_rankings_ppr.json` | Live overall PPR ECR (`position=ALL`). `rank_ecr` is overall draft order. |
+| `fantasypros/consensus_rankings_ppr_{qb,rb,wr,te,k,dst}.json` | Positional lists. Parse-join tests only. Not the runtime ECR source. |
+| `fantasypros/consensus_rankings_op.json` | Live superflex overall (`position=OP`). |
