@@ -1,4 +1,4 @@
-"""Process-level caches. Projections and ECR are fetched once, never polled."""
+"""Process-level caches. Forecast is fetched once, never polled."""
 
 from __future__ import annotations
 
@@ -12,10 +12,12 @@ HEADERS = {
 }
 
 projection_cache: dict[str, Any] = {}
+adp_cache: dict[tuple[str, str, str], Any] = {}
 ecr_cache: dict[tuple[str, str, bool], Any] = {}
 
 
 def clear_caches() -> None:
     """Drop cached payloads. Tests call this between cases."""
     projection_cache.clear()
+    adp_cache.clear()
     ecr_cache.clear()

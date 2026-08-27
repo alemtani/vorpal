@@ -96,6 +96,7 @@ def identities_from_override(rows: tuple[OverrideRow, ...]) -> list[MappingRow]:
             position=row.pos or "",
             team=row.team,
             adp=row.adp,
+            host_id=row.player_id,
         )
         for row in rows
     ]

@@ -33,6 +33,8 @@ def _row(
     position: str = "WR",
     team: str | None = "KC",
     adp: float | None = 1.0,
+    yahoo_id: str | None = None,
+    host_id: str | None = None,
 ) -> MappingRow:
     return MappingRow(
         player_id=player_id,
@@ -40,6 +42,8 @@ def _row(
         position=position,
         team=team,
         adp=adp,
+        yahoo_id=yahoo_id,
+        host_id=host_id,
     )
 
 
@@ -52,19 +56,34 @@ def _board(
     for index in range(n):
         pid = f"id{index}"
         name = f"Player {index}"
-        sources.append(_row(pid, name, adp=float(index + 1)))
+        sources.append(_row(pid, name, adp=float(index + 1), host_id=pid))
         if index >= misses:
             players[pid] = _player(pid, name, "WR", "KC")
     return sources, players
 
 
 def test_player_id_match_wins_even_when_the_name_differs() -> None:
-    sources = [_row("s1", "Wrong Name")]
+    sources = [_row("s1", "Wrong Name", host_id="s1")]
     players = {"s1": _player("s1", "Jane Doe", "WR", "KC"), "bad": "not-a-row"}
     report = map_rows(sources, players)
     assert report.matched == 1
     assert report.hits[0].method == "player_id"
     assert report.hits[0].host_player_id == "s1"
+
+
+def test_yahoo_id_match_when_host_ids_differ() -> None:
+    sources = [_row("fp1", "Jane Doe", yahoo_id="111")]
+    players = {"s1": {**_player("s1", "Jane Doe", "WR", "KC"), "yahoo_id": 111}}
+    report = map_rows(sources, players)
+    assert report.hits[0].method == "yahoo_id"
+    assert report.hits[0].host_player_id == "s1"
+
+
+def test_fp_numeric_id_does_not_collide_with_host_id() -> None:
+    sources = [_row("4984", "Someone Else", "WR", "KC")]
+    players = {"4984": _player("4984", "Josh Allen", "QB", "BUF")}
+    report = map_rows(sources, players)
+    assert report.matched == 0
 
 
 def test_name_pos_team_match_when_ids_differ() -> None:
@@ -145,8 +164,15 @@ def test_mapping_under_98_percent_raises_data_refusal_with_report() -> None:
     assert "id0" in message
 
 
-def test_no_adp_rows_is_data_refusal() -> None:
-    sources = [_row("a", "A", adp=None)]
-    report = map_rows(sources, {}, top_n=300)
+def test_no_adp_rows_falls_back_to_the_full_set() -> None:
+    sources = [_row("a", "A", adp=None, host_id="a")]
+    players = {"a": _player("a", "A", "WR", "KC")}
+    report = map_rows(sources, players, top_n=300)
+    assert report.considered == 1
+    check_mapping(report)
+
+
+def test_empty_sources_is_data_refusal() -> None:
+    report = map_rows([], {}, top_n=300)
     with pytest.raises(DataRefusal, match="ADP"):
         check_mapping(report)

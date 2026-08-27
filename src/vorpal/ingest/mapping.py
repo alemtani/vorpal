@@ -1,4 +1,4 @@
-"""Fail-closed player mapping across sources."""
+"""Fail-closed player mapping across sources. One join path."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from vorpal.errors import DataRefusal
 _SUFFIXES = re.compile(r"\b(?:jr|sr|ii|iii|iv|v)\b", re.IGNORECASE)
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _DST_POS = {"DST", "D/ST", "DEF"}
+_SLEEPER_ID_KEYS = ("sleeper_id", "player_sleeper_id", "sleeper_player_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,6 +22,8 @@ class MappingRow:
     position: str
     team: str | None
     adp: float | None
+    yahoo_id: str | None = None
+    host_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +75,61 @@ class MappingReport:
         return "\n".join(lines)
 
 
+@dataclass(frozen=True, slots=True)
+class JoinHit:
+    host_player_id: str
+    method: str
+    team_mismatch: bool
+
+
+class HostPlayerIndex:
+    """Join directory from a host player map.
+
+    Indexes host id, yahoo_id, name+pos+team, and name+pos. Ambiguous
+    name keys are a miss, not a guess. First yahoo_id wins.
+    """
+
+    def __init__(self, players: Mapping[str, Any]) -> None:
+        self._by_id: set[str] = set()
+        self._yahoo: dict[str, str] = {}
+        self._by_name_pos_team: dict[tuple[str, str, str | None], list[str]] = {}
+        self._by_name_pos: dict[tuple[str, str], list[str]] = {}
+        for pid, row in players.items():
+            if not isinstance(row, dict):
+                continue
+            host_id = str(pid)
+            self._by_id.add(host_id)
+            yahoo_raw = row.get("yahoo_id")
+            if yahoo_raw not in (None, ""):
+                self._yahoo.setdefault(str(yahoo_raw), host_id)
+            name = normalize_name(player_display_name(row))
+            pos = normalize_pos(str(row.get("position") or ""))
+            team = normalize_team(
+                None if row.get("team") in (None, "") else str(row.get("team"))
+            )
+            self._by_name_pos_team.setdefault((name, pos, team), []).append(host_id)
+            self._by_name_pos.setdefault((name, pos), []).append(host_id)
+
+    def join(self, row: MappingRow, *, allow_name_match: bool = True) -> JoinHit | None:
+        """host id, then yahoo_id, then name+pos+team, then name+pos."""
+        if row.host_id and row.host_id in self._by_id:
+            return JoinHit(row.host_id, "player_id", False)
+        if row.yahoo_id and row.yahoo_id in self._yahoo:
+            return JoinHit(self._yahoo[row.yahoo_id], "yahoo_id", False)
+        if not allow_name_match:
+            return None
+        name = normalize_name(row.name)
+        pos = normalize_pos(row.position)
+        team = normalize_team(row.team)
+        team_hits = self._by_name_pos_team.get((name, pos, team), [])
+        if len(team_hits) == 1:
+            return JoinHit(team_hits[0], "name_pos_team", False)
+        pos_hits = self._by_name_pos.get((name, pos), [])
+        if len(pos_hits) == 1:
+            return JoinHit(pos_hits[0], "name_pos", True)
+        return None
+
+
 def normalize_name(name: str) -> str:
     lowered = name.lower()
     stripped = _NON_ALNUM.sub(" ", lowered)
@@ -100,6 +158,21 @@ def player_display_name(row: Mapping[str, Any]) -> str:
     return f"{row.get('first_name') or ''} {row.get('last_name') or ''}".strip()
 
 
+def as_id(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def host_id_from_fp(row: Mapping[str, Any]) -> str | None:
+    """Optional Sleeper/host id on a FantasyPros player object."""
+    for key in _SLEEPER_ID_KEYS:
+        found = as_id(row.get(key))
+        if found:
+            return found
+    return None
+
+
 def map_rows(
     sources: Sequence[MappingRow],
     players: Mapping[str, Any],
@@ -107,12 +180,12 @@ def map_rows(
     allow_name_match: bool = True,
     top_n: int = 300,
 ) -> MappingReport:
-    by_id, by_name_pos_team, by_name_pos = _indexes(players)
+    index = HostPlayerIndex(players)
     hits: list[MappingHit] = []
     misses: list[MappingMiss] = []
     hit_by_source: dict[str, MappingHit] = {}
     for source in sources:
-        hit = _match(source, by_id, by_name_pos_team, by_name_pos, allow_name_match)
+        hit = index.join(source, allow_name_match=allow_name_match)
         if hit is None:
             misses.append(
                 MappingMiss(
@@ -124,11 +197,22 @@ def map_rows(
                 )
             )
             continue
-        hits.append(hit)
-        hit_by_source[source.player_id] = hit
+        mapped = MappingHit(
+            source_player_id=source.player_id,
+            host_player_id=hit.host_player_id,
+            method=hit.method,
+            team_mismatch=hit.team_mismatch,
+            adp=source.adp,
+            name=source.name,
+        )
+        hits.append(mapped)
+        hit_by_source[source.player_id] = mapped
     ranked = [row for row in sources if row.adp is not None]
     ranked.sort(key=lambda row: row.adp if row.adp is not None else 0.0)
     window = ranked[:top_n]
+    if not window:
+        window = list(sources)
+        top_n = len(window)
     matched = sum(1 for row in window if row.player_id in hit_by_source)
     considered = len(window)
     window_ids = {row.player_id for row in window}
@@ -153,72 +237,3 @@ def check_mapping(report: MappingReport, *, min_rate: float = 0.98) -> None:
         raise DataRefusal("No players with ADP to map.")
     if report.matched < min_rate * report.considered:
         raise DataRefusal(report.format())
-
-
-def _indexes(
-    players: Mapping[str, Any],
-) -> tuple[
-    set[str],
-    dict[tuple[str, str, str | None], list[str]],
-    dict[tuple[str, str], list[str]],
-]:
-    by_id: set[str] = set()
-    by_name_pos_team: dict[tuple[str, str, str | None], list[str]] = {}
-    by_name_pos: dict[tuple[str, str], list[str]] = {}
-    for pid, row in players.items():
-        if not isinstance(row, dict):
-            continue
-        host_id = str(pid)
-        by_id.add(host_id)
-        name = normalize_name(player_display_name(row))
-        pos = normalize_pos(str(row.get("position") or ""))
-        team = normalize_team(
-            None if row.get("team") in (None, "") else str(row.get("team"))
-        )
-        by_name_pos_team.setdefault((name, pos, team), []).append(host_id)
-        by_name_pos.setdefault((name, pos), []).append(host_id)
-    return by_id, by_name_pos_team, by_name_pos
-
-
-def _match(
-    source: MappingRow,
-    by_id: set[str],
-    by_name_pos_team: dict[tuple[str, str, str | None], list[str]],
-    by_name_pos: dict[tuple[str, str], list[str]],
-    allow_name_match: bool,
-) -> MappingHit | None:
-    if source.player_id and source.player_id in by_id:
-        return MappingHit(
-            source_player_id=source.player_id,
-            host_player_id=source.player_id,
-            method="player_id",
-            team_mismatch=False,
-            adp=source.adp,
-            name=source.name,
-        )
-    if not allow_name_match:
-        return None
-    name = normalize_name(source.name)
-    pos = normalize_pos(source.position)
-    team = normalize_team(source.team)
-    team_hits = by_name_pos_team.get((name, pos, team), [])
-    if len(team_hits) == 1:
-        return MappingHit(
-            source_player_id=source.player_id,
-            host_player_id=team_hits[0],
-            method="name_pos_team",
-            team_mismatch=False,
-            adp=source.adp,
-            name=source.name,
-        )
-    pos_hits = by_name_pos.get((name, pos), [])
-    if len(pos_hits) == 1:
-        return MappingHit(
-            source_player_id=source.player_id,
-            host_player_id=pos_hits[0],
-            method="name_pos",
-            team_mismatch=True,
-            adp=source.adp,
-            name=source.name,
-        )
-    return None

@@ -18,11 +18,16 @@ def load_fixture(*parts: str) -> Any:
 
 @pytest.fixture
 def projections_payload() -> Any:
-    return load_fixture("projections", "season_regular.json")
+    return load_fixture("fantasypros", "projections_week0.json")
 
 
 @pytest.fixture
-def sleeper_players() -> Any:
+def adp_payload() -> Any:
+    return load_fixture("fantasypros", "adp_ppr.json")
+
+
+@pytest.fixture
+def host_players() -> Any:
     return load_fixture("sleeper", "players.json")
 
 

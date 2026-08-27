@@ -12,6 +12,7 @@ import respx
 
 from vorpal.contracts import Banner
 from vorpal.ingest import fetch_ecr, parse_ecr
+from vorpal.ingest.client import FantasyProsClient
 
 SEASON = "2026"
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
@@ -24,8 +25,17 @@ def _fp(*parts: str) -> dict[str, Any]:
     return payload
 
 
-def test_join_on_yahoo_id(sleeper_players: dict[str, Any]) -> None:
-    rows, banners = parse_ecr([_fp("consensus_rankings_ppr_qb.json")], sleeper_players)
+def _client(*, min_interval_s: float = 0.0, sleep=None) -> FantasyProsClient:
+    return FantasyProsClient(
+        api_key="test-key",
+        http=httpx.Client(),
+        min_interval_s=min_interval_s,
+        sleep=sleep,
+    )
+
+
+def test_join_on_yahoo_id(host_players: dict[str, Any]) -> None:
+    rows, banners = parse_ecr([_fp("consensus_rankings_ppr_qb.json")], host_players)
     by_name = {row.name: row for row in rows}
     assert "Josh Allen" in by_name
     assert by_name["Josh Allen"].player_id == "4984"
@@ -36,7 +46,7 @@ def test_join_on_yahoo_id(sleeper_players: dict[str, Any]) -> None:
 
 
 def test_join_miss_omits_ecr_and_banners_the_count(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     payload = {
         "players": [
@@ -63,7 +73,7 @@ def test_join_miss_omits_ecr_and_banners_the_count(
             },
         ]
     }
-    rows, banners = parse_ecr([payload], sleeper_players)
+    rows, banners = parse_ecr([payload], host_players)
     assert [row.name for row in rows] == ["Josh Allen"]
     miss = next(banner for banner in banners if banner.code == "ecr_join_miss")
     assert "1" in miss.message
@@ -71,20 +81,19 @@ def test_join_miss_omits_ecr_and_banners_the_count(
 
 
 def test_dst_joins_on_name_when_yahoo_id_is_null(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
-    rows, banners = parse_ecr([_fp("consensus_rankings_ppr_dst.json")], sleeper_players)
+    rows, banners = parse_ecr([_fp("consensus_rankings_ppr_dst.json")], host_players)
     by_id = {row.player_id: row for row in rows}
     assert "HOU" in by_id
     assert by_id["HOU"].name == "Houston Texans"
     assert by_id["HOU"].position == "DEF"
     assert by_id["HOU"].bye == 8
-    # FP JAC vs Sleeper JAX is a name+pos hit with a team mismatch flag.
     assert "JAX" in by_id
     assert any(banner.code == "ecr_team_mismatch" for banner in banners)
 
 
-def test_malformed_payload_does_not_raise(sleeper_players: dict[str, Any]) -> None:
+def test_malformed_payload_does_not_raise(host_players: dict[str, Any]) -> None:
     rows, banners = parse_ecr(
         [
             "not-an-object",
@@ -92,13 +101,13 @@ def test_malformed_payload_does_not_raise(sleeper_players: dict[str, Any]) -> No
             {"players": [None, {"player_name": "X"}]},
             {"players": [{"player_name": "NoRank"}]},
         ],
-        {**sleeper_players, "bad": "not-a-row"},
+        {**host_players, "bad": "not-a-row"},
     )
     assert rows == ()
     assert banners == ()
 
 
-def test_rank_and_bye_coercion(sleeper_players: dict[str, Any]) -> None:
+def test_rank_and_bye_coercion(host_players: dict[str, Any]) -> None:
     payload = {
         "players": [
             {
@@ -114,8 +123,7 @@ def test_rank_and_bye_coercion(sleeper_players: dict[str, Any]) -> None:
             }
         ]
     }
-    # yahoo 30977 is Josh Allen in the recorded players subset (player_id 4984).
-    rows, _banners = parse_ecr([payload, payload], sleeper_players)
+    rows, _banners = parse_ecr([payload, payload], host_players)
     assert len(rows) == 1
     assert rows[0].rank_ecr == 1
     assert rows[0].rank_min == 1
@@ -126,7 +134,7 @@ def test_rank_and_bye_coercion(sleeper_players: dict[str, Any]) -> None:
 
 @respx.mock
 def test_fantasypros_down_banners_ecr_missing_and_returns_no_rows(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         return_value=httpx.Response(503, json={"error": "down"})
@@ -135,8 +143,8 @@ def test_fantasypros_down_banners_ecr_missing_and_returns_no_rows(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=_client(),
     )
     assert rows == ()
     assert any(banner.code == "ecr_missing" for banner in banners)
@@ -144,7 +152,7 @@ def test_fantasypros_down_banners_ecr_missing_and_returns_no_rows(
 
 @respx.mock
 def test_fetch_ecr_type_error_is_ecr_missing(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         side_effect=TypeError("broken")
@@ -153,8 +161,8 @@ def test_fetch_ecr_type_error_is_ecr_missing(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=_client(),
     )
     assert rows == ()
     assert any(banner.code == "ecr_missing" for banner in banners)
@@ -162,17 +170,18 @@ def test_fetch_ecr_type_error_is_ecr_missing(
 
 @respx.mock
 def test_missing_api_key_is_ecr_missing_without_a_call(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     route = respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         return_value=httpx.Response(200, json={"players": []})
     )
+    client = FantasyProsClient(api_key=None, http=httpx.Client())
     rows, banners = fetch_ecr(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key=None,
+        host_players=host_players,
+        client=client,
     )
     assert rows == ()
     assert any(banner.code == "ecr_missing" for banner in banners)
@@ -181,7 +190,7 @@ def test_missing_api_key_is_ecr_missing_without_a_call(
 
 @respx.mock
 def test_fetch_ecr_uses_scoring_and_positions(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     def _reply(request: httpx.Request) -> httpx.Response:
         position = request.url.params.get("position")
@@ -199,8 +208,8 @@ def test_fetch_ecr_uses_scoring_and_positions(
         SEASON,
         scoring="HALF",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=_client(),
     )
     positions = {call.request.url.params.get("position") for call in route.calls}
     assert positions == {"QB", "RB", "WR", "TE", "K", "DST"}
@@ -209,7 +218,7 @@ def test_fetch_ecr_uses_scoring_and_positions(
 
 @respx.mock
 def test_superflex_fetches_op_not_skill_positions(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     route = respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         return_value=httpx.Response(200, json={"players": []})
@@ -218,8 +227,8 @@ def test_superflex_fetches_op_not_skill_positions(
         SEASON,
         scoring="PPR",
         superflex=True,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=_client(),
     )
     positions = {call.request.url.params.get("position") for call in route.calls}
     assert positions == {"OP", "K", "DST"}
@@ -228,31 +237,32 @@ def test_superflex_fetches_op_not_skill_positions(
 
 @respx.mock
 def test_fetch_ecr_is_cached(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     route = respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         return_value=httpx.Response(200, json={"players": []})
     )
+    client = _client()
     fetch_ecr(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=client,
     )
     fetch_ecr(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=client,
     )
     assert route.call_count == 6
 
 
 @respx.mock
 def test_fetch_ecr_spaces_calls_when_asked(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     respx.get(url__regex=r"https://api.fantasypros.com/.*").mock(
         return_value=httpx.Response(200, json={"players": []})
@@ -262,17 +272,21 @@ def test_fetch_ecr_spaces_calls_when_asked(
         SEASON,
         scoring="PPR",
         superflex=True,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
-        min_interval_s=1.1,
-        sleep=slept.append,
+        host_players=host_players,
+        client=FantasyProsClient(
+            api_key="test-key",
+            http=httpx.Client(),
+            min_interval_s=1.1,
+            sleep=slept.append,
+            clock=lambda: 0.0,
+        ),
     )
     assert slept == [1.1, 1.1]
 
 
 @respx.mock
 def test_fetch_then_parse_live_fixture_shape(
-    sleeper_players: dict[str, Any],
+    host_players: dict[str, Any],
 ) -> None:
     qb = _fp("consensus_rankings_ppr_qb.json")
 
@@ -286,8 +300,8 @@ def test_fetch_then_parse_live_fixture_shape(
         SEASON,
         scoring="PPR",
         superflex=False,
-        sleeper_players=sleeper_players,
-        fp_api_key="test-key",
+        host_players=host_players,
+        client=_client(),
     )
     assert any(row.name == "Josh Allen" for row in rows)
     assert not any(banner.code == "ecr_missing" for banner in banners)
