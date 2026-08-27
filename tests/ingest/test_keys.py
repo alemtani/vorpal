@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from vorpal.contracts import AdpVariant
+from vorpal.contracts import AdpVariant, Host
 from vorpal.ingest.keys import (
-    canonical_stat_key,
+    FP_TO_HOST,
     counting_stats,
     extract_gp,
     fp_adp_position,
     fp_adp_scoring,
+    host_stat_key,
     is_fantasy_point_key,
 )
 
@@ -95,8 +96,20 @@ def test_fp_def_prefix_maps_onto_host_dst_keys() -> None:
 
 
 def test_qb_int_is_pass_int() -> None:
-    assert canonical_stat_key("int", position="QB") == "pass_int"
+    assert host_stat_key("int", position="QB") == "pass_int"
     assert counting_stats({"int": 10}, position="QB") == {"pass_int": 10.0}
+
+
+def test_espn_map_is_empty_and_does_not_apply_sleeper_names() -> None:
+    assert FP_TO_HOST[Host.ESPN] == {}
+    stats = counting_stats(
+        {"pass_yds": 4200, "rec_rec": 80, "points_ppr": 300},
+        position="QB",
+        host=Host.ESPN,
+    )
+    assert stats == {"pass_yds": 4200.0, "rec_rec": 80.0}
+    assert "pass_yd" not in stats
+    assert host_stat_key("int", position="QB", host=Host.ESPN) == "int"
 
 
 def test_coarse_kicker_fields_are_not_invented_as_distance_buckets() -> None:

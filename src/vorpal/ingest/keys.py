@@ -5,11 +5,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from vorpal.contracts import AdpVariant
+from vorpal.contracts import AdpVariant, Host
 
-# FantasyPros wire name -> host scoring key. Missing means keep the name.
+# FantasyPros wire name -> Sleeper scoring_settings key.
 # None means drop (coarse field we must not invent a bucket from).
-FP_TO_CANONICAL: dict[str, str | None] = {
+# Missing means keep the wire name.
+FP_TO_SLEEPER: dict[str, str | None] = {
     "pass_yds": "pass_yd",
     "pass_tds": "pass_td",
     "pass_td": "pass_td",
@@ -49,6 +50,13 @@ FP_TO_CANONICAL: dict[str, str | None] = {
     "fga": None,
     "pa": None,
     "yds_agn": None,
+}
+
+# Per host, like resolve.SCORING_KEY_GROUP. ESPN stays empty until that
+# adapter maps FantasyPros names onto ESPN scoring keys.
+FP_TO_HOST: dict[Host, dict[str, str | None]] = {
+    Host.SLEEPER: FP_TO_SLEEPER,
+    Host.ESPN: {},
 }
 
 FANTASY_POINT_NAMES = frozenset(
@@ -95,11 +103,17 @@ def as_int(value: Any) -> int | None:
     return int(number)
 
 
-def canonical_stat_key(key: str, *, position: str | None = None) -> str | None:
-    """Map a FantasyPros stat name onto a host scoring key, or drop it.
+def host_stat_key(
+    key: str,
+    *,
+    position: str | None = None,
+    host: Host = Host.SLEEPER,
+) -> str | None:
+    """Map a FantasyPros stat name onto this host's scoring key, or drop it.
 
-    Drops fantasy-point totals, ADP, and gp. Keeps pts_allow_*. ``int`` is
-    pass_int except on DEF. ``td`` is def_td only on DEF. Coarse FG and
+    Drops fantasy-point totals, ADP, and gp. Keeps pts_allow_*. Sleeper
+    ``int`` is pass_int except on DEF; ``td`` is def_td only on DEF.
+    ESPN has no rows yet: FP names pass through. Coarse FG and
     points-allowed fields are dropped so we do not invent buckets.
     """
     name = str(key)
@@ -113,22 +127,27 @@ def canonical_stat_key(key: str, *, position: str | None = None) -> str | None:
     pos = (position or "").strip().upper()
     if pos in {"DST", "D/ST", "DEF"}:
         pos = "DEF"
-    if name == "int":
-        return "int" if pos == "DEF" else "pass_int"
-    if name == "td":
-        return "def_td" if pos == "DEF" else None
-    if name in FP_TO_CANONICAL:
-        return FP_TO_CANONICAL[name]
+    if host is Host.SLEEPER:
+        if name == "int":
+            return "int" if pos == "DEF" else "pass_int"
+        if name == "td":
+            return "def_td" if pos == "DEF" else None
+    table = FP_TO_HOST.get(host, {})
+    if name in table:
+        return table[name]
     return name
 
 
 def counting_stats(
-    stats: Mapping[str, Any], *, position: str | None = None
+    stats: Mapping[str, Any],
+    *,
+    position: str | None = None,
+    host: Host = Host.SLEEPER,
 ) -> dict[str, float]:
     """Drop ADP, gp, and fantasy-point totals. Keep mapped counting keys."""
     out: dict[str, float] = {}
     for key, value in stats.items():
-        mapped = canonical_stat_key(str(key), position=position)
+        mapped = host_stat_key(str(key), position=position, host=host)
         if mapped is None:
             continue
         number = as_float(value)

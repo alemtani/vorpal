@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from vorpal.contracts import Banner, StatRow
+from vorpal.contracts import Banner, Host, StatRow
 from vorpal.errors import DataRefusal, PlatformError
 from vorpal.ingest.cache import adp_cache, projection_cache
 from vorpal.ingest.client import FantasyProsClient
@@ -41,13 +41,15 @@ class ProjectionRecord:
     adp: float | None
 
 
-def parse_projections(payload: Any) -> tuple[ProjectionRecord, ...]:
+def parse_projections(
+    payload: Any, *, host: Host = Host.SLEEPER
+) -> tuple[ProjectionRecord, ...]:
     """Parse FP season totals. Does not join to a host id."""
     if not isinstance(payload, (dict, list)):
         raise DataRefusal("Projections payload is not a list or object.")
     seen: dict[str, ProjectionRecord] = {}
     for item in fp_player_list(payload):
-        record = _parse_player(item)
+        record = _parse_player(item, host=host)
         if record is None:
             continue
         seen[record.fp_id] = record
@@ -56,7 +58,9 @@ def parse_projections(payload: Any) -> tuple[ProjectionRecord, ...]:
     return tuple(seen.values())
 
 
-def _parse_player(item: Mapping[str, Any]) -> ProjectionRecord | None:
+def _parse_player(
+    item: Mapping[str, Any], *, host: Host = Host.SLEEPER
+) -> ProjectionRecord | None:
     fp_id = fp_player_id(item)
     if not fp_id:
         return None
@@ -65,7 +69,7 @@ def _parse_player(item: Mapping[str, Any]) -> ProjectionRecord | None:
         return None
     position = fp_position(item)
     stats_raw = fp_stats_map(item)
-    stats = counting_stats(stats_raw, position=position)
+    stats = counting_stats(stats_raw, position=position, host=host)
     return ProjectionRecord(
         fp_id=fp_id,
         name=fp_name(item),

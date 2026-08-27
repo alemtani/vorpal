@@ -4,10 +4,13 @@ from vorpal.ingest.cache import clear_caches
 from vorpal.ingest.client import FantasyProsClient
 from vorpal.ingest.ecr import fetch_ecr, parse_ecr
 from vorpal.ingest.forecast import load_forecast, load_stat_rows
+from vorpal.ingest.keys import FP_TO_HOST, FP_TO_SLEEPER
 from vorpal.ingest.override import load_override, parse_override
 from vorpal.ingest.projections import fetch_projections, parse_projections
 
 __all__ = [
+    "FP_TO_HOST",
+    "FP_TO_SLEEPER",
     "FantasyProsClient",
     "clear_caches",
     "fetch_ecr",

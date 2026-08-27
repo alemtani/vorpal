@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from vorpal.contracts import AdpVariant, Banner, EcrRow, OverrideRow, StatRow
+from vorpal.contracts import AdpVariant, Banner, EcrRow, Host, OverrideRow, StatRow
 from vorpal.errors import DataRefusal, PlatformError
 from vorpal.ingest.client import FantasyProsClient, require_api_key
 from vorpal.ingest.ecr import fetch_ecr
@@ -32,11 +32,14 @@ from vorpal.ingest.projections import (
 
 
 def override_to_stat_rows(
-    rows: tuple[OverrideRow, ...], season: str
+    rows: tuple[OverrideRow, ...],
+    season: str,
+    *,
+    host: Host = Host.SLEEPER,
 ) -> tuple[StatRow, ...]:
     out: list[StatRow] = []
     for row in rows:
-        stats = counting_stats(row.stats, position=row.pos)
+        stats = counting_stats(row.stats, position=row.pos, host=host)
         out.append(
             StatRow(
                 player_id=row.player_id,
@@ -84,6 +87,7 @@ def load_stat_rows(
     scoring_keys: Collection[str] | None = None,
     scoring: Mapping[str, float] | None = None,
     ecr_scoring: str | None = None,
+    host: Host = Host.SLEEPER,
 ) -> tuple[tuple[StatRow, ...], tuple[Banner, ...]]:
     banners: list[Banner] = []
     try:
@@ -92,7 +96,7 @@ def load_stat_rows(
         assert client is not None
         scoring_label = fp_adp_scoring(adp_variant, ecr_scoring)
         raw = fetch_projections(season, client=client, scoring=scoring_label)
-        records = parse_projections(raw)
+        records = parse_projections(raw, host=host)
         adp, adp_banners = load_adp_map(
             season,
             client=client,
@@ -113,7 +117,7 @@ def load_stat_rows(
         override_rows = load_override(
             override_path, scoring_keys=scoring_keys, scoring=scoring
         )
-        rows = override_to_stat_rows(override_rows, season)
+        rows = override_to_stat_rows(override_rows, season, host=host)
         identities = identities_from_override(override_rows)
         report = map_rows(identities, host_players, allow_name_match=False)
         check_mapping(report)
@@ -146,6 +150,7 @@ def load_forecast(
     scoring: Mapping[str, float] | None = None,
     min_interval_s: float = 0.0,
     sleep: Callable[[float], None] = time.sleep,
+    host: Host = Host.SLEEPER,
 ) -> tuple[tuple[StatRow, ...], tuple[EcrRow, ...], tuple[Banner, ...]]:
     owned = False
     if isinstance(client, FantasyProsClient):
@@ -171,6 +176,7 @@ def load_forecast(
                 scoring_keys=scoring_keys,
                 scoring=scoring,
                 ecr_scoring=ecr_scoring,
+                host=host,
             )
             ecr_f = pool.submit(
                 fetch_ecr,
