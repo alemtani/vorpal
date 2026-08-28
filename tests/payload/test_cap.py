@@ -1,4 +1,4 @@
-"""Board cap is a union of three arms. Scarcity is not read off the list."""
+"""Board cap is a union of two VOLS arms. No ADP arm. See SPEC.md section 4."""
 
 from __future__ import annotations
 
@@ -38,26 +38,15 @@ def _cap(rows, *, pick_no=50, teams=12, rounds=15, needs=None):
     )
 
 
-def _ranked_board() -> tuple[list[BoardRow], BoardRow, BoardRow]:
-    """60 RBs (vols 200..141) plus 15 TEs (vols 20..6), then two extra TEs."""
+def _ranked_board() -> list[BoardRow]:
+    """60 RBs (vols 200..141) plus 15 TEs (vols 20..6)."""
     rbs = [_row(f"rb{i}", vols=200.0 - i, adp=200.0) for i in range(60)]
     tes = [_row(f"te{i}", position="TE", vols=20.0 - i, adp=200.0) for i in range(15)]
-    window_te = _row("window_te", position="TE", vols=1.0, adp=60.0)
-    far_te = _row("far_te", position="TE", vols=0.5, adp=200.0)
-    return [*rbs, *tes, window_te, far_te], window_te, far_te
-
-
-def test_adp_window_player_is_kept_even_outside_the_other_two_arms() -> None:
-    rows, window_te, far_te = _ranked_board()
-    ids = {row.player_id for row in _cap(rows)}
-    assert "window_te" in ids
-    assert "far_te" not in ids
-    assert window_te.vols < 50
-    assert far_te.player_id == "far_te"
+    return [*rbs, *tes]
 
 
 def test_top_50_overall_are_kept() -> None:
-    rows, _, _ = _ranked_board()
+    rows = _ranked_board()
     ids = {row.player_id for row in _cap(rows)}
     assert "rb0" in ids
     assert "rb49" in ids
@@ -65,64 +54,36 @@ def test_top_50_overall_are_kept() -> None:
 
 
 def test_cap_is_a_union_not_an_intersection() -> None:
-    rows, _, _ = _ranked_board()
+    """te0 is nowhere near the top 50; the position arm is what keeps him."""
+    rows = _ranked_board()
     ids = {row.player_id for row in _cap(rows)}
     assert "rb0" in ids
     assert "te0" in ids
-    assert "window_te" in ids
+
+
+def test_adp_never_puts_a_player_on_the_board() -> None:
+    """ADP is an input the model reads, not a route onto the board."""
+    rbs = [_row(f"rb{i}", vols=200.0 - i, adp=200.0) for i in range(60)]
+    # Ten better TEs exhaust the position arm, so only ADP could let these two in.
+    tes = [_row(f"te{i}", position="TE", vols=20.0 - i, adp=200.0) for i in range(10)]
+    imminent = _row("imminent", position="TE", vols=0.0, adp=51.0)
+    faller = _row("faller", position="TE", vols=0.0, adp=2.0)
+    ids = {row.player_id for row in _cap([*rbs, *tes, imminent, faller], pick_no=50)}
+    assert "imminent" not in ids
+    assert "faller" not in ids
+
+
+def test_the_board_shrinks_as_starter_slots_fill() -> None:
+    rows = _ranked_board()
+    early = len(_cap(rows, needs=OPEN_RB))
+    late = len(_cap(rows, needs=FULL))
+    assert late < early
 
 
 def test_capped_board_is_ordered_by_vols_descending() -> None:
-    rows, _, _ = _ranked_board()
+    rows = _ranked_board()
     vols = [row.vols for row in _cap(rows)]
     assert vols == sorted(vols, reverse=True)
-
-
-def test_adp_window_is_the_next_two_rounds_from_pick_no() -> None:
-    just_inside = _row("in", position="TE", vols=0.1, adp=74.0)
-    just_outside = _row("out", position="TE", vols=0.2, adp=74.1)
-    rbs = [_row(f"rb{i}", vols=100.0 - i, adp=200.0) for i in range(60)]
-    tes = [_row(f"te{i}", position="TE", vols=50.0 - i, adp=200.0) for i in range(15)]
-    ids = {
-        row.player_id
-        for row in _cap([*rbs, *tes, just_inside, just_outside], pick_no=50)
-    }
-    assert "in" in ids
-    assert "out" not in ids
-
-
-def test_a_faller_whose_adp_already_passed_is_kept() -> None:
-    """A player the market was wrong about is the point of the backward half."""
-    faller = _row("faller", position="TE", vols=0.0, adp=3.0)
-    rbs = [_row(f"rb{i}", vols=100.0 - i, adp=200.0) for i in range(60)]
-    tes = [_row(f"te{i}", position="TE", vols=50.0 - i, adp=200.0) for i in range(15)]
-    ids = {row.player_id for row in _cap([*rbs, *tes, faller], pick_no=90)}
-    assert "faller" in ids
-
-
-def test_fallers_are_capped_at_one_round_so_they_do_not_eat_the_late_board() -> None:
-    """Unbounded, this arm puts most of a late pool on the board."""
-    # 60 high-vols RBs with no ADP claim soak up the top-50 arm, so what is
-    # left of the board is the faller arm on its own.
-    rbs = [_row(f"rb{i}", vols=100.0 - i, adp=999.0) for i in range(60)]
-    fallers = [
-        _row(f"f{i:03d}", position="TE", vols=0.0, adp=float(i + 1)) for i in range(80)
-    ]
-    capped = _cap([*rbs, *fallers], pick_no=140, teams=12, needs=FULL)
-    kept = {row.player_id for row in capped}
-    # Biggest falls first: lowest ADP wins the twelve seats.
-    assert "f000" in kept
-    assert "f011" in kept
-    assert "f012" not in kept
-
-
-def test_the_forward_window_is_not_capped_by_the_faller_bound() -> None:
-    ahead = [
-        _row(f"a{i:03d}", position="TE", vols=0.0, adp=float(140 + i))
-        for i in range(20)
-    ]
-    kept = {row.player_id for row in _cap(ahead, pick_no=140, teams=12, needs=FULL)}
-    assert len(kept) == 20
 
 
 def test_kickers_and_defenses_are_off_the_early_board() -> None:

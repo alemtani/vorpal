@@ -3,7 +3,6 @@
 from vorpal.payload.assemble import (
     BOARD_CAPPED,
     DEFERRED_POSITIONS,
-    FALLER_ROUNDS,
     build_payload,
     cap_board,
     position_depth,
@@ -13,7 +12,6 @@ from vorpal.payload.assemble import (
 __all__ = [
     "BOARD_CAPPED",
     "DEFERRED_POSITIONS",
-    "FALLER_ROUNDS",
     "build_payload",
     "cap_board",
     "position_depth",

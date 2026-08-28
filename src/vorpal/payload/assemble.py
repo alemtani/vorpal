@@ -23,13 +23,12 @@ TOP_OVERALL = 50
 TOP_PER_POSITION = 10
 FILLED_DEPTH = 2
 DEPTH_PER_NEED = 2
-ADP_ROUNDS_AHEAD = 2
-FALLER_ROUNDS = 1
 LATE_ROUNDS = 2
 
 # Nobody drafts these before the last rounds, and ten of each is a fifth of a
-# board. Arm 3 reaches them when their ADP arrives; the late clause is the
-# backstop for a league whose K or DEF ADP never does.
+# board. Their VOLS is near zero, so nothing else surfaces them either: this
+# clause is the only way a kicker reaches the board, and it waits until the
+# rounds where a kicker is actually the pick.
 DEFERRED_POSITIONS = frozenset({"K", "DEF", "DST"})
 
 BOARD_CAPPED = Banner(
@@ -85,7 +84,13 @@ def cap_board(
     rounds: int,
     needs: Mapping[str, Need],
 ) -> tuple[BoardRow, ...]:
-    """Union of top 50, slot-aware depth per position, and the ADP window."""
+    """Union of top 50 by VOLS and slot-aware depth per position.
+
+    There is deliberately no ADP arm. ADP goes stale as the draft runs, and by
+    the late rounds nearly every player left has an ADP behind the clock — so an
+    ADP window stops selecting anybody in particular. `adp` still ships on every
+    board row; it is the model's input, not the cap's.
+    """
     ranked = sorted(rows, key=lambda row: (-row.vols, row.player_id))
     keep: dict[str, BoardRow] = {}
     for row in ranked[:TOP_OVERALL]:
@@ -100,22 +105,6 @@ def cap_board(
         )
         for row in group[:depth]:
             keep[row.player_id] = row
-    # Forward window: the next two rounds of market. Naturally about two rounds
-    # wide, so it needs no bound of its own.
-    adp_hi = pick_no + ADP_ROUNDS_AHEAD * teams
-    fallers: list[BoardRow] = []
-    for row in ranked:
-        if row.adp < pick_no:
-            fallers.append(row)
-        elif row.adp <= adp_hi:
-            keep[row.player_id] = row
-    # Fallers: still here with their ADP already passed. Bounded, because
-    # unbounded it eats the late board — by pick 165 most of what is left has
-    # an ADP behind the clock, and "everyone the market was wrong about" is not
-    # a shortlist. One round of the biggest falls is.
-    fallers.sort(key=lambda row: (row.adp, row.player_id))
-    for row in fallers[: FALLER_ROUNDS * teams]:
-        keep[row.player_id] = row
     return tuple(sorted(keep.values(), key=lambda row: (-row.vols, row.player_id)))
 
 
