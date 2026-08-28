@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from vorpal.contracts import Slot, WeeklyCell
-from vorpal.valuation.slots import ELIGIBLE, fill_order, starter_counts
+from vorpal.valuation.slots import greedy_fill, starter_counts
 from vorpal.valuation.vols import ScoredPlayer
 
 SEASON_WEEKS = 18
@@ -52,30 +52,22 @@ def fill_starters(
         for player in roster
     }
     counts = starter_counts(slots)
-    order = fill_order(counts)
     cells: list[WeeklyCell] = []
     for week in range(1, SEASON_WEEKS + 1):
         rates = {player: vectors[player.player_id][week - 1] for player in roster}
-        remaining = sorted(
+        # Same fill as VOLS, one roster instead of the league: rank by this
+        # week's rate, seat the slots, and report the ones that came up short.
+        ranked = sorted(
             (player for player in roster if rates[player] > 0),
             key=lambda player: (-rates[player], player.player_id),
         )
-        starter_points = 0.0
-        filled = {slot: 0 for slot in order}
-        for slot in order:
-            need = counts[slot]
-            eligible = ELIGIBLE[slot]
-            still: list[ScoredPlayer] = []
-            taken = 0
-            for player in remaining:
-                if taken < need and player.position in eligible:
-                    starter_points += rates[player]
-                    taken += 1
-                    filled[slot] += 1
-                else:
-                    still.append(player)
-            remaining = still
-        empty = tuple(slot for slot in order if filled[slot] < counts[slot])
+        seated, _ = greedy_fill(ranked, counts)
+        starter_points = sum(
+            rates[player] for players in seated.values() for player in players
+        )
+        empty = tuple(
+            slot for slot, players in seated.items() if len(players) < counts[slot]
+        )
         cells.append(WeeklyCell(week=week, starter_points=starter_points, empty=empty))
     return tuple(cells)
 

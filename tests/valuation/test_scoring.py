@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from vorpal.contracts import Host
+from vorpal.resolve import SCORING_KEY_GROUP
 from vorpal.valuation import (
     FANTASY_POINT_KEYS,
     ScoringFamily,
@@ -222,3 +224,51 @@ def test_unknown_position_and_bonus_edges() -> None:
     assert score_skill(
         SKILL_STATS, {**PPR, "bonus_rec_yd_100": 3.0}, position="RB"
     ) == (score_skill(SKILL_STATS, PPR, position="RB"))
+
+
+def test_classification_comes_from_the_host_table_not_a_prefix() -> None:
+    """A key with no row in the host table is UNKNOWN, whatever it looks like."""
+    assert classify_scoring_key("pass_invented") is ScoringFamily.UNKNOWN
+    assert classify_scoring_key("rec_invented") is ScoringFamily.UNKNOWN
+    assert classify_scoring_key("def_invented") is ScoringFamily.UNKNOWN
+    assert classify_scoring_key("not_a_real_key") is ScoringFamily.UNKNOWN
+
+
+def test_valuation_and_resolve_read_one_table() -> None:
+    """S3 groups and S4 families are the same rows. One table, one meaning."""
+    expected = {
+        "QB": ScoringFamily.PASS,
+        "OFF": ScoringFamily.SKILL,
+        "K": ScoringFamily.KICK,
+        "DEF": ScoringFamily.DST,
+        "IDP": ScoringFamily.IDP,
+    }
+    for key, group in SCORING_KEY_GROUP[Host.SLEEPER].items():
+        assert classify_scoring_key(key, Host.SLEEPER) is expected[group]
+
+
+def test_a_host_with_no_table_classifies_nothing() -> None:
+    assert classify_scoring_key("pass_yd", Host.SLEEPER) is ScoringFamily.PASS
+    assert classify_scoring_key("pass_yd", Host.ESPN) is ScoringFamily.UNKNOWN
+    assert score_player("QB", {"pass_yd": 300.0}, PPR, host=Host.ESPN) == 0.0
+    assert score_skill(SKILL_STATS, PPR, position="RB", host=Host.ESPN) == 0.0
+    assert unmatched_scoring_keys(PPR, columns=set(PPR), host=Host.ESPN) == ()
+
+
+def test_defensive_return_and_recovery_tds_are_dst() -> None:
+    """S3 is canon: these are DEF rows, so DST scores them and skill does not."""
+    for key in ("fum_rec_td", "kr_td", "pr_td", "int_td", "blk_kick_td", "tkl_loss"):
+        assert classify_scoring_key(key) is ScoringFamily.DST
+    scoring = {"fum_rec_td": 6.0, "int_td": 6.0, "rec": 1.0}
+    stats = {"fum_rec_td": 1.0, "int_td": 1.0, "rec": 5.0}
+    assert score_player("DEF", stats, scoring) == 12.0
+    assert score_player("RB", stats, scoring) == 5.0
+
+
+def test_qb_rush_bonus_is_a_qb_row_not_a_skill_row() -> None:
+    """No position special case: the table keeps bonus_rush_td_qb off skill."""
+    assert classify_scoring_key("bonus_rush_td_qb") is ScoringFamily.PASS
+    scoring = {"bonus_rush_td_qb": 2.0, "rush_td": 6.0}
+    stats = {"bonus_rush_td_qb": 1.0, "rush_td": 1.0}
+    assert score_player("QB", stats, scoring) == 8.0
+    assert score_player("RB", stats, scoring) == 6.0

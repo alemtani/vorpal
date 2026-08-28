@@ -1,10 +1,22 @@
-"""Starter-slot eligibility and fill order. Bench is not startable."""
+"""Starter-slot eligibility, fill order, and the one greedy fill.
+
+Bench is not startable.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Protocol
 
 from vorpal.contracts import Slot
+
+
+class Positioned(Protocol):
+    """Anything the fill can seat. Only the position decides eligibility."""
+
+    @property
+    def position(self) -> str: ...
+
 
 ELIGIBLE: dict[Slot, frozenset[str]] = {
     Slot.QB: frozenset({"QB"}),
@@ -62,3 +74,40 @@ def fill_order(counts: dict[Slot, int]) -> tuple[Slot, ...]:
     flex = [slot for slot in counts if slot not in _DEDICATED]
     flex.sort(key=lambda slot: (len(ELIGIBLE[slot]), _FLEX_TIE.get(slot, 99)))
     return dedicated + tuple(flex)
+
+
+def greedy_fill[P: Positioned](
+    ordered: Sequence[P],
+    counts: Mapping[Slot, int],
+    *,
+    teams: int = 1,
+) -> tuple[dict[Slot, list[P]], list[P]]:
+    """Seat pre-ranked players into starting slots. One rule, two callers.
+
+    `ordered` is best-first by whatever metric the caller ranks on: projected
+    points or VOLS league-wide, this week's rate for one roster. The fill only
+    reads the order, never the metric, so both callers get the same rule.
+
+    Walks `fill_order`: dedicated slots first, then flex most-restrictive
+    first. Each slot takes the best `counts[slot] * teams` players still
+    unseated and eligible for it. Dedicated-before-flex is what makes a FLEX
+    seat go to the best player *left* rather than the best player overall.
+
+    Returns the players seated in each slot, plus everyone left over, still
+    in rank order. A short list in `taken` means that slot went unfilled.
+    """
+    remaining = list(ordered)
+    taken: dict[Slot, list[P]] = {}
+    for slot in fill_order(dict(counts)):
+        need = counts[slot] * teams
+        eligible = ELIGIBLE[slot]
+        seated: list[P] = []
+        still: list[P] = []
+        for player in remaining:
+            if len(seated) < need and player.position in eligible:
+                seated.append(player)
+            else:
+                still.append(player)
+        taken[slot] = seated
+        remaining = still
+    return taken, remaining

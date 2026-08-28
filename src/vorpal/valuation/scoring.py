@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 
+from vorpal.contracts import Host
+from vorpal.platform.scoring_keys import SCORING_KEY_GROUP
+
 FANTASY_POINT_KEYS = frozenset({"pts_ppr", "pts_std", "pts_half_ppr"})
 
 
@@ -18,72 +21,36 @@ class ScoringFamily(StrEnum):
     UNKNOWN = "unknown"
 
 
-_EXACT: dict[str, ScoringFamily] = {
-    "rec": ScoringFamily.SKILL,
-    "int": ScoringFamily.DST,
-    "sack": ScoringFamily.DST,
-    "sack_yd": ScoringFamily.DST,
-    "safe": ScoringFamily.DST,
-    "ff": ScoringFamily.DST,
-    "blk_kick": ScoringFamily.DST,
-    "blk_kick_ret_yd": ScoringFamily.DST,
-    "fum": ScoringFamily.SKILL,
-    "fum_lost": ScoringFamily.SKILL,
-    "fum_rec": ScoringFamily.DST,
-    "fum_rec_td": ScoringFamily.SKILL,
-    "fum_ret_yd": ScoringFamily.DST,
-    "tkl": ScoringFamily.DST,
-    "tkl_solo": ScoringFamily.DST,
-    "tkl_ast": ScoringFamily.DST,
-    "tfl": ScoringFamily.DST,
-    "qb_hit": ScoringFamily.DST,
-    "pass_def": ScoringFamily.DST,
+# The host table groups keys by position. Valuation needs the formula that
+# scores them. One row per group, so the two never drift apart.
+_GROUP_FAMILY: dict[str, ScoringFamily] = {
+    "QB": ScoringFamily.PASS,
+    "OFF": ScoringFamily.SKILL,
+    "K": ScoringFamily.KICK,
+    "DEF": ScoringFamily.DST,
+    "IDP": ScoringFamily.IDP,
 }
 
-# Longer prefix wins: pass_int is PASS, int is DST; fgmiss before fgm.
-_PREFIXES: tuple[tuple[str, ScoringFamily], ...] = tuple(
-    sorted(
-        (
-            ("bonus_rush_", ScoringFamily.SKILL),
-            ("bonus_pass_", ScoringFamily.PASS),
-            ("bonus_rec_", ScoringFamily.SKILL),
-            ("pts_allow_", ScoringFamily.DST),
-            ("yds_allow_", ScoringFamily.DST),
-            ("fgmiss", ScoringFamily.KICK),
-            ("xpmiss", ScoringFamily.KICK),
-            ("pass_", ScoringFamily.PASS),
-            ("rush_", ScoringFamily.SKILL),
-            ("idp_", ScoringFamily.IDP),
-            ("def_", ScoringFamily.DST),
-            ("rec_", ScoringFamily.SKILL),
-            ("st_", ScoringFamily.DST),
-            ("fgm", ScoringFamily.KICK),
-            ("xpm", ScoringFamily.KICK),
-            ("kr_", ScoringFamily.SKILL),
-            ("pr_", ScoringFamily.SKILL),
-        ),
-        key=lambda item: len(item[0]),
-        reverse=True,
-    )
-)
+_SKILL_POSITIONS = frozenset({"RB", "WR", "TE", "FB"})
 
 
-def classify_scoring_key(key: str) -> ScoringFamily:
-    """Family for a scoring key. Longer prefix wins."""
+def classify_scoring_key(key: str, host: Host = Host.SLEEPER) -> ScoringFamily:
+    """Family for a scoring key, from the host table. Never from a prefix.
+
+    UNKNOWN means the table has no row. The key is reported, not scored.
+    """
     if key in FANTASY_POINT_KEYS:
         return ScoringFamily.FANTASY
-    exact = _EXACT.get(key)
-    if exact is not None:
-        return exact
-    for prefix, family in _PREFIXES:
-        if key.startswith(prefix):
-            return family
-    return ScoringFamily.UNKNOWN
+    group = SCORING_KEY_GROUP.get(host, {}).get(key)
+    if group is None:
+        return ScoringFamily.UNKNOWN
+    return _GROUP_FAMILY[group]
 
 
 def unmatched_scoring_keys(
     scoring: Mapping[str, float],
     columns: set[str] | frozenset[str],
+    host: Host = Host.SLEEPER,
 ) -> tuple[str, ...]:
     """Nonzero keys with no counting column, plus fantasy-point keys.
 
@@ -93,7 +60,7 @@ def unmatched_scoring_keys(
     for key, weight in scoring.items():
         if weight == 0.0:
             continue
-        family = classify_scoring_key(key)
+        family = classify_scoring_key(key, host)
         if family is ScoringFamily.FANTASY or key not in columns:
             missing.append(key)
     return tuple(missing)
@@ -104,24 +71,26 @@ def score_skill(
     scoring: Mapping[str, float],
     *,
     position: str,
+    host: Host = Host.SLEEPER,
 ) -> float:
     """One formula for RB/WR/TE: rush, rec, yards, TDs, fumbles.
 
     Position only changes replacement, plus premiums such as bonus_rec_te.
     """
-    return _apply(stats, scoring, {ScoringFamily.SKILL}, position)
+    return _apply(stats, scoring, {ScoringFamily.SKILL}, position, host)
 
 
 def score_player(
     position: str,
     stats: Mapping[str, float],
     scoring: Mapping[str, float],
+    host: Host = Host.SLEEPER,
 ) -> float:
     """Dispatch by position. QB is pass_* plus the skill formula."""
     pos = "DEF" if position == "DST" else position
     if pos == "QB":
         families = {ScoringFamily.PASS, ScoringFamily.SKILL}
-    elif pos in {"RB", "WR", "TE", "FB"}:
+    elif pos in _SKILL_POSITIONS:
         families = {ScoringFamily.SKILL}
     elif pos == "K":
         families = {ScoringFamily.KICK}
@@ -129,7 +98,7 @@ def score_player(
         families = {ScoringFamily.DST}
     else:
         return 0.0
-    return _apply(stats, scoring, families, pos)
+    return _apply(stats, scoring, families, pos, host)
 
 
 def _apply(
@@ -137,12 +106,13 @@ def _apply(
     scoring: Mapping[str, float],
     families: set[ScoringFamily],
     position: str,
+    host: Host,
 ) -> float:
     total = 0.0
     for key, weight in scoring.items():
         if weight == 0.0:
             continue
-        family = classify_scoring_key(key)
+        family = classify_scoring_key(key, host)
         if family is ScoringFamily.FANTASY or family not in families:
             continue
         total += weight * _stat_value(key, stats, position)
@@ -150,6 +120,11 @@ def _apply(
 
 
 def _stat_value(key: str, stats: Mapping[str, float], position: str) -> float:
+    """Read one counting column. Only receptions premiums need the position.
+
+    `bonus_rec_te` and friends are one OFF row that pays one position. The
+    forecast rarely ships the bonus column, so fall back to `rec`.
+    """
     if key.startswith("bonus_rec_"):
         tagged = _bonus_rec_position(key)
         if tagged is not None and tagged != position:
@@ -158,8 +133,6 @@ def _stat_value(key: str, stats: Mapping[str, float], position: str) -> float:
             return float(stats[key])
         if tagged == position:
             return float(stats.get("rec", 0.0))
-        return 0.0
-    if key == "bonus_rush_td_qb" and position != "QB":
         return 0.0
     return float(stats.get(key, 0.0))
 

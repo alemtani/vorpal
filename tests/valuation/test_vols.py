@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from vorpal.contracts import Slot
 from vorpal.valuation import ScoredPlayer, compute_vols
+from vorpal.valuation.slots import greedy_fill
 
 
 def _p(
@@ -173,3 +174,28 @@ def test_rec_flex_takes_te_not_rb() -> None:
     result = compute_vols(players, slots, teams=1)
     assert result.replacement["TE"].player_id == "TE3"
     assert result.replacement["RB"].player_id == "RB2"
+
+
+def test_greedy_fill_seats_dedicated_slots_before_flex() -> None:
+    """The one fill rule: a FLEX seat goes to the best player left, not best overall."""
+    ranked = [
+        ScoredPlayer("rb1", "RB", 300.0),
+        ScoredPlayer("rb2", "RB", 290.0),
+        ScoredPlayer("wr1", "WR", 280.0),
+        ScoredPlayer("wr2", "WR", 270.0),
+        ScoredPlayer("te1", "TE", 100.0),
+    ]
+    counts = {Slot.RB: 1, Slot.WR: 1, Slot.FLEX: 1}
+    seated, leftover = greedy_fill(ranked, counts)
+    assert [player.player_id for player in seated[Slot.RB]] == ["rb1"]
+    assert [player.player_id for player in seated[Slot.WR]] == ["wr1"]
+    assert [player.player_id for player in seated[Slot.FLEX]] == ["rb2"]
+    assert [player.player_id for player in leftover] == ["wr2", "te1"]
+
+
+def test_greedy_fill_scales_by_teams_and_reports_short_slots() -> None:
+    ranked = [ScoredPlayer(f"rb{i}", "RB", 100.0 - i) for i in range(3)]
+    seated, leftover = greedy_fill(ranked, {Slot.RB: 1, Slot.QB: 1}, teams=2)
+    assert len(seated[Slot.RB]) == 2
+    assert seated[Slot.QB] == []
+    assert [player.player_id for player in leftover] == ["rb2"]

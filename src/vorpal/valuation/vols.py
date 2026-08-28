@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from vorpal.contracts import Replacement, Slot
-from vorpal.valuation.slots import ELIGIBLE, fill_order, starter_counts
+from vorpal.valuation.slots import greedy_fill, starter_counts
 
 MAX_REPLACEMENT_RANK_SHIFT = 2
 
@@ -53,7 +53,27 @@ def compute_vols(
     slots: Sequence[Slot],
     teams: int,
 ) -> VolsResult:
-    """Rank by points, fill, re-rank by that VOLS, fill once more. Stop."""
+    """Rank by points, fill, re-rank by that VOLS, fill once more. Stop.
+
+    Two passes because the definition is circular: VOLS is points minus the
+    replacement's points, but replacement depends on who starts, and who
+    starts should be decided by value, not by raw points.
+
+    Pass 1 breaks the circle. Projected points is the only ranking available
+    before any replacement level exists, so fill on that and read off a first
+    replacement per position. That gives a first VOLS.
+
+    Pass 2 spends it. Re-rank by that VOLS and fill again. This is where flex
+    seats change hands: by points a QB or RB tops the list, but by VOLS a WR
+    who beats his replacement by 60 outranks an RB who beats his by 20. Those
+    seats move, so the replacement line moves with them.
+
+    Two by fiat, not by convergence. This is a fixed-point iteration that
+    could oscillate. `hypothetical_replacement_ranks` runs one more fill and
+    the invariant test asserts no position's line moves more than
+    MAX_REPLACEMENT_RANK_SHIFT. A failure there means the model is unstable,
+    not that this code is wrong.
+    """
     pool = tuple(player for player in players if not player.market_only)
     points = {player.player_id: player.points for player in pool}
     pass1 = _fill(pool, slots, teams, points)
@@ -126,26 +146,35 @@ def _fill(
     teams: int,
     metric: Mapping[str, float],
 ) -> _Fill:
+    """Play out how the whole league fills its starters, then read the leftovers.
+
+    Rank the pool best-first by `metric`, seat every roster's starting slots
+    league-wide (`counts[slot] * teams`), and look at who is left. The best
+    leftover at a position is the replacement: the player nobody starts, the
+    waiver-wire baseline that VOLS measures against.
+
+    `metric` is the only thing that changes between passes, so the same fill
+    serves pass 1 (points), pass 2 (pass-1 VOLS), and the eval fill.
+
+    `ranks[position]` is that replacement's positional index, 1-based: how
+    many players at his position are ahead of him, plus one. In a 12-team
+    league starting 2 RB and 1 FLEX, 24 RBs come off the board from RB slots
+    and however many more win FLEX seats, so the RB line falls somewhere past
+    24. A position whose players were all absorbed has no leftover; record
+    where its line fell anyway.
+    """
     remaining = sorted(
         pool,
         key=lambda player: (-metric.get(player.player_id, 0.0), player.player_id),
     )
     counts = starter_counts(slots)
+    seated, remaining = greedy_fill(remaining, counts, teams=teams)
     absorbed_by_pos: dict[str, int] = {}
-    for slot in fill_order(counts):
-        need = counts[slot] * teams
-        eligible = ELIGIBLE[slot]
-        still: list[ScoredPlayer] = []
-        taken = 0
-        for player in remaining:
-            if taken < need and player.position in eligible:
-                absorbed_by_pos[player.position] = (
-                    absorbed_by_pos.get(player.position, 0) + 1
-                )
-                taken += 1
-            else:
-                still.append(player)
-        remaining = still
+    for players in seated.values():
+        for player in players:
+            absorbed_by_pos[player.position] = (
+                absorbed_by_pos.get(player.position, 0) + 1
+            )
     replacement: dict[str, Replacement] = {}
     ranks: dict[str, int] = {}
     for player in remaining:
