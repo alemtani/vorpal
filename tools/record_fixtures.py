@@ -251,10 +251,44 @@ def subset_projections(
 
 def redact_fantasypros(payload: dict[str, Any]) -> dict[str, Any]:
     out = json.loads(json.dumps(payload))
-    for row in out.get("players") or []:
+    if not isinstance(out, dict):
+        return out
+    for row in out.get("players") or out.get("player") or []:
         if isinstance(row, dict):
             for key in FP_IMAGE_KEYS:
                 row.pop(key, None)
+    return out
+
+
+def _subset_fp_players(payload: Any, *, per_position: int) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {"players": []}
+    out = json.loads(json.dumps(payload))
+    players = out.get("players")
+    if not isinstance(players, list):
+        players = out.get("player")
+    if not isinstance(players, list):
+        return out
+    kept: list[Any] = []
+    counts: dict[str, int] = {}
+    for row in players:
+        if not isinstance(row, dict):
+            continue
+        pos = str(
+            row.get("player_position_id")
+            or row.get("position_id")
+            or row.get("position")
+            or "?"
+        )
+        n = counts.get(pos, 0)
+        if n >= per_position:
+            continue
+        counts[pos] = n + 1
+        kept.append(row)
+    if "players" in out:
+        out["players"] = kept
+    elif "player" in out:
+        out["player"] = kept
     return out
 
 
@@ -444,22 +478,27 @@ def record_fantasypros(
     player_subset: dict[str, Any] | None,
 ) -> list[str]:
     notes: list[str] = []
-    jobs = [
-        ("PPR", pos, f"consensus_rankings_ppr_{pos.lower()}.json")
-        for pos in FP_PPR_POSITIONS
+    jobs: list[tuple[str, str, str, str | None]] = [
+        ("PPR", "ALL", "consensus_rankings_ppr.json", "draft"),
     ]
-    jobs.append(("PPR", "OP", "consensus_rankings_op.json"))
+    jobs.extend(
+        ("PPR", pos, f"consensus_rankings_ppr_{pos.lower()}.json", None)
+        for pos in FP_PPR_POSITIONS
+    )
+    jobs.append(("PPR", "OP", "consensus_rankings_op.json", None))
     fp_ok = False
     if fp_key:
         try:
             fp_headers = {**headers, "x-api-key": fp_key}
-            for i, (scoring, position, filename) in enumerate(jobs):
+            for i, (scoring, position, filename, ranking_type) in enumerate(jobs):
                 if i:
                     time.sleep(FP_MIN_INTERVAL_S)
                 url = (
                     f"{FANTASYPROS}/nfl/{season}/consensus-rankings"
                     f"?position={position}&scoring={scoring}"
                 )
+                if ranking_type:
+                    url += f"&type={ranking_type}"
                 print(f"fetching {url}", file=sys.stderr)
                 response = client.get(url, headers=fp_headers, timeout=60.0)
                 response.raise_for_status()
@@ -473,9 +512,41 @@ def record_fantasypros(
             unverified = fixtures / "fantasypros" / "UNVERIFIED"
             if unverified.exists():
                 unverified.unlink()
-            stale = fixtures / "fantasypros" / "consensus_rankings_ppr.json"
-            if stale.exists():
-                stale.unlink()
+            merged_players: list[Any] = []
+            proj_envelope: dict[str, Any] = {}
+            for pos in FP_PPR_POSITIONS:
+                time.sleep(FP_MIN_INTERVAL_S)
+                proj_url = (
+                    f"{FANTASYPROS}/nfl/{season}/projections"
+                    f"?week=0&position={pos}&scoring=PPR"
+                )
+                print(f"fetching {proj_url}", file=sys.stderr)
+                proj_resp = client.get(proj_url, headers=fp_headers, timeout=120.0)
+                proj_resp.raise_for_status()
+                proj_payload = proj_resp.json()
+                if isinstance(proj_payload, dict):
+                    proj_envelope = proj_payload
+                    rows = proj_payload.get("players") or []
+                    if isinstance(rows, list):
+                        merged_players.extend(rows)
+            proj_envelope = dict(proj_envelope)
+            proj_envelope["players"] = merged_players
+            write_json(
+                fixtures / "fantasypros" / "projections_week0.json",
+                redact_fantasypros(_subset_fp_players(proj_envelope, per_position=4)),
+            )
+            time.sleep(FP_MIN_INTERVAL_S)
+            adp_url = (
+                f"{FANTASYPROS}/nfl/{season}/consensus-rankings"
+                f"?position=ALL&scoring=PPR&type=ADP"
+            )
+            print(f"fetching {adp_url}", file=sys.stderr)
+            adp_resp = client.get(adp_url, headers=fp_headers, timeout=60.0)
+            adp_resp.raise_for_status()
+            write_json(
+                fixtures / "fantasypros" / "adp_ppr.json",
+                redact_fantasypros(_subset_fp_players(adp_resp.json(), per_position=4)),
+            )
             fp_ok = True
         except httpx.HTTPError as exc:
             notes.append(
