@@ -121,7 +121,7 @@ flowchart LR
 
 Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
-**Stats contract (FantasyPros):** season totals (`week=0`). Counting keys only — never ingest `points` / `points_ppr` / `points_half` / `pts_ppr` / `pts_std` / `pts_half_ppr`. Map FP stat names onto this **host's** scoring keys (`pass_yds` → Sleeper `pass_yd`). ESPN has no rows yet. Do not invent kicker distance buckets or `pts_allow_*` from coarse FP fields (`fg`, `pa`). Unmatched nonzero scoring keys banner; they must not silent-zero. Rows with ADP and no stats are market-only: exclude from VOLS, keep on the board.
+**Stats contract (FantasyPros):** season totals (`week=0`). Counting keys only — never ingest `points` / `points_ppr` / `points_half` / `pts_ppr` / `pts_std` / `pts_half_ppr`. Map FP stat names onto this **host's** scoring keys (`pass_yds` → Sleeper `pass_yd`). ESPN has no rows yet. Do not invent kicker distance buckets or `pts_allow_*` from coarse FP fields (`fg`, `pa`). Unmatched nonzero scoring keys banner; they must not silent-zero. Rows with ADP and no stats are market-only: excluded from VOLS, and so excluded from the section 4 board, which ranks on VOLS. Keep them in the pool — they still count against the mapping gate.
 
 **ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `2qb`; else `rec ≥ 0.75` → `ppr`; `0.25–0.75` → `half_ppr`; else `std`. Banner when `rec` is not exactly `1/0.5/0`. Ingest maps that onto FantasyPros ADP (`2qb` → `position=OP`; else `ALL` with STD/PPR/HALF). If OP ADP is empty, use 1QB ADP and banner `adp_1qb_market`. There is no `adp_2qb_ppr`.
 
@@ -177,10 +177,42 @@ worse, lets the model act on data no gate ever sees — which is what hollows ou
 treatment: banner and proceed, never block.
 
 **The board is the world.** Rec and alternatives must be on `board` — not merely
-undrafted. Order by `vols` descending. Cap: top 50 overall, plus top 10 per
-position, plus every player whose `adp` falls inside the next two rounds. State
-in the payload that the board is capped, so the model does not read scarcity off
-a truncated list.
+undrafted. Order by `vols` descending. State in the payload that the board is
+capped, so the model does not read scarcity off a truncated list.
+
+**The cap is a union of two arms.** A player on either arm is on the board.
+
+1. **Top 50 overall** by `vols`.
+2. **Top `depth(position)` per position**, where depth answers "how many of these
+   could still start for you": `2 + 2 × remaining`, capped at 10, where
+   `remaining` is the unfilled starter need any slot this position can fill
+   (a FLEX need counts for RB, WR, and TE alike). A position with every starter
+   seated keeps a floor of 2 — enough that a value pick is still nameable, not
+   enough to crowd the board. A fixed 10 per position spends the same rows on a
+   filled QB room as on an empty one.
+
+That is 54–60 rows in a 12-team league, and it shrinks as slots fill.
+
+**K and DEF are deferred.** Arm 2 is `depth = 0` for them until the last two
+rounds *and* a starter slot is still empty. Ten kickers and ten defenses on a
+round-1 board is a fifth of the rows for a decision nobody makes before round 13.
+Their `vols` is near zero, so nothing else surfaces them either — this clause is
+the only route a kicker has onto the board, and it opens in the rounds where a
+kicker is actually the pick.
+
+**There is no ADP arm, deliberately.** ADP goes stale as a draft runs, and by the
+late rounds nearly every player still available has an ADP behind the clock, so
+an ADP window stops selecting anybody in particular — measured, an unbounded one
+put 125 of 187 remaining players on a pick-165 board, and bounding it only moved
+the arbitrariness around. `vols` and starter need already rank everyone who can
+start, and `adp` still ships on every board row: it is an input the model reads,
+not a way onto the board.
+
+The cost is that a **market-only** row — ADP but no counting stats after mapping,
+so no `vols` — can no longer reach the board. That population is players
+FantasyPros does not project at all, and a player with no projection is not a
+starting-slot candidate. Systematic mapping failure is caught upstream by the
+98% gate on the top 300 by ADP, not here.
 
 Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a survival “band”; wait-vs-take is the model's.
 
@@ -224,10 +256,31 @@ Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a 
 
 `flags` ∈ `ECR_DISAGREE | BYE_STACK | POSITION_RUN | EMPTY_STARTER | UPSIDE | VOLS_DISSENT`.
 
-- Ids not on `board` → fail the call.
-- Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → fail.
-- Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin` → fail. The flag does not save it.
-- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the override has it). Not a second scorer.
+**Violations.** Every rule below fails the *call*. None of them fails the *run*.
+The operator is on a pick timer: a validator that exits 2 hands them nothing at
+the one moment they cannot recover. So validation returns violations, and the
+caller decides what they mean.
+
+- Ids not on `board` → violation.
+- Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → violation.
+- Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin`
+  → violation. The flag does not save it. **One exception:** a rec whose
+  `ecr_min` is inside the ceiling passes. `ecr` is the consensus median, and the
+  margin rule exists to catch a rec no expert would make — not to punish the
+  wide-spread upside pick that some experts rank inside the ceiling and others
+  far outside. `ecr_std` is the upside input; a floor that ignores `ecr_min`
+  would discard exactly the picks that input is for.
+- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the
+  override has it). Not a second scorer.
+
+**Draft night:** one retry on a violation, then fall back to `hint_argmax_vols`
+— the calculator answer — with a banner naming what the model got wrong. A
+degraded pick beats no pick. **Eval run:** violations are the score. Never
+retried, never degraded, never hidden.
+
+A malformed HTTP response, a transport failure, or a body that is not JSON is a
+`PlatformError`, not a violation. That is the host being broken, not the model
+being wrong.
 
 ---
 
