@@ -101,15 +101,15 @@ def test_players_include_yahoo_id_and_no_bye_field() -> None:
 def test_fantasypros_live_rows_have_yahoo_std_and_bye() -> None:
     fp = FIXTURES / "fantasypros"
     assert not (fp / "UNVERIFIED").exists()
-    qb = _load(fp / "consensus_rankings_ppr_qb.json")
+    overall = _load(fp / "consensus_rankings_ppr.json")
     op = _load(fp / "consensus_rankings_op.json")
-    assert isinstance(qb, dict)
+    assert isinstance(overall, dict)
     assert isinstance(op, dict)
-    assert qb["position_id"] == "QB"
+    assert overall["position_id"] == "ALL"
     assert op["position_id"] == "OP"
-    assert qb["public_api_limited"] is True
-    assert qb["limit"] == 10
-    players = qb["players"]
+    assert overall.get("public_api_limited") is True
+    assert overall.get("limit") == 10
+    players = overall["players"]
     assert isinstance(players, list)
     assert players
     row = players[0]
