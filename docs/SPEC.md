@@ -177,10 +177,39 @@ worse, lets the model act on data no gate ever sees — which is what hollows ou
 treatment: banner and proceed, never block.
 
 **The board is the world.** Rec and alternatives must be on `board` — not merely
-undrafted. Order by `vols` descending. Cap: top 50 overall, plus top 10 per
-position, plus every player whose `adp` falls inside the next two rounds. State
-in the payload that the board is capped, so the model does not read scarcity off
-a truncated list.
+undrafted. Order by `vols` descending. State in the payload that the board is
+capped, so the model does not read scarcity off a truncated list.
+
+**The cap is a union of three arms.** A player on any one arm is on the board.
+
+1. **Top 50 overall** by `vols`.
+2. **Top `depth(position)` per position**, where depth answers "how many of these
+   could still start for you": `2 + 2 × remaining`, capped at 10, where
+   `remaining` is the unfilled starter need any slot this position can fill
+   (a FLEX need counts for RB, WR, and TE alike). A position with every starter
+   seated keeps a floor of 2 — enough that a value pick is still nameable, not
+   enough to crowd the board. A fixed 10 per position spends the same rows on a
+   filled QB room as on an empty one.
+3. **The ADP window, in two halves.** *Forward:* every player whose `adp` falls
+   between `pick_no` and `pick_no + 2 × teams` — the next two rounds. That set is
+   about two rounds wide by construction, so it needs no bound. *Backward:* the
+   **`teams` biggest fallers** — players still undrafted whose ADP is already
+   behind the clock, taken lowest ADP first. A faller is the most interesting row
+   on the board and `vols` alone will not surface him, because market-only rows
+   carry ADP and no stats and are excluded from VOLS by construction.
+
+   The backward half is capped for a measured reason. Unbounded, it eats the late
+   board: by pick 165 most of what is left has an ADP behind the clock, so
+   "everyone the market was wrong about" stops being a shortlist. In simulation
+   an unbounded backward half put 125 of the 187 remaining players on the board.
+   One round of the biggest falls holds it at 87.
+
+**K and DEF are deferred.** Arm 2 is `depth = 0` for them until the last two
+rounds *and* a starter slot is still empty. Ten kickers and ten defenses on a
+round-1 board is a fifth of the rows for a decision nobody makes before round 13.
+Arm 3 still reaches them on its own: kicker ADP enters the window exactly when
+kickers start going. The late-round clause is the backstop for a league whose K
+or DEF ADP never arrives.
 
 Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a survival “band”; wait-vs-take is the model's.
 
@@ -224,10 +253,31 @@ Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a 
 
 `flags` ∈ `ECR_DISAGREE | BYE_STACK | POSITION_RUN | EMPTY_STARTER | UPSIDE | VOLS_DISSENT`.
 
-- Ids not on `board` → fail the call.
-- Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → fail.
-- Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin` → fail. The flag does not save it.
-- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the override has it). Not a second scorer.
+**Violations.** Every rule below fails the *call*. None of them fails the *run*.
+The operator is on a pick timer: a validator that exits 2 hands them nothing at
+the one moment they cannot recover. So validation returns violations, and the
+caller decides what they mean.
+
+- Ids not on `board` → violation.
+- Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → violation.
+- Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin`
+  → violation. The flag does not save it. **One exception:** a rec whose
+  `ecr_min` is inside the ceiling passes. `ecr` is the consensus median, and the
+  margin rule exists to catch a rec no expert would make — not to punish the
+  wide-spread upside pick that some experts rank inside the ceiling and others
+  far outside. `ecr_std` is the upside input; a floor that ignores `ecr_min`
+  would discard exactly the picks that input is for.
+- Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the
+  override has it). Not a second scorer.
+
+**Draft night:** one retry on a violation, then fall back to `hint_argmax_vols`
+— the calculator answer — with a banner naming what the model got wrong. A
+degraded pick beats no pick. **Eval run:** violations are the score. Never
+retried, never degraded, never hidden.
+
+A malformed HTTP response, a transport failure, or a body that is not JSON is a
+`PlatformError`, not a violation. That is the host being broken, not the model
+being wrong.
 
 ---
 

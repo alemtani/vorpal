@@ -23,9 +23,12 @@ from vorpal.contracts import (
 )
 from vorpal.errors import PlatformError
 from vorpal.model import (
+    EFFORT,
+    MAX_TOKENS,
     MODEL_ID,
     AnthropicTransport,
     StubTransport,
+    propose,
     recommend,
     run_stability,
 )
@@ -231,3 +234,117 @@ def test_default_anthropic_client_is_constructed_when_none_is_passed(
     transport = AnthropicTransport()
     assert transport.complete(_payload().to_dict()) == recorded
     assert captured["model"] == MODEL_ID
+
+
+# --- draft night: one retry, then the calculator -------------------------
+
+
+def test_propose_returns_the_model_pick_when_it_validates() -> None:
+    transport = StubTransport(_recorded())
+    result = propose(_payload(), transport)
+    assert result.degraded is False
+    assert result.violations == ()
+    assert result.attempts == 1
+    assert result.proposal.player_id == "4866"
+    assert len(transport.calls) == 1
+
+
+def test_propose_retries_once_and_keeps_a_valid_second_answer() -> None:
+    bad = {**_recorded(), "player_id": "ghost"}
+    transport = StubTransport([bad, _recorded()])
+    result = propose(_payload(), transport)
+    assert result.degraded is False
+    assert result.attempts == 2
+    assert result.proposal.player_id == "4866"
+    assert len(transport.calls) == 2
+
+
+def test_propose_degrades_to_the_calculator_rather_than_exiting() -> None:
+    """The operator is on a pick timer. A violation must never hand back nothing."""
+    bad = {**_recorded(), "player_id": "ghost"}
+    transport = StubTransport(bad)
+    payload = _payload()
+    result = propose(payload, transport)
+    assert result.degraded is True
+    assert result.attempts == 2
+    assert result.proposal.player_id == payload.hint_argmax_vols
+    assert result.proposal.slot_filled is Slot.RB
+    assert result.proposal.coin_flip is False
+    assert result.proposal.flags == ()
+    assert [v.code for v in result.violations] == ["rec_off_board"]
+    assert "rec_off_board" in result.proposal.why
+
+
+def test_the_degraded_pick_names_alternatives_from_the_board() -> None:
+    bad = {**_recorded(), "player_id": "ghost"}
+    result = propose(_payload(), StubTransport(bad))
+    assert result.proposal.alternatives == ("7564",)
+
+
+def test_propose_degrades_on_a_semantic_violation_too() -> None:
+    """A readable proposal that breaks a rule still degrades, not raises."""
+    silent = {**_recorded(), "player_id": "7564", "slot_filled": "WR", "flags": []}
+    result = propose(_payload(), StubTransport(silent))
+    assert result.degraded is True
+    assert [v.code for v in result.violations] == ["silent_vols_dissent"]
+
+
+# --- eval run: a violation is the score, never a retry -------------------
+
+
+def test_recommend_raises_on_a_violation_so_evals_can_count_it() -> None:
+    silent = {**_recorded(), "player_id": "7564", "slot_filled": "WR", "flags": []}
+    transport = StubTransport(silent)
+    with pytest.raises(PlatformError, match="silent_vols_dissent"):
+        recommend(_payload(), transport)
+    assert len(transport.calls) == 1
+
+
+def test_recommend_raises_on_an_unreadable_response() -> None:
+    with pytest.raises(PlatformError, match="did not validate"):
+        recommend(_payload(), StubTransport({"player_id": "4866"}))
+
+
+# --- call parameters -----------------------------------------------------
+
+
+def test_stub_transport_repeats_a_single_response() -> None:
+    transport = StubTransport(_recorded())
+    payload = _payload()
+    for _ in range(3):
+        transport.complete(payload.to_dict())
+    assert len(transport.calls) == 3
+
+
+def test_transport_asks_for_medium_effort_and_adaptive_thinking() -> None:
+    captured: dict = {}
+
+    class _Messages:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            captured.update(kwargs)
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(_recorded()))],
+                stop_reason="end_turn",
+            )
+
+    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport.complete(_payload().to_dict())
+    assert captured["thinking"] == {"type": "adaptive"}
+    assert captured["output_config"]["effort"] == EFFORT
+    assert captured["output_config"]["format"]["type"] == "json_schema"
+    assert captured["max_tokens"] == MAX_TOKENS
+    # budget_tokens is a 400 on this model; effort is the depth lever.
+    assert "budget_tokens" not in json.dumps(captured["thinking"])
+
+
+def test_a_truncated_response_says_so_instead_of_bad_json() -> None:
+    class _Messages:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text='{"player_id": "48')],
+                stop_reason="max_tokens",
+            )
+
+    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    with pytest.raises(PlatformError, match="max_tokens"):
+        transport.complete(_payload().to_dict())

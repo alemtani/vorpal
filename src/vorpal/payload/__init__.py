@@ -1,5 +1,21 @@
 """Board assembly and payload serialisation. SPEC.md section 4."""
 
-from vorpal.payload.assemble import BOARD_CAPPED, build_payload, cap_board
+from vorpal.payload.assemble import (
+    BOARD_CAPPED,
+    DEFERRED_POSITIONS,
+    FALLER_ROUNDS,
+    build_payload,
+    cap_board,
+    position_depth,
+    remaining_need,
+)
 
-__all__ = ["BOARD_CAPPED", "build_payload", "cap_board"]
+__all__ = [
+    "BOARD_CAPPED",
+    "DEFERRED_POSITIONS",
+    "FALLER_ROUNDS",
+    "build_payload",
+    "cap_board",
+    "position_depth",
+    "remaining_need",
+]

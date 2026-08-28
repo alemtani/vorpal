@@ -453,6 +453,32 @@ class Proposal:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class Violation:
+    """One SPEC.md section 4 rule the model broke. Fails the call, not the run."""
+
+    code: str
+    message: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"code": self.code, "message": self.message}
+
+
+@dataclass(frozen=True, slots=True)
+class Recommendation:
+    """What the operator sees. A degraded pick still carries its violations.
+
+    `degraded` means the model's proposal never validated and `proposal` is the
+    calculator answer instead. Evals read `violations`; draft night reads
+    `proposal` and surfaces `violations` as banners.
+    """
+
+    proposal: Proposal
+    violations: tuple[Violation, ...]
+    degraded: bool
+    attempts: int
+
+
 def _board_row_to_dict(row: BoardRow) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "player_id": row.player_id,

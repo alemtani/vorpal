@@ -17,7 +17,7 @@ from vorpal.contracts import (
     Replacement,
     Slot,
 )
-from vorpal.model import AnthropicTransport, recommend
+from vorpal.model import AnthropicTransport, propose, recommend
 
 pytestmark = pytest.mark.live
 
@@ -77,3 +77,11 @@ def test_live_call_returns_a_board_player() -> None:
     )
     proposal = recommend(payload, AnthropicTransport())
     assert proposal.player_id in {"4866", "7564"}
+
+    # The draft-night path against a real response: it must validate on the
+    # first call, so nothing degrades and no retry is spent.
+    result = propose(payload, AnthropicTransport())
+    assert result.degraded is False
+    assert result.violations == ()
+    assert result.attempts == 1
+    assert result.proposal.player_id in {"4866", "7564"}
