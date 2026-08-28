@@ -4,7 +4,13 @@
 
 Personal NFL redraft tool. A `LeagueHost` adapter reads the platform.
 v1 implements Sleeper. ESPN would be another adapter, not a rewrite.
-Forecast (stats, ADP, ECR) stays in ingest. Valuation never imports a host.
+Forecast (stats, ADP, ECR, bye) is FantasyPros. It stays in ingest.
+Valuation never imports a host.
+
+Ingest is host-agnostic. Parameters are `host_players`, not `sleeper_*`.
+The host player map is a join directory (id, yahoo_id, name, pos, team).
+Player join has one implementation. New sources add an extractor, not a
+new matcher. Independent forecast fetches run in parallel and join.
 
 ## TDD
 
@@ -58,6 +64,8 @@ skips those is not finished.
   on redraft is a banner, not a refusal.
 - **Unknown seat:** omit `next_user_pick`, `picks_until_next`, `between`.
 - **`/players` has no bye.** Take bye from FantasyPros `player_bye_week`.
+- **Forecast is FantasyPros.** Counting stats, ADP, ECR, bye. Host `/players`
+  is the join directory. Do not fetch Sleeper projections.
 - **VOLS is last starter, two passes.** Bench is not absorbed. Spec
   section 3. The pick is the model's; `hint_argmax_vols` is a calculator.
 - **ECR is not the pick** and is not a valuation input. S2 then S5.

@@ -130,9 +130,9 @@ session; start it first.
 | ID | Scope | Owns | Depends | Status |
 |---|---|---|---|---|
 | S0 | Seed: contracts, errors, fixtures, CI, docs | root, `contracts.py`, `errors.py`, `platform/`, `tests/fixtures/`, `tools/` | — | DONE |
-| S1 | Sleeper documented reads | `src/vorpal/sleeper/**` | S0 | NOT STARTED |
-| S2 | Projections, ECR, override CSV | `src/vorpal/ingest/**` | S0 | NOT STARTED |
-| S3 | Slots, scoring source, seat, refusals | `src/vorpal/resolve/**` | S0 | NOT STARTED |
+| S1 | Sleeper documented reads | `src/vorpal/sleeper/**` | S0 | DONE |
+| S2 | FantasyPros forecast (stats, ADP, ECR) + override | `src/vorpal/ingest/**` | S0 | DONE |
+| S3 | Slots, scoring source, seat, refusals | `src/vorpal/resolve/**` | S0 | DONE |
 | S4 | Scoring, VOLS, weekly vector, delta | `src/vorpal/valuation/**` | S0 | DONE |
 | S5 | Board cap, payload, model call | `src/vorpal/payload/**`, `src/vorpal/model/**` | S0 | NOT STARTED |
 | S6 | The eleven gates, three baselines | `src/vorpal/evals/**` | S0 | NOT STARTED |
