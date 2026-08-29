@@ -32,7 +32,9 @@ def _pick(pick_no: int, player_id: str, *, position: str = "RB") -> Pick:
     )
 
 
-def _player(player_id: str, *, position: str = "RB", points: float = 200.0) -> ScoredPlayer:
+def _player(
+    player_id: str, *, position: str = "RB", points: float = 200.0
+) -> ScoredPlayer:
     return ScoredPlayer(
         player_id=player_id,
         position=position,

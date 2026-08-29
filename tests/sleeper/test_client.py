@@ -364,9 +364,7 @@ def test_get_players_raw_returns_the_wire_body_with_yahoo_id(
     tmp_path: Path,
 ) -> None:
     """Ingest joins on yahoo_id, which parse drops. The raw body keeps it."""
-    payload = json.loads(
-        (FIXTURES / "players.json").read_text(encoding="utf-8")
-    )
+    payload = json.loads((FIXTURES / "players.json").read_text(encoding="utf-8"))
     with respx.mock(base_url=BASE) as mock:
         mock.get("/players/nfl").mock(return_value=httpx.Response(200, json=payload))
         client = SleeperClient(players_cache_path=tmp_path / "players.json")
