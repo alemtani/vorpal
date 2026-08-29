@@ -138,7 +138,7 @@ session; start it first.
 | S6 | The eleven gates, three baselines | `src/vorpal/evals/**` | S0 | DONE |
 | S7 | HTML board, poll loop, data age | `src/vorpal/board/**` | S0 | DONE |
 | S8 | CLI, wiring, end-to-end test | `src/vorpal/cli.py`, `tests/e2e/**` | S1–S5, S7 | NOT STARTED |
-| S9 | Golden set + regret fixtures | `tests/golden/**`, `tests/regret/**` | S0 | NOT STARTED |
+| S9 | Golden set + regret fixtures | `tests/golden/**`, `tests/regret/**` | S0 | DONE |
 | S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | NOT STARTED |
 
 Prompts: `docs/prompts/S1.md` … `docs/prompts/S10.md`.
