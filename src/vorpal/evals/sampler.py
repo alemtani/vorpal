@@ -1,4 +1,21 @@
-"""ADP-order-plus-noise boards, plus hostile states. Does not call the model."""
+"""Board states to run the gates against.
+
+A gate needs a board to judge. This builds them two ways.
+
+`sample_adp_order` and friends fake a draft: players come off the board
+in average-draft-position order with some noise, because that is roughly
+how a real room drafts. Stop after N picks and you have a plausible board
+at pick N. Vary the noise and you get many of them.
+
+`hostile_states` is the opposite — five boards hand-built to be awkward.
+An empty starter slot in the last rounds, a roster stacking one bye week,
+a run on a position, a board where every VOLS is within a point, and a
+draft where we do not know which seat is ours. These are the situations
+where a policy that looks fine on average falls over.
+
+Nothing here samples from the model. A test set the model helped write
+cannot measure the model.
+"""
 
 from __future__ import annotations
 

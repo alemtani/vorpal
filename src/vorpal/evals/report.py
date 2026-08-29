@@ -1,4 +1,16 @@
-"""Four pass rates per gate, model against the three baselines."""
+"""The scoreboard: one row per gate, four pass rates side by side.
+
+Reading a row: the model's rate is only interesting next to
+`argmax_vols`. If they match, the gate did not distinguish the model from
+a one-line rule, and we mark the row NO DISCRIMINATING POWER. That is a
+verdict on the gate or the fixtures, not on the model — a gate nothing
+can fail teaches us nothing.
+
+Skips are counted apart from the rate and printed as `s=N`. A gate that
+ran twice and passed twice reads 1.00 the same as one that ran two
+hundred times, so the skip count is how you catch a rate resting on
+almost no evidence.
+"""
 
 from __future__ import annotations
 
@@ -20,9 +32,12 @@ _COL = 16
 
 @dataclass(frozen=True, slots=True)
 class GateScore:
-    """Pass/fail/skip counts for one gate across policies.
+    """One gate's counts, per policy. `counts` maps policy to (pass, fail, skip).
 
-    Pass rate is passes / (passes + fails). Skips are not a zero.
+    Pass rate divides by the runs that actually happened, so a missing
+    fixture never counts against a policy. All skips means no rate at all
+    (`None`), printed as a dash — we did not measure this, which is a
+    different statement from measuring zero.
     """
 
     gate: Gate
@@ -43,7 +58,11 @@ class GateScore:
         return passed + failed
 
     def separates(self) -> bool:
-        """True only when model and argmax_vols both ran and posted different rates."""
+        """Did this gate tell the model apart from the argmax_vols baseline?
+
+        Both must have actually run. Equal rates mean the gate earned
+        nothing, and neither does a gate only one of them was scored on.
+        """
         model = self.pass_rate("model")
         hint = self.pass_rate("argmax_vols")
         if model is None or hint is None:

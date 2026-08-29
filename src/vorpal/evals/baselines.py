@@ -1,4 +1,18 @@
-"""Fixed policies. Flags are set mechanically so the XOR gates can fire."""
+"""Three dumb policies to measure the model against.
+
+Each is a one-line rule with no judgment in it: take our VOLS pick, take
+the best ADP, take the best ECR. They run against every fixture the model
+does.
+
+The point is the comparison. `argmax_vols` passes most gates by
+construction, and that is intended — a gate where the model scores the
+same as a one-line rule is not measuring anything the rule does not
+already give us for free. See `report.NO_DISCRIMINATING_POWER`.
+
+Flags are set mechanically here, by comparing the pick against the hint
+and against ecr_best. A baseline is not reasoning about dissent; it just
+never lies about it, so the XOR gates score it fairly.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +24,13 @@ from vorpal.evals.gates import ecr_best
 
 
 def argmax_vols(payload: Payload) -> Proposal:
-    """Pick `hint_argmax_vols`. Fall back to max vols if the hint is off the board."""
+    """Take the player our own VOLS math likes best.
+
+    Normally that is `hint_argmax_vols` straight from the payload. The
+    fallback recomputes it when the hint names someone already drafted,
+    breaking ties toward the later ADP — the player the room rates lower,
+    whom we are therefore less likely to get back.
+    """
     rows = _require_board(payload)
     chosen = next(
         (row for row in rows if row.player_id == payload.hint_argmax_vols),
@@ -22,14 +42,18 @@ def argmax_vols(payload: Payload) -> Proposal:
 
 
 def adp_follow(payload: Payload) -> Proposal:
-    """Best available ADP (lowest number)."""
+    """Take whoever the draft room rates highest. Pure herd-following."""
     rows = _require_board(payload)
     chosen = min(rows, key=lambda row: (row.adp, row.player_id))
     return _proposal(payload, chosen, "adp_follow")
 
 
 def ecr_follow(payload: Payload) -> Proposal:
-    """Best available overall ECR (lowest number). No ECR → argmax_vols."""
+    """Take whoever the experts rank highest, ignoring our own math.
+
+    Falls back to `argmax_vols` when no one left has a ranking at all,
+    which happens deep in a draft.
+    """
     rows = _require_board(payload)
     ranked = [row for row in rows if row.ecr is not None]
     if not ranked:
@@ -46,7 +70,12 @@ BASELINES: dict[str, Callable[[Payload], Proposal]] = {
 
 
 def choose_slot(row: BoardRow, payload: Payload) -> Slot:
-    """First legal starter that still has a need, else first legal starter."""
+    """Where this player would start.
+
+    Prefer a slot we still need filled, so a baseline does not fail the
+    schema gate on a technicality. Falls back to any legal starter, then
+    bench.
+    """
     starters = [slot for slot in payload.config.slots if slot is not Slot.BN]
     legal = [slot for slot in starters if slot in row.legal_slots]
     for slot in legal:

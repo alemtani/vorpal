@@ -1,4 +1,8 @@
-"""Each gate is binary. Missing input is NOT_PERFORMED, not a fail."""
+"""One class per gate. Each case is named for the situation it describes.
+
+Every gate is binary: PASS or FAIL when it ran, NOT_PERFORMED when an
+input was missing. NOT_PERFORMED is never a soft fail.
+"""
 
 from __future__ import annotations
 
@@ -269,7 +273,10 @@ class TestByeHole:
         assert result.gate is Gate.BYE_HOLE
 
     def test_fail_when_rec_bye_opens_a_slot_an_alt_would_fill(self) -> None:
-        # Empty WR starter. Rec is a WR on bye 9. wr1 (bye 5) would play week 9.
+        # The WR starter slot is empty and the roster holds one RB. The pick
+        # is a WR on bye 9, so in week 9 that WR slot starts nobody. The
+        # alternative wr1 is on bye 5 and would have played week 9. Same
+        # slot, same need, one of them costs a zero — so the pick fails.
         payload = make_payload(
             state=make_state(
                 user_roster=(
@@ -294,6 +301,9 @@ class TestByeHole:
         _outcome(result, GateOutcome.FAIL)
 
     def test_pass_when_no_different_bye_alternative_exists(self) -> None:
+        # The gate only fails a pick we could have avoided. Here every WR on
+        # the board is on bye 9, so any choice leaves the same week-9 hole.
+        # Nothing to have done differently, so it passes.
         board = (
             board_row("wr-a", position="WR", bye=9, ecr=5, vols=50.0),
             board_row("wr-b", position="WR", bye=9, ecr=8, vols=40.0, adp=10.0),
@@ -323,23 +333,35 @@ class TestByeHole:
 
 
 class TestStability:
+    # stability_ids is the pick from each of five reruns against a
+    # byte-identical payload. Three of five must agree: an odd number, and a
+    # simple majority of it. Five different answers means the recommendation
+    # is a dice roll, and a human reading the board cannot tell which roll
+    # they got.
+
     def test_pass_three_of_five_match(self, payload: Payload) -> None:
+        # rb1 three times out of five. The other two do not have to agree.
         fixtures = GateFixtures(stability_ids=("rb1", "rb1", "wr1", "rb1", "te1"))
         result = stability(payload, make_proposal("rb1"), fixtures)
         _outcome(result, GateOutcome.PASS)
         assert result.gate is Gate.STABILITY
 
     def test_fail_when_no_id_reaches_three(self, payload: Payload) -> None:
+        # Five runs, five different players. No majority, so no judgment.
         fixtures = GateFixtures(stability_ids=("rb1", "wr1", "rb2", "te1", "k1"))
         result = stability(payload, make_proposal("rb1"), fixtures)
         _outcome(result, GateOutcome.FAIL)
 
     def test_not_performed_on_coin_flip(self, payload: Payload) -> None:
+        # The model called the candidates equivalent. Disagreeing with itself
+        # about a tie is honest, not unstable, so we do not score it.
         fixtures = GateFixtures(stability_ids=("rb1", "rb1", "rb1", "rb1", "rb1"))
         result = stability(payload, make_proposal("rb1", coin_flip=True), fixtures)
         _outcome(result, GateOutcome.NOT_PERFORMED)
 
     def test_not_performed_without_five_ids(self, payload: Payload) -> None:
+        # Three of three is not the same evidence as three of five. Rather
+        # than rescale the threshold, skip a fixture that is not five runs.
         fixtures = GateFixtures(stability_ids=("rb1", "rb1", "rb1"))
         result = stability(payload, make_proposal("rb1"), fixtures)
         _outcome(result, GateOutcome.NOT_PERFORMED)
@@ -350,6 +372,13 @@ class TestStability:
 
 
 class TestVolsInvariant:
+    # replacement_rank_delta is how far a third VOLS pass would move each
+    # position's replacement player, measured in ranks. {"RB": 3} means the
+    # RB baseline would slide from RB30 to RB33. Two passes then stop is the
+    # spec; more than two ranks of movement means it had not settled, and
+    # every VOLS number is then an artifact of where we stopped counting.
+    # This gate judges our own arithmetic, not the model.
+
     def test_pass_within_two_ranks(self, payload: Payload) -> None:
         fixtures = GateFixtures(replacement_rank_delta={"RB": 2, "WR": 0, "QB": -1})
         result = vols_invariant(payload, make_proposal("rb1"), fixtures)
@@ -357,11 +386,13 @@ class TestVolsInvariant:
         assert result.gate is Gate.VOLS_INVARIANT
 
     def test_fail_when_a_position_moves_more_than_two(self, payload: Payload) -> None:
+        # RB replacement would slide three ranks further down. Too far.
         fixtures = GateFixtures(replacement_rank_delta={"RB": 3})
         result = vols_invariant(payload, make_proposal("rb1"), fixtures)
         _outcome(result, GateOutcome.FAIL)
 
     def test_fail_on_negative_move_past_two(self, payload: Payload) -> None:
+        # Direction does not matter. Four ranks up is as unsettled as down.
         fixtures = GateFixtures(replacement_rank_delta={"TE": -4})
         result = vols_invariant(payload, make_proposal("rb1"), fixtures)
         _outcome(result, GateOutcome.FAIL)
@@ -371,6 +402,8 @@ class TestVolsInvariant:
         _outcome(result, GateOutcome.NOT_PERFORMED)
 
     def test_empty_delta_map_is_performed_and_passes(self, payload: Payload) -> None:
+        # Empty map: we computed the deltas and nothing moved. A real pass,
+        # unlike None, which means nobody computed them.
         result = vols_invariant(
             payload, make_proposal("rb1"), GateFixtures(replacement_rank_delta={})
         )
@@ -378,18 +411,31 @@ class TestVolsInvariant:
 
 
 class TestRegret:
+    # available_at_next is read off a completed public draft: who was still
+    # on the board when our turn came round again. No survival model.
+    #
+    # One failure only: we took the player who would have kept until next
+    # turn anyway, and the alternative we named got drafted meanwhile.
+    # Reversing the order gets both. Anything else is not a loss.
+
     def test_pass_when_rec_was_gone_by_next_pick(self, payload: Payload) -> None:
+        # rb1 is not in available_at_next: he was gone by our next turn, so
+        # taking him now was right, whatever happened to wr1.
         fixtures = GateFixtures(available_at_next=frozenset({"wr1", "te1"}))
         result = regret(payload, make_proposal("rb1", alternatives=("wr1",)), fixtures)
         _outcome(result, GateOutcome.PASS)
         assert result.gate is Gate.REGRET
 
     def test_pass_when_rec_and_alts_all_survived(self, payload: Payload) -> None:
+        # Both still there next turn. We were early, but we lost nobody, so
+        # there is no regret to measure.
         fixtures = GateFixtures(available_at_next=frozenset({"rb1", "wr1"}))
         result = regret(payload, make_proposal("rb1", alternatives=("wr1",)), fixtures)
         _outcome(result, GateOutcome.PASS)
 
     def test_fail_when_rec_survived_and_an_alt_did_not(self, payload: Payload) -> None:
+        # rb1 survived to our next turn; wr1 did not. Taking wr1 first would
+        # have landed both. This is the only shape that fails.
         fixtures = GateFixtures(available_at_next=frozenset({"rb1", "te1"}))
         result = regret(payload, make_proposal("rb1", alternatives=("wr1",)), fixtures)
         _outcome(result, GateOutcome.FAIL)

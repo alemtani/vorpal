@@ -1,6 +1,32 @@
-"""Eval gates, baseline policies, sampler, and the four-column report.
+"""Does the model earn its tokens? This package answers that and nothing else.
 
-Pure functions. Zero network. No LLM-as-judge.
+Eleven gates, each a yes/no question about one recommendation:
+
+| Gate | Asks |
+|---|---|
+| `schema` | Is the answer even well-formed — real players, legal slot? |
+| `golden_forbid` | Did it make a pick a human marked as plainly wrong? |
+| `golden_require` | Did it at least name one of the picks a human says are right? |
+| `vols_dissent` | If it left our VOLS pick, did it flag that it was doing so? |
+| `ecr_dissent` | Same question against the expert consensus. |
+| `ecr_sanity` | Is the pick a defensible reach, or off the map entirely? |
+| `bye_hole` | Does the pick leave a starter slot empty on its own bye week? |
+| `stability` | Same board five times — do at least three answers agree? |
+| `vols_invariant` | Has our own VOLS arithmetic settled? (About us, not the model.) |
+| `regret` | Could we have had both names? Then we took them in the wrong order. |
+| `replay` | Would this roster have outscored the human's, on draft-day numbers? |
+
+Each returns PASS, FAIL, or NOT_PERFORMED. Missing input is
+NOT_PERFORMED, never a fail.
+
+`baselines` runs the same fixtures through three one-line rules, and
+`report` prints the four pass rates side by side. A gate where the model
+matches `argmax_vols` is not measuring anything.
+
+Pure functions. Zero network. No LLM-as-judge: nothing here asks a model
+whether a model was right.
+
+Read `gates.py` for the reasoning behind each rule.
 """
 
 from vorpal.evals.baselines import BASELINES, adp_follow, argmax_vols, ecr_follow

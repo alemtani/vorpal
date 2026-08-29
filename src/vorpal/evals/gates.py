@@ -1,4 +1,20 @@
-"""The eleven gates. Each is binary. A missing input is NOT_PERFORMED."""
+"""The eleven gates.
+
+A gate answers one yes/no question about one recommendation. It never
+scores, ranks, or grades. Three outcomes only:
+
+- PASS — the gate ran and the recommendation is fine.
+- FAIL — the gate ran and the recommendation is wrong.
+- NOT_PERFORMED — the gate could not run, because an input is missing.
+
+NOT_PERFORMED is not a soft fail. A gate with no fixture to check against
+has no opinion, and the report counts it separately so a missing file can
+never look like a passing grade.
+
+Every gate has the same signature, `(payload, proposal, fixtures)`, so
+`evaluate` can run all eleven in one pass. Gates that do not need the
+board ignore `payload`; gates that need nothing extra ignore `fixtures`.
+"""
 
 from __future__ import annotations
 
@@ -19,24 +35,33 @@ from vorpal.contracts import (
 from vorpal.evals._lineup import empty_startable_slots, legal_slots_for_position
 from vorpal.evals.types import GateFixtures
 
+# A hypothetical third VOLS pass may move a position's replacement rank by
+# this much and no more. See `vols_invariant`.
+MAX_RANK_SHIFT = 2
+
+# Stability asks the same question five times. Three is the majority.
+STABILITY_RUNS = 5
+STABILITY_AGREE = 3
+
 
 def draft_margin(payload: Payload) -> int:
-    """Teams in the first half of the draft, else two times teams.
+    """How far past the consensus best `ecr_sanity` lets a pick sit.
 
-    First half is `pick_no * 2 <= teams * rounds`. One round of slack
-    early, two late.
+    One round of slack in the first half of the draft, two in the second.
+    Late picks are lottery tickets and the consensus is thinner there, so
+    the rule loosens rather than pretending to know better.
     """
     teams = payload.config.teams
-    total = teams * payload.config.rounds
-    if payload.state.pick_no * 2 <= total:
-        return teams
-    return 2 * teams
+    total_picks = teams * payload.config.rounds
+    first_half = payload.state.pick_no * 2 <= total_picks
+    return teams if first_half else 2 * teams
 
 
 def ecr_best(payload: Payload) -> int | None:
-    """Minimum overall ECR among board players that have one.
+    """Best (lowest) overall ECR still on the board, or None if nobody has one.
 
-    Not a positional list: min across every row, whatever position.
+    Overall, not positional: the best player left at any position. This is
+    the reference point both ECR gates measure against.
     """
     ranks = [row.ecr for row in payload.board if row.ecr is not None]
     if not ranks:
@@ -49,15 +74,24 @@ def schema(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Is the answer even well-formed?
+
+    The pick and every alternative must be a player who is actually still
+    on the board, and the slot must be one the pick can legally start in.
+
+    Fails on a model that recommends someone drafted two rounds ago, or
+    that starts a kicker at RB. No judgment involved — the answer is
+    unusable, so every later gate is measuring noise.
+    """
     del fixtures
     missing = _need_proposal(Gate.SCHEMA, proposal)
     if missing is not None:
         return missing
     assert proposal is not None
-    ids = {row.player_id for row in payload.board}
-    if proposal.player_id not in ids:
+    on_board = {row.player_id for row in payload.board}
+    if proposal.player_id not in on_board:
         return _fail(Gate.SCHEMA, "rec not on board")
-    if any(alt not in ids for alt in proposal.alternatives):
+    if any(alt not in on_board for alt in proposal.alternatives):
         return _fail(Gate.SCHEMA, "alternative not on board")
     rec = _row(payload, proposal.player_id)
     assert rec is not None
@@ -71,6 +105,12 @@ def golden_forbid(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Did it pick someone hand-marked as wrong for this board?
+
+    The forbid set is written by a human for one fixture: a kicker in
+    round 2, a third TE while a starter slot sits empty. These are picks
+    nobody needs a model to rule on, so a fail here is unambiguous.
+    """
     del payload
     missing = _need_proposal(Gate.GOLDEN_FORBID, proposal)
     if missing is not None:
@@ -89,6 +129,14 @@ def golden_require(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Did it at least name one of the picks a human says are right?
+
+    Naming it as an alternative counts. The gate asks whether the model
+    saw the right players, not whether it ranked them the way we would.
+
+    Example: superflex, two startable QBs left, eight teams still need
+    one. Any answer that never mentions either QB missed the run.
+    """
     del payload
     missing = _need_proposal(Gate.GOLDEN_REQUIRE, proposal)
     if missing is not None:
@@ -97,8 +145,8 @@ def golden_require(
     require = _fx(fixtures).require
     if require is None:
         return _skip(Gate.GOLDEN_REQUIRE, "no require set")
-    candidates = (proposal.player_id, *proposal.alternatives)
-    if any(player_id in require for player_id in candidates):
+    named = (proposal.player_id, *proposal.alternatives)
+    if any(player_id in require for player_id in named):
         return _pass(Gate.GOLDEN_REQUIRE)
     return _fail(Gate.GOLDEN_REQUIRE, "rec and alternatives miss the require set")
 
@@ -108,6 +156,17 @@ def vols_dissent(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """If it walked away from our own VOLS pick, did it say so?
+
+    Exactly one of these must be true: it picked `hint_argmax_vols`, or
+    it set the VOLS_DISSENT flag. Both, or neither, is a fail.
+
+    Disagreeing with the numbers is allowed and is most of the value we
+    are paying for. Doing it silently is not: the flag is what puts the
+    disagreement on the board where a human can overrule it in ten
+    seconds. Flagging dissent while agreeing is the same bug pointed the
+    other way — the flag stops meaning anything.
+    """
     del fixtures
     missing = _need_proposal(Gate.VOLS_DISSENT, proposal)
     if missing is not None:
@@ -115,11 +174,11 @@ def vols_dissent(
     assert proposal is not None
     if payload.hint_argmax_vols == "":
         return _skip(Gate.VOLS_DISSENT, "no hint_argmax_vols")
-    agree = proposal.player_id == payload.hint_argmax_vols
+    agreed = proposal.player_id == payload.hint_argmax_vols
     flagged = Flag.VOLS_DISSENT in proposal.flags
-    if agree ^ flagged:
+    if agreed ^ flagged:
         return _pass(Gate.VOLS_DISSENT)
-    if agree:
+    if agreed:
         return _fail(Gate.VOLS_DISSENT, "agreed with the hint and set VOLS_DISSENT")
     return _fail(Gate.VOLS_DISSENT, "silent VOLS dissent")
 
@@ -129,6 +188,12 @@ def ecr_dissent(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Same XOR as `vols_dissent`, against the expert consensus instead.
+
+    Picked the best player left by ECR, or set ECR_DISAGREE. Not both,
+    not neither. Passing over the consensus number one is a real call and
+    belongs on the board, not buried in prose.
+    """
     del fixtures
     missing = _need_proposal(Gate.ECR_DISSENT, proposal)
     if missing is not None:
@@ -138,11 +203,11 @@ def ecr_dissent(
     if best is None:
         return _skip(Gate.ECR_DISSENT, "no ECR on the board")
     rec = _row(payload, proposal.player_id)
-    agree = rec is not None and rec.ecr is not None and rec.ecr == best
+    agreed = rec is not None and rec.ecr is not None and rec.ecr == best
     flagged = Flag.ECR_DISAGREE in proposal.flags
-    if agree ^ flagged:
+    if agreed ^ flagged:
         return _pass(Gate.ECR_DISSENT)
-    if agree:
+    if agreed:
         return _fail(Gate.ECR_DISSENT, "picked ecr_best and set ECR_DISAGREE")
     return _fail(Gate.ECR_DISSENT, "silent ECR dissent")
 
@@ -152,6 +217,19 @@ def ecr_sanity(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Is the pick a defensible reach, or is it off the map?
+
+    A floor, not a target. `ecr_dissent` already covers *whether* it left
+    the consensus; this asks how far. The pick must sit within one round
+    of the best player left early, two rounds late.
+
+    Twelve-team league, best player left is ECR 40. Taking ECR 48 is a
+    reach we allow. Taking ECR 200 is not a read, it is a mistake.
+
+    `ecr_min` is the escape hatch: if a single expert has the player much
+    higher, the consensus is split rather than settled, and taking the
+    optimistic side of a split is a call we let stand.
+    """
     del fixtures
     missing = _need_proposal(Gate.ECR_SANITY, proposal)
     if missing is not None:
@@ -175,6 +253,21 @@ def bye_hole(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Does this pick leave a starter slot empty on its own bye week?
+
+    Say your WR starter slot is still empty and the pick is a WR on bye
+    9. Come week 9 you start nobody there. Another WR on the board is on
+    bye 5 and would have played that week. Same position, same slot, one
+    of them costs you a zero — that is a fail.
+
+    The comparison is always run at the pick's bye week: count the empty
+    starter slots with the pick added, then with each different-bye
+    alternative added instead. A slot that is empty in the first count
+    and filled in the second is the hole.
+
+    Skipped when the pick has no bye, and passed when every alternative
+    shares its bye — there is nothing better to have done.
+    """
     del fixtures
     missing = _need_proposal(Gate.BYE_HOLE, proposal)
     if missing is not None:
@@ -195,6 +288,8 @@ def bye_hole(
     rec_empty = Counter(_empties_with(payload, rec, rec.bye))
     for alt in alts:
         alt_empty = Counter(_empties_with(payload, alt, rec.bye))
+        # Counter subtraction keeps only positive counts: slots left empty
+        # by the pick that this alternative would have covered.
         if rec_empty - alt_empty:
             return _fail(
                 Gate.BYE_HOLE,
@@ -208,6 +303,21 @@ def stability(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Ask the same question five times. Do at least three answers agree?
+
+    `stability_ids` is one run of the model per entry, all five against a
+    byte-identical payload. Five different answers means the pick is a
+    dice roll, not a judgment, and a human reading the board has no way
+    to tell which roll they got.
+
+    Five and three are the cheapest honest test: an odd number, and a
+    simple majority of it. The count is fixed, so a fixture that does not
+    hold exactly five runs is skipped rather than scored on fewer.
+
+    Skipped when the model declares `coin_flip`. It is saying the
+    candidates are equivalent, and disagreeing with itself about a tie is
+    honest rather than unstable.
+    """
     del payload
     missing = _need_proposal(Gate.STABILITY, proposal)
     if missing is not None:
@@ -216,10 +326,10 @@ def stability(
     if proposal.coin_flip:
         return _skip(Gate.STABILITY, "coin_flip")
     ids = _fx(fixtures).stability_ids
-    if ids is None or len(ids) != 5:
+    if ids is None or len(ids) != STABILITY_RUNS:
         return _skip(Gate.STABILITY, "need five identical-payload player_ids")
-    top = max(Counter(ids).values())
-    if top >= 3:
+    most_agreed = max(Counter(ids).values())
+    if most_agreed >= STABILITY_AGREE:
         return _pass(Gate.STABILITY)
     return _fail(Gate.STABILITY, "fewer than 3 of 5 share a player_id")
 
@@ -229,6 +339,27 @@ def vols_invariant(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Has our own VOLS number settled, or is it still moving?
+
+    VOLS is `points - replacement.points`, and the definition is
+    circular: the replacement is the worst startable player at a
+    position, but who starts is decided by VOLS. We break the circle by
+    ranking on raw points, picking replacements, re-ranking on that, and
+    picking once more. Two passes, then stop.
+
+    This gate checks the stopping was safe. `replacement_rank_delta` is
+    how far one more hypothetical pass would move each position's
+    replacement, in ranks. Superflex is where this bites: valuing QBs
+    properly pushes the QB replacement from, say, QB13 to QB20, and if
+    another pass would move it again by four, then every QB's VOLS is an
+    artifact of where we stopped counting rather than a number.
+
+    So: no position may move by more than two. An empty map means we
+    computed the deltas and nothing moved — a real pass. A missing map
+    means nobody computed them, which is a skip.
+
+    This gate is about the tool's own arithmetic, not about the model.
+    """
     del payload
     missing = _need_proposal(Gate.VOLS_INVARIANT, proposal)
     if missing is not None:
@@ -237,7 +368,7 @@ def vols_invariant(
     if delta is None:
         return _skip(Gate.VOLS_INVARIANT, "no replacement-rank deltas")
     for position, move in delta.items():
-        if abs(move) > 2:
+        if abs(move) > MAX_RANK_SHIFT:
             return _fail(
                 Gate.VOLS_INVARIANT,
                 f"{position} replacement rank moved by {move}",
@@ -250,6 +381,23 @@ def regret(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Could you have had both? Then you took them in the wrong order.
+
+    You named two players you wanted. You took the one who was still
+    sitting there at your next turn anyway, and the other one got
+    drafted. Taking them the other way round gets you both. That is the
+    only thing this gate fails.
+
+    Everything else passes. Your pick was gone by your next turn — you
+    were right to take him. Everyone survived — you lost nothing.
+
+    No survival model and no judge: `available_at_next` is read off a
+    completed public draft, replayed to your pick with the board frozen.
+    Who was still there is a matter of record.
+
+    This is the tool's only measurement of wait-versus-take, which the
+    spec hands to the model outright.
+    """
     del payload
     missing = _need_proposal(Gate.REGRET, proposal)
     if missing is not None:
@@ -258,9 +406,9 @@ def regret(
     available = _fx(fixtures).available_at_next
     if available is None:
         return _skip(Gate.REGRET, "no completed-draft fixture")
-    if proposal.player_id in available and any(
-        alt not in available for alt in proposal.alternatives
-    ):
+    rec_survived = proposal.player_id in available
+    an_alt_was_taken = any(alt not in available for alt in proposal.alternatives)
+    if rec_survived and an_alt_was_taken:
         return _fail(Gate.REGRET, "rec survived and a listed alternative did not")
     return _pass(Gate.REGRET)
 
@@ -270,6 +418,13 @@ def replay(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
+    """Would the policy's roster have outscored the human's, on paper?
+
+    Both lineups are summed with the same dated projections — what was
+    knowable on draft day, not what happened. Actual season results are
+    mostly luck and injuries, and scoring a draft on them rewards the
+    lucky pick over the right one, so they are never an input here.
+    """
     del payload
     missing = _need_proposal(Gate.REPLAY, proposal)
     if missing is not None:
@@ -285,19 +440,27 @@ def replay(
 
 
 GateFn = Callable[[Payload, Proposal | None, GateFixtures | None], GateResult]
-GATE_FNS: tuple[GateFn, ...] = (
-    schema,
-    golden_forbid,
-    golden_require,
-    vols_dissent,
-    ecr_dissent,
-    ecr_sanity,
-    bye_hole,
-    stability,
-    vols_invariant,
-    regret,
-    replay,
+
+# The registry. To add a gate: add its member to the Gate enum in
+# contracts.py, write the function above, and add the pair here. The
+# assert below is the whole wiring check.
+GATES: tuple[tuple[Gate, GateFn], ...] = (
+    (Gate.SCHEMA, schema),
+    (Gate.GOLDEN_FORBID, golden_forbid),
+    (Gate.GOLDEN_REQUIRE, golden_require),
+    (Gate.VOLS_DISSENT, vols_dissent),
+    (Gate.ECR_DISSENT, ecr_dissent),
+    (Gate.ECR_SANITY, ecr_sanity),
+    (Gate.BYE_HOLE, bye_hole),
+    (Gate.STABILITY, stability),
+    (Gate.VOLS_INVARIANT, vols_invariant),
+    (Gate.REGRET, regret),
+    (Gate.REPLAY, replay),
 )
+
+# The report indexes rows by Gate, so evaluate() must emit every gate,
+# once, in enum order.
+assert tuple(gate for gate, _fn in GATES) == tuple(Gate)
 
 
 def evaluate(
@@ -305,15 +468,17 @@ def evaluate(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> tuple[GateResult, ...]:
-    """Run every gate in Gate enum order against one proposal."""
-    return tuple(fn(payload, proposal, fixtures) for fn in GATE_FNS)
+    """Run all eleven gates against one proposal, in Gate enum order."""
+    return tuple(fn(payload, proposal, fixtures) for _gate, fn in GATES)
 
 
 def _fx(fixtures: GateFixtures | None) -> GateFixtures:
+    """No fixtures at all reads the same as fixtures with every field unset."""
     return fixtures if fixtures is not None else GateFixtures()
 
 
 def _need_proposal(gate: Gate, proposal: Proposal | None) -> GateResult | None:
+    """Every gate judges a proposal. No proposal, nothing to judge."""
     if proposal is None:
         return _skip(gate, "no proposal")
     return None
@@ -327,19 +492,28 @@ def _row(payload: Payload, player_id: str) -> BoardRow | None:
 
 
 def _empties_with(payload: Payload, added: BoardRow, week: int) -> tuple[Slot, ...]:
-    players = tuple(
+    """Starter slots left empty in `week` if we drafted `added` right now.
+
+    Takes the current roster, appends the one hypothetical player, and
+    fills the lineup. Only `week` matters, so a player on bye that week
+    counts as absent.
+    """
+    roster = tuple(
         _player_legal_and_bye(player) for player in payload.state.user_roster
-    ) + ((added.legal_slots, added.bye),)
-    return empty_startable_slots(payload.config.slots, players, week)
+    )
+    with_added = roster + ((added.legal_slots, added.bye),)
+    return empty_startable_slots(payload.config.slots, with_added, week)
 
 
 def _player_legal_and_bye(
     player: RosterPlayer,
 ) -> tuple[tuple[Slot, ...], int | None]:
+    """Roster players carry a position; the lineup filler wants slots."""
     return legal_slots_for_position(player.position), player.bye
 
 
 def _lineup_sum(player_ids: tuple[str, ...], points: dict[str, float]) -> float:
+    """A player with no dated projection contributes zero, not an error."""
     return sum(points.get(player_id, 0.0) for player_id in player_ids)
 
 
