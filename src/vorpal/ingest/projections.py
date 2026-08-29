@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from vorpal.contracts import Banner, Host, StatRow
+from vorpal.contracts import Banner, Host, Player, StatRow
 from vorpal.errors import DataRefusal, PlatformError
 from vorpal.ingest.cache import adp_cache, projection_cache
 from vorpal.ingest.client import FantasyProsClient
@@ -131,7 +131,7 @@ def identities_from_projections(
 
 def to_stat_rows(
     records: Sequence[ProjectionRecord],
-    host_players: Mapping[str, Any],
+    host_players: Mapping[str, Player],
     *,
     season: str,
     allow_name_match: bool = True,
@@ -154,6 +154,7 @@ def to_stat_rows(
                 adp=record.adp,
                 gp=record.gp,
                 market_only=not record.stats,
+                bye=record.bye,
             )
         )
     banners: list[Banner] = []

@@ -8,6 +8,7 @@ from typing import Any, cast
 from vorpal.contracts import (
     AdpVariant,
     Draft,
+    ExternalId,
     Host,
     League,
     LeagueFormat,
@@ -50,6 +51,20 @@ def _require_mapping(payload: Any, what: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise PlatformError(f"Sleeper {what} is not an object")
     return cast(dict[str, Any], payload)
+
+
+# Sleeper's cross-reference ids. The wire names stop here; the source tag
+# is `ExternalId`, so it cannot drift from what the join looks up.
+_EXTERNAL_ID_KEYS = ((ExternalId.YAHOO, "yahoo_id"),)
+
+
+def _external_ids(row: Mapping[str, Any]) -> tuple[tuple[ExternalId, str], ...]:
+    out: list[tuple[ExternalId, str]] = []
+    for source, key in _EXTERNAL_ID_KEYS:
+        value = _optional_str(row.get(key))
+        if value is not None:
+            out.append((source, value))
+    return tuple(out)
 
 
 def _optional_str(value: Any) -> str | None:
@@ -271,4 +286,5 @@ class SleeperHost(LeagueHost):
             years_exp=_as_int_or_none(row.get("years_exp")),
             number=_as_int_or_none(row.get("number")),
             bye=None,
+            external_ids=_external_ids(row),
         )

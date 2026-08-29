@@ -12,6 +12,7 @@ import respx
 
 from vorpal.contracts import Draft, Host, League, Pick, Player, User
 from vorpal.errors import PlatformError
+from vorpal.platform import LeagueClient
 from vorpal.sleeper import SleeperClient, backoff_seconds
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "sleeper"
@@ -358,3 +359,23 @@ def test_default_clock_and_sleep_come_from_time(
     finally:
         client.close()
     assert slept == pytest.approx([60.0 / 1000.0])
+
+
+def test_get_players_carries_the_external_ids_the_join_needs(
+    tmp_path: Path,
+) -> None:
+    """Ingest joins on yahoo_id. It reaches ingest as a generic external id."""
+    payload = json.loads((FIXTURES / "players.json").read_text(encoding="utf-8"))
+    with respx.mock(base_url=BASE) as mock:
+        mock.get("/players/nfl").mock(return_value=httpx.Response(200, json=payload))
+        client = SleeperClient(players_cache_path=tmp_path / "players.json")
+        players = client.get_players()
+        cached = client.get_players()
+        client.close()
+    assert players == cached
+    assert any(("yahoo", "30182") in player.external_ids for player in players.values())
+
+
+def test_the_client_satisfies_the_league_client_protocol() -> None:
+    """The CLI depends on the protocol, never on this class."""
+    assert issubclass(SleeperClient, LeagueClient)
