@@ -86,7 +86,7 @@ class SleeperClient:
         """GET /players/nfl. Cached to disk for one day. No active=true filter."""
         cached = self._read_players_cache()
         if cached is not None:
-            return self._host.parse_players(cached)
+            return self._parse(cached, self._host.parse_players)
         payload = self._get("/players/nfl")
         players = self._parse(payload, self._host.parse_players)
         self._write_players_cache(payload)

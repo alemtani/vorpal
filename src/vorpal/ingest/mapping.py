@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from vorpal.contracts import ExternalId, Player
 from vorpal.errors import DataRefusal
 
 _SUFFIXES = re.compile(r"\b(?:jr|sr|ii|iii|iv|v)\b", re.IGNORECASE)
@@ -85,28 +86,24 @@ class JoinHit:
 class HostPlayerIndex:
     """Join directory from a host player map.
 
+    Takes generic ``Player`` rows, so no host wire name reaches this module.
     Indexes host id, yahoo_id, name+pos+team, and name+pos. Ambiguous
     name keys are a miss, not a guess. First yahoo_id wins.
     """
 
-    def __init__(self, players: Mapping[str, Any]) -> None:
+    def __init__(self, players: Mapping[str, Player]) -> None:
         self._by_id: set[str] = set()
-        self._yahoo: dict[str, str] = {}
+        self._external: dict[tuple[ExternalId, str], str] = {}
         self._by_name_pos_team: dict[tuple[str, str, str | None], list[str]] = {}
         self._by_name_pos: dict[tuple[str, str], list[str]] = {}
         for pid, row in players.items():
-            if not isinstance(row, dict):
-                continue
             host_id = str(pid)
             self._by_id.add(host_id)
-            yahoo_raw = row.get("yahoo_id")
-            if yahoo_raw not in (None, ""):
-                self._yahoo.setdefault(str(yahoo_raw), host_id)
-            name = normalize_name(player_display_name(row))
-            pos = normalize_pos(str(row.get("position") or ""))
-            team = normalize_team(
-                None if row.get("team") in (None, "") else str(row.get("team"))
-            )
+            for source, value in row.external_ids:
+                self._external.setdefault((source, value), host_id)
+            name = normalize_name(row.name)
+            pos = normalize_pos(row.position)
+            team = normalize_team(row.team)
             self._by_name_pos_team.setdefault((name, pos, team), []).append(host_id)
             self._by_name_pos.setdefault((name, pos), []).append(host_id)
 
@@ -114,8 +111,9 @@ class HostPlayerIndex:
         """host id, then yahoo_id, then name+pos+team, then name+pos."""
         if row.host_id and row.host_id in self._by_id:
             return JoinHit(row.host_id, "player_id", False)
-        if row.yahoo_id and row.yahoo_id in self._yahoo:
-            return JoinHit(self._yahoo[row.yahoo_id], "yahoo_id", False)
+        key = (ExternalId.YAHOO, row.yahoo_id)
+        if row.yahoo_id and key in self._external:
+            return JoinHit(self._external[key], "yahoo_id", False)
         if not allow_name_match:
             return None
         name = normalize_name(row.name)
@@ -151,13 +149,6 @@ def normalize_team(team: str | None) -> str | None:
     return text or None
 
 
-def player_display_name(row: Mapping[str, Any]) -> str:
-    full = row.get("full_name")
-    if full:
-        return str(full)
-    return f"{row.get('first_name') or ''} {row.get('last_name') or ''}".strip()
-
-
 def as_id(value: Any) -> str | None:
     if value in (None, ""):
         return None
@@ -175,7 +166,7 @@ def host_id_from_fp(row: Mapping[str, Any]) -> str | None:
 
 def map_rows(
     sources: Sequence[MappingRow],
-    players: Mapping[str, Any],
+    players: Mapping[str, Player],
     *,
     allow_name_match: bool = True,
     top_n: int = 300,

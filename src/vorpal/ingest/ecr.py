@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from vorpal.contracts import Banner, EcrRow
+from vorpal.contracts import Banner, EcrRow, Player
 from vorpal.errors import PlatformError
 from vorpal.ingest.cache import ecr_cache
 from vorpal.ingest.client import FantasyProsClient
@@ -30,7 +30,7 @@ ECR_MISSING = Banner(
 
 def parse_ecr(
     payloads: Sequence[Any],
-    host_players: Mapping[str, Any],
+    host_players: Mapping[str, Player],
 ) -> tuple[tuple[EcrRow, ...], tuple[Banner, ...]]:
     """Join FP overall ranks onto host ids.
 
@@ -112,7 +112,7 @@ def fetch_ecr(
     *,
     scoring: str,
     superflex: bool,
-    host_players: Mapping[str, Any],
+    host_players: Mapping[str, Player],
     client: FantasyProsClient | None = None,
 ) -> tuple[tuple[EcrRow, ...], tuple[Banner, ...]]:
     key = (season, scoring, superflex)
