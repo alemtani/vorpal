@@ -14,6 +14,17 @@ class Host(StrEnum):
     ESPN = "espn"
 
 
+class ExternalId(StrEnum):
+    """A source of cross-reference player ids, for joining across providers.
+
+    The host adapter tags what it publishes; ``ingest`` looks up by the same
+    member. One definition, so a host and the join cannot disagree on the
+    spelling and fall through to name matching in silence.
+    """
+
+    YAHOO = "yahoo"
+
+
 class LeagueFormat(StrEnum):
     """Scoring-league format. Adapters map host-specific codes onto this."""
 
@@ -143,10 +154,10 @@ class Player:
     number: int | None
     bye: int | None
     # ``(source, id)`` pairs the host publishes for cross-source joins, e.g.
-    # ``(("yahoo", "30182"),)``. No host wire name: the source is data, not a
-    # field. A host that publishes none leaves this empty and the join falls
-    # back to name and position.
-    external_ids: tuple[tuple[str, str], ...] = ()
+    # ``((ExternalId.YAHOO, "30182"),)``. No host wire name: the source is
+    # data, not a field. A host that publishes none leaves this empty and the
+    # join falls back to name and position.
+    external_ids: tuple[tuple[ExternalId, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

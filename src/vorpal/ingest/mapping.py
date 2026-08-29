@@ -7,16 +7,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from vorpal.contracts import Player
+from vorpal.contracts import ExternalId, Player
 from vorpal.errors import DataRefusal
 
 _SUFFIXES = re.compile(r"\b(?:jr|sr|ii|iii|iv|v)\b", re.IGNORECASE)
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
 _DST_POS = {"DST", "D/ST", "DEF"}
 _SLEEPER_ID_KEYS = ("sleeper_id", "player_sleeper_id", "sleeper_player_id")
-
-# The one external source FantasyPros and every host agree on.
-YAHOO = "yahoo"
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,7 +93,7 @@ class HostPlayerIndex:
 
     def __init__(self, players: Mapping[str, Player]) -> None:
         self._by_id: set[str] = set()
-        self._external: dict[tuple[str, str], str] = {}
+        self._external: dict[tuple[ExternalId, str], str] = {}
         self._by_name_pos_team: dict[tuple[str, str, str | None], list[str]] = {}
         self._by_name_pos: dict[tuple[str, str], list[str]] = {}
         for pid, row in players.items():
@@ -114,8 +111,9 @@ class HostPlayerIndex:
         """host id, then yahoo_id, then name+pos+team, then name+pos."""
         if row.host_id and row.host_id in self._by_id:
             return JoinHit(row.host_id, "player_id", False)
-        if row.yahoo_id and (YAHOO, row.yahoo_id) in self._external:
-            return JoinHit(self._external[(YAHOO, row.yahoo_id)], "yahoo_id", False)
+        key = (ExternalId.YAHOO, row.yahoo_id)
+        if row.yahoo_id and key in self._external:
+            return JoinHit(self._external[key], "yahoo_id", False)
         if not allow_name_match:
             return None
         name = normalize_name(row.name)

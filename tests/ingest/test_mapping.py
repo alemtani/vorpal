@@ -7,6 +7,7 @@ import pytest
 from vorpal.contracts import Host, Player
 from vorpal.errors import DataRefusal
 from vorpal.ingest.mapping import MappingRow, check_mapping, map_rows
+from vorpal.platform import SleeperHost
 
 
 def _player(
@@ -185,3 +186,30 @@ def test_empty_sources_is_data_refusal() -> None:
     report = map_rows([], {}, top_n=300)
     with pytest.raises(DataRefusal, match="ADP"):
         check_mapping(report)
+
+
+def test_the_host_adapter_and_the_join_agree_on_the_yahoo_tag() -> None:
+    """The one test that binds both sides of `Player.external_ids`.
+
+    The adapter tags the source and the join looks it up. They are in
+    different packages, so a mismatch would cost nothing but the yahoo
+    join, and name matching would quietly cover for it. Here the names
+    disagree on purpose: yahoo is the only way through.
+    """
+    players = SleeperHost().parse_players(
+        {
+            "s1": {
+                "player_id": "s1",
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "full_name": "Jane Doe",
+                "position": "WR",
+                "team": "KC",
+                "yahoo_id": 111,
+            }
+        }
+    )
+    report = map_rows([_row("fp1", "Someone Else", yahoo_id="111")], players)
+    assert report.matched == 1
+    assert report.hits[0].method == "yahoo_id"
+    assert report.hits[0].host_player_id == "s1"
