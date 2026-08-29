@@ -154,6 +154,7 @@ class StatRow:
     adp: float | None
     gp: float | None
     market_only: bool
+    bye: int | None = None
 
 
 @dataclass(frozen=True, slots=True)

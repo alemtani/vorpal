@@ -154,6 +154,7 @@ def to_stat_rows(
                 adp=record.adp,
                 gp=record.gp,
                 market_only=not record.stats,
+                bye=record.bye,
             )
         )
     banners: list[Banner] = []

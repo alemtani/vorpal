@@ -277,3 +277,10 @@ def test_fetch_timeout_is_platform_error() -> None:
     client = FantasyProsClient(api_key="k", http=httpx.Client())
     with pytest.raises(PlatformError, match="FantasyPros"):
         fetch_projections(SEASON, client=client)
+
+
+def test_stat_rows_carry_the_fantasypros_bye() -> None:
+    """`/players` has no bye. FantasyPros `player_bye_week` is the only source."""
+    records = parse_projections(_envelope(_player(player_bye_week="10")))
+    rows, _banners = to_stat_rows(records, _host("s1"), season=SEASON)
+    assert rows[0].bye == 10
