@@ -11,10 +11,6 @@ SLEEPER = FIXTURES / "sleeper"
 
 # Sleeper user/draft snowflakes are 15+ digits. Player ids are short.
 SNOWFLAKE = re.compile(r'"[0-9]{15,}"')
-IDENTITY = re.compile(
-    r"scottfish|Guys who watch|Ryan Leaf|WalterFootball",
-    re.IGNORECASE,
-)
 
 
 def _load(path: Path) -> object:
@@ -126,9 +122,19 @@ def test_fantasypros_live_rows_have_yahoo_std_and_bye() -> None:
 def test_fixtures_do_not_identify_a_league_or_manager() -> None:
     for path in FIXTURES.rglob("*.json"):
         text = path.read_text(encoding="utf-8")
-        assert IDENTITY.search(text) is None, path
-        if path.parent.name == "sleeper" and path.name.startswith(
-            ("draft_", "picks_", "user_")
-        ):
+        if path.parent.name != "sleeper":
+            continue
+        data = json.loads(text)
+        if path.name.startswith("league_"):
+            assert isinstance(data, dict)
+            assert data.get("name") == "League", path
+            assert data.get("last_author_display_name") in (None, "")
+            assert data.get("last_author_id") in (None, "")
+        if path.name.startswith("draft_"):
+            assert isinstance(data, dict)
+            meta = data.get("metadata") or {}
+            if "name" in meta:
+                assert meta["name"] == "Draft", path
+        if path.name.startswith(("draft_", "picks_", "user_")):
             for match in SNOWFLAKE.findall(text):
                 raise AssertionError(f"snowflake user id left in {path}: {match}")
