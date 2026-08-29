@@ -359,14 +359,14 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
 
     def draft_response(request: httpx.Request) -> httpx.Response:
         polls["draft"] += 1
-        # Two live polls, then the draft ends and the loop returns.
-        return httpx.Response(200, json=drafting if polls["draft"] <= 3 else complete)
+        # Three live polls, then the draft ends and the loop returns.
+        return httpx.Response(200, json=drafting if polls["draft"] <= 4 else complete)
 
     first = _pick("nobody")
     second = {**_pick("nobody2"), "draft_slot": 2, "pick_no": 2}
-    # The startup fetch, then an empty first poll, then the operator's own
-    # pick lands and the seat is twenty picks away.
-    scripted = [[], [], [first, second]]
+    # The startup fetch, an empty first poll, then the operator's own pick
+    # lands and the seat is twenty picks away. The last poll changes nothing.
+    scripted = [[], [], [first, second], [first, second]]
 
     def picks_response(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
@@ -377,13 +377,20 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     api["picks"].mock(side_effect=picks_response)
 
     asked: list[int] = []
+    built: list[int] = []
     real_propose = cli.propose
+    real_build_payload = cli.build_payload
 
     def counting_propose(payload: Any, transport: Any) -> Any:
         asked.append(payload.state.pick_no)
         return real_propose(payload, transport)
 
+    def counting_build_payload(config: Any, state: Any, *rest: Any) -> Any:
+        built.append((state.pick_no, config.status))
+        return real_build_payload(config, state, *rest)
+
     monkeypatch.setattr(cli, "propose", counting_propose)
+    monkeypatch.setattr(cli, "build_payload", counting_build_payload)
 
     argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
     code = main(argv, transport=HintTransport(), sleep=lambda _s: None, now=lambda: 0.0)
@@ -391,5 +398,8 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     # Pick 1 is one away from the seat, so the model runs. Pick 3 is twenty
     # away: the board turns over before the operator can act on that answer.
     assert asked == [1]
+    # Four polls, three boards. The third poll found pick 3 again and built
+    # nothing. The fourth rebuilt only because `complete` is on the page.
+    assert built == [(1, "drafting"), (3, "drafting"), (3, "complete")]
     page = (tmp_path / "board.html").read_text(encoding="utf-8")
     assert "proposal_not_current" in page

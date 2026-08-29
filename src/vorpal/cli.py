@@ -50,8 +50,10 @@ FP_MIN_INTERVAL_S = 1.1
 
 # How close to the operator's pick the model runs. A pick further out than
 # this is answered from the last call: the board will have turned over
-# before the operator can act on it anyway.
-PROPOSE_WITHIN_PICKS = 3
+# before the operator can act on it anyway. Two is the floor that still
+# works from any seat — after your own pick, snake order puts at least two
+# picks in front of your next one from every slot but the turn.
+PROPOSE_WITHIN_PICKS = 2
 
 # Each class keeps its own word. Collapsing them costs the operator the one
 # thing the message is for: whether a better file, a retry, or a different
@@ -209,17 +211,16 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
-    proposals = _Proposals(transport)
+    frames = _Frames(_Proposals(transport))
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
-        return _frame(
+        return frames.get(
             live,
             live_picks,
             resolved=resolved,
             pool=pool,
             adp=adp,
             ecr=ecr,
-            proposals=proposals,
             extra=forecast_banners,
         )
 
@@ -237,6 +238,53 @@ def _run(
         now=now,
         sleep=sleep,
     )
+
+
+class _Frames:
+    """One computed board per pick. A poll that changes nothing computes nothing.
+
+    The loop polls every 3s and the pick number moves at most once a poll,
+    usually not at all. VOLS over the pool, the row join, and the payload
+    are the same page until someone picks, so build them once and hand the
+    same frame back. ``status`` and ``pick_timer`` are on the page too, so
+    a change in either is a new key. Page age is not: ``run_loop`` renders
+    that from its own clock, so a cached frame still ages on screen.
+    """
+
+    __slots__ = ("_frame", "_key", "_proposals")
+
+    def __init__(self, proposals: _Proposals) -> None:
+        self._proposals = proposals
+        self._key: tuple[int, str, int | None] | None = None
+        self._frame: Frame | None = None
+
+    def get(
+        self,
+        draft: Draft,
+        picks: tuple[Pick, ...],
+        *,
+        resolved: Resolved,
+        pool: Mapping[str, ScoredPlayer],
+        adp: Mapping[str, float],
+        ecr: Mapping[str, EcrRow],
+        extra: tuple[Banner, ...],
+    ) -> Frame:
+        key = (len(picks), draft.status, draft.pick_timer)
+        if self._frame is not None and key == self._key:
+            return self._frame
+        frame = _frame(
+            draft,
+            picks,
+            resolved=resolved,
+            pool=pool,
+            adp=adp,
+            ecr=ecr,
+            proposals=self._proposals,
+            extra=extra,
+        )
+        self._key = key
+        self._frame = frame
+        return frame
 
 
 class _Proposals:
