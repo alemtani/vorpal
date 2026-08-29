@@ -84,13 +84,22 @@ class SleeperClient:
 
     def get_players(self) -> dict[str, Player]:
         """GET /players/nfl. Cached to disk for one day. No active=true filter."""
+        return self._parse(self.get_players_raw(), self._host.parse_players)
+
+    def get_players_raw(self) -> Any:
+        """The unparsed /players/nfl body. Cached to disk for one day.
+
+        Ingest joins on ``yahoo_id``, which lives on the wire and never
+        reaches ``Player``. That is the one caller for this method; everyone
+        else wants ``get_players``.
+        """
         cached = self._read_players_cache()
         if cached is not None:
-            return self._host.parse_players(cached)
+            return cached
         payload = self._get("/players/nfl")
-        players = self._parse(payload, self._host.parse_players)
+        self._parse(payload, self._host.parse_players)
         self._write_players_cache(payload)
-        return players
+        return payload
 
     def close(self) -> None:
         """Close an owned httpx client. Injected clients are left open."""

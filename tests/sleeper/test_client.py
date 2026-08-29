@@ -358,3 +358,21 @@ def test_default_clock_and_sleep_come_from_time(
     finally:
         client.close()
     assert slept == pytest.approx([60.0 / 1000.0])
+
+
+def test_get_players_raw_returns_the_wire_body_with_yahoo_id(
+    tmp_path: Path,
+) -> None:
+    """Ingest joins on yahoo_id, which parse drops. The raw body keeps it."""
+    payload = json.loads(
+        (FIXTURES / "players.json").read_text(encoding="utf-8")
+    )
+    with respx.mock(base_url=BASE) as mock:
+        mock.get("/players/nfl").mock(return_value=httpx.Response(200, json=payload))
+        client = SleeperClient(players_cache_path=tmp_path / "players.json")
+        raw = client.get_players_raw()
+        cached = client.get_players_raw()
+        client.close()
+    assert raw == payload
+    assert cached == payload
+    assert any("yahoo_id" in row for row in raw.values())
