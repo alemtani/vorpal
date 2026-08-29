@@ -52,6 +52,19 @@ def _require_mapping(payload: Any, what: str) -> dict[str, Any]:
     return cast(dict[str, Any], payload)
 
 
+# Sleeper's cross-reference ids. The wire names stop here.
+_EXTERNAL_ID_KEYS = (("yahoo", "yahoo_id"),)
+
+
+def _external_ids(row: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+    out: list[tuple[str, str]] = []
+    for source, key in _EXTERNAL_ID_KEYS:
+        value = _optional_str(row.get(key))
+        if value is not None:
+            out.append((source, value))
+    return tuple(out)
+
+
 def _optional_str(value: Any) -> str | None:
     if value is None or value == "":
         return None
@@ -271,4 +284,5 @@ class SleeperHost(LeagueHost):
             years_exp=_as_int_or_none(row.get("years_exp")),
             number=_as_int_or_none(row.get("number")),
             bye=None,
+            external_ids=_external_ids(row),
         )

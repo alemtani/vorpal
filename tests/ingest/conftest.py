@@ -9,6 +9,9 @@ from typing import Any
 
 import pytest
 
+from vorpal.contracts import Player
+from vorpal.platform import SleeperHost
+
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
 
@@ -27,8 +30,8 @@ def adp_payload() -> Any:
 
 
 @pytest.fixture
-def host_players() -> Any:
-    return load_fixture("sleeper", "players.json")
+def host_players() -> dict[str, Player]:
+    return SleeperHost().parse_players(load_fixture("sleeper", "players.json"))
 
 
 @pytest.fixture(autouse=True)

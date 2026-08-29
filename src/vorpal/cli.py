@@ -19,10 +19,13 @@ from vorpal.board import Frame, render, run_loop, write_html
 from vorpal.contracts import (
     Banner,
     Draft,
+    DraftState,
     EcrRow,
     Host,
+    Payload,
     Pick,
     Player,
+    Proposal,
     Slot,
     StatRow,
 )
@@ -36,6 +39,7 @@ from vorpal.errors import (
 from vorpal.ingest import load_forecast
 from vorpal.model import AnthropicTransport, propose
 from vorpal.payload import build_payload, build_rows, build_state
+from vorpal.platform import LeagueClient
 from vorpal.resolve import Resolved, resolve
 from vorpal.sleeper import SleeperClient
 from vorpal.valuation import ScoredPlayer, compute_vols, score_player
@@ -43,6 +47,11 @@ from vorpal.valuation import ScoredPlayer, compute_vols, score_player
 FP_KEY_ENV = "FANTASYPROS_API_KEY"
 DEFAULT_OUTPUT = Path("board.html")
 FP_MIN_INTERVAL_S = 1.1
+
+# How close to the operator's pick the model runs. A pick further out than
+# this is answered from the last call: the board will have turned over
+# before the operator can act on it anyway.
+PROPOSE_WITHIN_PICKS = 3
 
 # Each class keeps its own word. Collapsing them costs the operator the one
 # thing the message is for: whether a better file, a retry, or a different
@@ -106,7 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(
     argv: Sequence[str] | None = None,
     *,
-    client: SleeperClient | None = None,
+    client: LeagueClient | None = None,
     transport: object | None = None,
     sleep=time.sleep,
     now=time.monotonic,
@@ -132,7 +141,7 @@ def main(
     return 0
 
 
-def _client(args: argparse.Namespace) -> SleeperClient:
+def _client(args: argparse.Namespace) -> LeagueClient:
     return SleeperClient(players_cache_path=args.players_cache)
 
 
@@ -145,7 +154,7 @@ def _label(exc: VorpalError) -> str:
 
 def _run(
     args: argparse.Namespace,
-    client: SleeperClient,
+    client: LeagueClient,
     transport,
     *,
     sleep,
@@ -172,14 +181,13 @@ def _run(
         explicit_slot=args.slot,
         picks=picks,
     )
-    raw_players = client.get_players_raw()
     players = client.get_players()
     stat_rows, ecr_rows, forecast_banners = load_forecast(
         draft.season,
         seed.config.adp_variant,
         ecr_scoring=seed.config.ecr_scoring,
         superflex=seed.ecr_position == "OP",
-        host_players=raw_players,
+        host_players=players,
         override_path=args.override,
         fp_api_key=os.environ.get(FP_KEY_ENV),
         scoring=seed.config.scoring,
@@ -201,6 +209,8 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
+    proposals = _Proposals(transport)
+
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return _frame(
             live,
@@ -209,7 +219,7 @@ def _run(
             pool=pool,
             adp=adp,
             ecr=ecr,
-            transport=transport,
+            proposals=proposals,
             extra=forecast_banners,
         )
 
@@ -229,12 +239,73 @@ def _run(
     )
 
 
+class _Proposals:
+    """Decides when the model runs. Draft night is mostly other people's picks.
+
+    ``recompute`` fires on every poll — 3s while the draft is live. Calling
+    the model each time is thousands of calls for the handful of picks the
+    operator can act on. So: call on the first board, call again when the
+    picks change and the seat is within ``PROPOSE_WITHIN_PICKS`` of the
+    clock, and otherwise serve the last answer with a banner saying which
+    pick it was for. Nothing here changes what a call returns.
+    """
+
+    __slots__ = ("_banners", "_pick_no", "_proposal", "_transport")
+
+    def __init__(self, transport) -> None:
+        self._transport = transport
+        self._proposal: Proposal | None = None
+        self._banners: tuple[Banner, ...] = ()
+        self._pick_no: int | None = None
+
+    def for_payload(self, payload: Payload) -> tuple[Proposal, tuple[Banner, ...]]:
+        """The proposal to show for this payload, and any banners it carries."""
+        pick_no = payload.state.pick_no
+        if self._proposal is None or self._should_call(pick_no, payload.state):
+            return self._call(payload, pick_no)
+        if pick_no == self._pick_no:
+            return self._proposal, self._banners
+        return self._proposal, self._banners + (self._stale(pick_no),)
+
+    def _should_call(self, pick_no: int, state: DraftState) -> bool:
+        if pick_no == self._pick_no:
+            return False
+        # No seat means no clock to wait for. Answer every new pick.
+        if state.picks_until_next is None:
+            return True
+        return state.picks_until_next <= PROPOSE_WITHIN_PICKS
+
+    def _call(
+        self, payload: Payload, pick_no: int
+    ) -> tuple[Proposal, tuple[Banner, ...]]:
+        result = propose(payload, self._transport)
+        banners: tuple[Banner, ...] = ()
+        if result.degraded:
+            banners = tuple(
+                Banner(code=f"violation_{violation.code}", message=violation.message)
+                for violation in result.violations
+            )
+        self._proposal = result.proposal
+        self._banners = banners
+        self._pick_no = pick_no
+        return result.proposal, banners
+
+    def _stale(self, pick_no: int) -> Banner:
+        return Banner(
+            code="proposal_not_current",
+            message=(
+                f"Recommendation is for pick {self._pick_no}, not {pick_no}. "
+                f"It refreshes within {PROPOSE_WITHIN_PICKS} picks of yours."
+            ),
+        )
+
+
 class _BoundClient:
     """S1's client bound to one draft id. The poll loop takes no id."""
 
     __slots__ = ("_client", "_draft_id")
 
-    def __init__(self, client: SleeperClient, draft_id: str) -> None:
+    def __init__(self, client: LeagueClient, draft_id: str) -> None:
         self._client = client
         self._draft_id = draft_id
 
@@ -287,7 +358,7 @@ def _frame(
     pool: Mapping[str, ScoredPlayer],
     adp: Mapping[str, float],
     ecr: Mapping[str, EcrRow],
-    transport,
+    proposals: _Proposals,
     extra: tuple[Banner, ...],
 ) -> Frame:
     """One board. The only thing that changes between polls is the picks."""
@@ -329,14 +400,8 @@ def _frame(
     # off the draft. Copy them across or the two disagree.
     config = replace(resolved.config, status=draft.status, pick_timer=draft.pick_timer)
     payload = build_payload(config, state, values.replacement, rows)
-    result = propose(payload, transport)
-    banners = extra
-    if result.degraded:
-        banners = banners + tuple(
-            Banner(code=f"violation_{violation.code}", message=violation.message)
-            for violation in result.violations
-        )
-    return Frame(payload=payload, proposal=result.proposal, banners=banners)
+    proposal, proposal_banners = proposals.for_payload(payload)
+    return Frame(payload=payload, proposal=proposal, banners=extra + proposal_banners)
 
 
 if __name__ == "__main__":  # pragma: no cover

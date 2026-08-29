@@ -9,10 +9,11 @@ import httpx
 import pytest
 import respx
 
-from vorpal.contracts import AdpVariant
+from vorpal.contracts import AdpVariant, Player
 from vorpal.errors import DataRefusal
 from vorpal.ingest import load_forecast, load_stat_rows
 from vorpal.ingest.client import FantasyProsClient
+from vorpal.platform import SleeperHost
 
 SEASON = "2026"
 
@@ -38,18 +39,20 @@ def _adp(*players: dict[str, Any]) -> dict[str, Any]:
     return {"type": "ADP", "position_id": "ALL", "players": list(players)}
 
 
-def _host(player_id: str = "1") -> dict[str, Any]:
-    return {
-        player_id: {
-            "player_id": player_id,
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "full_name": "Jane Doe",
-            "position": "WR",
-            "team": "KC",
-            "yahoo_id": 111,
+def _host(player_id: str = "1") -> dict[str, Player]:
+    return SleeperHost().parse_players(
+        {
+            player_id: {
+                "player_id": player_id,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "full_name": "Jane Doe",
+                "position": "WR",
+                "team": "KC",
+                "yahoo_id": 111,
+            }
         }
-    }
+    )
 
 
 def _csv() -> str:

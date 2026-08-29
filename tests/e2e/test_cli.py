@@ -10,7 +10,9 @@ import pytest
 import respx
 from league import ROSTER, SEASON, load
 
-from vorpal.cli import _label, main
+from vorpal import cli
+from vorpal.cli import PROPOSE_WITHIN_PICKS, _label, _Proposals, main
+from vorpal.contracts import Banner
 from vorpal.errors import VorpalError
 from vorpal.model import StubTransport
 
@@ -268,3 +270,126 @@ def test_a_keeper_never_reaches_the_pool(api: respx.MockRouter, tmp_path: Path) 
     _, transport = _run(tmp_path)
     board = {row["player_id"] for row in transport.calls[0]["board"]}
     assert "rb1" not in board
+
+
+class _FakeState:
+    def __init__(self, pick_no: int, picks_until_next: int | None) -> None:
+        self.pick_no = pick_no
+        self.picks_until_next = picks_until_next
+
+
+class _FakePayload:
+    def __init__(self, pick_no: int, picks_until_next: int | None) -> None:
+        self.state = _FakeState(pick_no, picks_until_next)
+
+
+class _CountingProposals(_Proposals):
+    """``propose`` replaced by a counter. The gate is what is under test."""
+
+    def __init__(self) -> None:
+        super().__init__(transport=None)
+        self.calls = 0
+
+    def _call(self, payload: Any, pick_no: int) -> tuple[Any, tuple[Banner, ...]]:
+        self.calls += 1
+        self._proposal = f"proposal for {pick_no}"
+        self._banners = ()
+        self._pick_no = pick_no
+        return self._proposal, ()
+
+
+def test_the_first_board_always_asks_the_model() -> None:
+    proposals = _CountingProposals()
+    proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=40))
+    assert proposals.calls == 1
+
+
+def test_the_same_pick_never_asks_twice() -> None:
+    proposals = _CountingProposals()
+    for _ in range(20):
+        proposal, banners = proposals.for_payload(
+            _FakePayload(pick_no=1, picks_until_next=1)
+        )
+    # Twenty polls of an unchanged board are one call, and the answer is
+    # still for this pick, so nothing warns the operator.
+    assert proposals.calls == 1
+    assert proposal == "proposal for 1"
+    assert banners == ()
+
+
+def test_a_pick_far_from_the_seat_reuses_the_last_answer_and_says_so() -> None:
+    proposals = _CountingProposals()
+    proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=1))
+    proposal, banners = proposals.for_payload(
+        _FakePayload(pick_no=3, picks_until_next=20)
+    )
+    assert proposals.calls == 1
+    assert proposal == "proposal for 1"
+    assert [banner.code for banner in banners] == ["proposal_not_current"]
+    assert "pick 1, not 3" in banners[0].message
+
+
+def test_the_model_runs_again_once_the_seat_is_near() -> None:
+    proposals = _CountingProposals()
+    proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=1))
+    proposals.for_payload(_FakePayload(pick_no=3, picks_until_next=20))
+    proposal, banners = proposals.for_payload(
+        _FakePayload(pick_no=20, picks_until_next=PROPOSE_WITHIN_PICKS)
+    )
+    assert proposals.calls == 2
+    assert proposal == "proposal for 20"
+    assert banners == ()
+
+
+def test_no_seat_means_no_clock_so_every_new_pick_asks() -> None:
+    proposals = _CountingProposals()
+    for pick_no in (1, 2, 3):
+        proposals.for_payload(_FakePayload(pick_no=pick_no, picks_until_next=None))
+    assert proposals.calls == 3
+
+
+def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
+    api: respx.MockRouter, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Draft night is mostly other people's picks. They are not model calls."""
+    drafting = load("sleeper", "draft_snake_redraft.json")
+    drafting["status"] = "drafting"
+    complete = load("sleeper", "draft_snake_redraft.json")
+    polls = {"draft": 0}
+
+    def draft_response(request: httpx.Request) -> httpx.Response:
+        polls["draft"] += 1
+        # Two live polls, then the draft ends and the loop returns.
+        return httpx.Response(200, json=drafting if polls["draft"] <= 3 else complete)
+
+    first = _pick("nobody")
+    second = {**_pick("nobody2"), "draft_slot": 2, "pick_no": 2}
+    # The startup fetch, then an empty first poll, then the operator's own
+    # pick lands and the seat is twenty picks away.
+    scripted = [[], [], [first, second]]
+
+    def picks_response(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200, json=scripted.pop(0) if scripted else [first, second]
+        )
+
+    api["draft"].mock(side_effect=draft_response)
+    api["picks"].mock(side_effect=picks_response)
+
+    asked: list[int] = []
+    real_propose = cli.propose
+
+    def counting_propose(payload: Any, transport: Any) -> Any:
+        asked.append(payload.state.pick_no)
+        return real_propose(payload, transport)
+
+    monkeypatch.setattr(cli, "propose", counting_propose)
+
+    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
+    code = main(argv, transport=HintTransport(), sleep=lambda _s: None, now=lambda: 0.0)
+    assert code == 0
+    # Pick 1 is one away from the seat, so the model runs. Pick 3 is twenty
+    # away: the board turns over before the operator can act on that answer.
+    assert asked == [1]
+    page = (tmp_path / "board.html").read_text(encoding="utf-8")
+    assert "proposal_not_current" in page

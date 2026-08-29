@@ -6,11 +6,18 @@ import time
 from collections.abc import Callable, Collection, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
 
 import httpx
 
-from vorpal.contracts import AdpVariant, Banner, EcrRow, Host, OverrideRow, StatRow
+from vorpal.contracts import (
+    AdpVariant,
+    Banner,
+    EcrRow,
+    Host,
+    OverrideRow,
+    Player,
+    StatRow,
+)
 from vorpal.errors import DataRefusal, PlatformError
 from vorpal.ingest.client import FantasyProsClient, require_api_key
 from vorpal.ingest.ecr import fetch_ecr
@@ -81,7 +88,7 @@ def load_stat_rows(
     season: str,
     adp_variant: AdpVariant,
     *,
-    host_players: Mapping[str, Any],
+    host_players: Mapping[str, Player],
     override_path: Path | str | None = None,
     client: FantasyProsClient | None = None,
     scoring_keys: Collection[str] | None = None,
@@ -142,7 +149,7 @@ def load_forecast(
     *,
     ecr_scoring: str,
     superflex: bool,
-    host_players: Mapping[str, Any],
+    host_players: Mapping[str, Player],
     override_path: Path | str | None = None,
     fp_api_key: str | None = None,
     client: httpx.Client | FantasyProsClient | None = None,

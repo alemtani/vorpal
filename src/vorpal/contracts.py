@@ -142,6 +142,11 @@ class Player:
     years_exp: int | None
     number: int | None
     bye: int | None
+    # ``(source, id)`` pairs the host publishes for cross-source joins, e.g.
+    # ``(("yahoo", "30182"),)``. No host wire name: the source is data, not a
+    # field. A host that publishes none leaves this empty and the join falls
+    # back to name and position.
+    external_ids: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

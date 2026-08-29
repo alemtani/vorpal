@@ -101,7 +101,7 @@ def test_malformed_payload_does_not_raise(host_players: dict[str, Any]) -> None:
             {"players": [None, {"player_name": "X"}]},
             {"players": [{"player_name": "NoRank"}]},
         ],
-        {**host_players, "bad": "not-a-row"},
+        host_players,
     )
     assert rows == ()
     assert banners == ()

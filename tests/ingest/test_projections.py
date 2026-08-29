@@ -8,12 +8,13 @@ import httpx
 import pytest
 import respx
 
-from vorpal.contracts import StatRow
+from vorpal.contracts import Player, StatRow
 from vorpal.errors import DataRefusal, PlatformError
 from vorpal.ingest import fetch_projections, parse_projections
 from vorpal.ingest.client import FantasyProsClient
 from vorpal.ingest.fp import parse_adp_map
 from vorpal.ingest.projections import attach_adp, to_stat_rows
+from vorpal.platform import SleeperHost
 
 SEASON = "2026"
 FP = "https://api.fantasypros.com/public/v2/json"
@@ -43,18 +44,20 @@ def _envelope(*players: dict[str, Any]) -> dict[str, Any]:
     return {"season": SEASON, "week": "0", "players": list(players)}
 
 
-def _host(player_id: str = "s1", yahoo: str = "111") -> dict[str, Any]:
-    return {
-        player_id: {
-            "player_id": player_id,
-            "first_name": "Jane",
-            "last_name": "Doe",
-            "full_name": "Jane Doe",
-            "position": "WR",
-            "team": "KC",
-            "yahoo_id": int(yahoo) if yahoo.isdigit() else yahoo,
+def _host(player_id: str = "s1", yahoo: str = "111") -> dict[str, Player]:
+    return SleeperHost().parse_players(
+        {
+            player_id: {
+                "player_id": player_id,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "full_name": "Jane Doe",
+                "position": "WR",
+                "team": "KC",
+                "yahoo_id": int(yahoo) if yahoo.isdigit() else yahoo,
+            }
         }
-    }
+    )
 
 
 def _stat_keys(rows: tuple[StatRow, ...]) -> set[str]:
