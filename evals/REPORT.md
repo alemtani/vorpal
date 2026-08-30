@@ -265,8 +265,7 @@ right read. The last written page from the live loop had:
 
 The pick the operator can act on has to be the first thing on the page.
 Banners that are not about *this* pick belong in a fold, or off the
-night view. That is a board session, not an eval-gate session. See
-`docs/prompts/S12.md`.
+night view. That is a board issue, not an eval-gate issue. See #19.
 
 **One CLI fix shipped after this note.** The poll loop no longer calls
 the model within two picks of the seat. It calls only when
@@ -290,7 +289,8 @@ tokens and will spend ~12s of the pick clock on the call.
 
 - Replay (no dated projections).
 - VOLS invariant on golden (no full pool).
-- A paid FantasyPros universe (ADP/ECR/stats past row 10).
+- A full FantasyPros universe (ADP/ECR/stats past row 10). Paging was
+  not probed; do not assume a paid key (#18).
 - Model vs the operator's two mocks (credits).
 - Stability on those 28 turns.
 - Flags other than the two XOR bits (`UPSIDE`, `POSITION_RUN`,
@@ -305,7 +305,7 @@ tokens and will spend ~12s of the pick clock on the call.
 ```sh
 cd ../vorpal-s10   # feat/eval-run worktree
 export ANTHROPIC_API_KEY=...
-export FANTASYPROS_API_KEY=...   # paid key, or the table is a toy
+export FANTASYPROS_API_KEY=...   # public key is 10 rows/list until #18
 uv run python evals/run.py                  # golden + regret + human
 uv run python evals/run.py --only golden    # cached under evals/_cache
 uv run python evals/rehearse.py \
@@ -316,3 +316,26 @@ uv run python evals/rehearse.py \
 
 Open `evals/_cache/rehearsal/board.html`. Golden model raws are cached;
 re-running `--only golden` does not spend five new calls per case.
+
+---
+
+## Follow-ups
+
+Living work is GitHub issues, not S11.
+
+| Issue | Kind |
+|---|---|
+| [#18](https://github.com/alemtani/vorpal/issues/18) | Probe FantasyPros paging on the public key |
+| [#19](https://github.com/alemtani/vorpal/issues/19) | Draft-night board: rec first, banners folded |
+| [#20](https://github.com/alemtani/vorpal/issues/20) | Dissent `why` names the VOLS / ECR hint |
+| [#21](https://github.com/alemtani/vorpal/issues/21) | Dress rehearsal of a mock the operator sits in |
+| [#22](https://github.com/alemtani/vorpal/issues/22) | Snapshot a completed draft to JSON |
+| [#23](https://github.com/alemtani/vorpal/issues/23) | `te_cliff` silent `ECR_DISAGREE` |
+| [#24](https://github.com/alemtani/vorpal/issues/24) | needs-spec: model cassettes |
+| [#25](https://github.com/alemtani/vorpal/issues/25) | CI scores golden cassettes (blocked by #24) |
+| [#26](https://github.com/alemtani/vorpal/issues/26) | needs-spec: grow the golden set |
+| [#27](https://github.com/alemtani/vorpal/issues/27) | needs-spec: board tools |
+| [#28](https://github.com/alemtani/vorpal/issues/28) | needs-spec: projection-season sim |
+| [#29](https://github.com/alemtani/vorpal/issues/29) | needs-spec: human feedback to eval case |
+| [#30](https://github.com/alemtani/vorpal/issues/30) | needs-spec: opponent model, not ADP |
+| [#31](https://github.com/alemtani/vorpal/issues/31) | needs-spec: `bye_hole` cannot see a stack |

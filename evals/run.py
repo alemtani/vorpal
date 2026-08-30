@@ -1,8 +1,22 @@
 # ruff: noqa: E402, E501, I001
-"""S10 eval runner. Live model. Eleven gates, four policies, one report.
+"""Live eval runner. Eleven gates, four policies, one report.
 
-Eval path: `recommend` / `run_stability`. A violation is the score. Draft
-night's `propose` is not used here.
+Three fixture families, four policies on each board:
+
+- **golden** — 12 hand-built boards with a human forbid/require. Floor:
+  did the rec avoid a mistake a stranger can name in one sentence?
+- **regret** — 4 seats on completed public drafts. Wait-or-take: could
+  we have had both names? Fail iff rec survived to our next pick and a
+  listed alternative did not.
+- **human** — 28 turns from the operator's own mocks. Agreement with
+  what was clicked. No right answer. Not in the four-column table.
+
+Policies, always in this order: model, argmax_vols, adp_follow,
+ecr_follow. A gate where model and VOLS post the same rate has no
+discriminating power (SPEC.md §5).
+
+Eval path: `recommend` / `run_stability`. A violation is the score.
+Draft night's `propose` is not used here.
 
 Usage:
     uv run python -m evals.run
@@ -284,6 +298,12 @@ def run_policies(
     actually_picked: str | None = None,
     case_why: str | None = None,
 ) -> list[FixtureRun]:
+    """Score the model and the three baselines on one board.
+
+    Same payload, same gates. The model uses `recommend` (or
+    `run_stability` for five ids). Baselines are deterministic:
+    argmax_vols, adp_follow, ecr_follow. That is the four-column table.
+    """
     out: list[FixtureRun] = []
     proposal, five_ids, error = ask_model(
         payload, live, kind=kind, name=name, stability=with_stability
@@ -323,6 +343,14 @@ def run_policies(
 
 
 def run_golden(live) -> list[FixtureRun]:
+    """12 human verdicts. This family is in the four-column table.
+
+    Each case forbids picks nobody needs a model to rule out, and
+    requires that the rec or an alternative name one of a must-see set.
+    `argmax_vols` already passes 9 of 12; only three cases can show the
+    model is doing anything. pytest -m golden checks the cases, not the
+    live model.
+    """
     from cases import CASES
 
     runs: list[FixtureRun] = []
@@ -345,6 +373,14 @@ def run_golden(live) -> list[FixtureRun]:
 
 
 def run_regret(live, fp_key: str, players) -> list[FixtureRun]:
+    """Wait-or-take on completed drafts. This family is in the table.
+
+    Not "was the pick good." Fail iff rec was still available at our
+    next pick and a listed alternative was gone — we could have had
+    both. Golden forbid/require skip; there is no human verdict here.
+    Frozen board: we substitute our rec and leave the other seats as
+    recorded. Floor, not a simulation.
+    """
     from replay import all_fixtures
 
     runs: list[FixtureRun] = []
@@ -427,10 +463,15 @@ def run_regret(live, fp_key: str, players) -> list[FixtureRun]:
 
 
 def run_human(live, fp_key: str, players) -> list[FixtureRun]:
-    """Replay the operator's two seat-1 mocks. Recommend once; no fifth call.
+    """Replay the operator's two seat-1 mocks. Not in the four-column table.
 
-    Stability on 14 picks times two drafts is 140 extra calls. The four-column
-    table does not include these; they are a human baseline, reported apart.
+    28 turns, freeze the board, ask what each policy would rec, record
+    `actually_picked`. Agreement with a click, not a right/wrong
+    verdict. No forbid/require, no per-pick why. Until a human writes
+    one, keep these out of the pass-rate table.
+
+    Recommend once; no fifth call. Stability on 14 picks times two
+    drafts is 140 extra calls.
     """
     from types import SimpleNamespace
 
@@ -582,6 +623,7 @@ def _by_policy(
 
 
 def write_report(runs: list[FixtureRun]) -> str:
+    """Four-column table is golden + regret only. Human is sidecar JSON."""
     table_runs = [r for r in runs if r.kind in {"golden", "regret"}]
     table = render_report(_by_policy(table_runs))
     scores = score_results(_by_policy(table_runs))
