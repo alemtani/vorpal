@@ -76,6 +76,27 @@ PROPOSAL_JSON_SCHEMA: dict[str, Any] = {
 }
 
 
+def build_request(payload: dict[str, Any]) -> dict[str, Any]:
+    """The exact Messages request for this payload, as a plain dict.
+
+    One place assembles the request, so the cassette key can hash the same
+    object the transport sends. A key built from a request nobody sends is
+    a key that misses forever. Transport settings (retries, deadlines) are
+    not here: they cannot change the answer.
+    """
+    return {
+        "model": MODEL_ID,
+        "max_tokens": MAX_TOKENS,
+        "system": SYSTEM,
+        "thinking": {"type": "adaptive"},
+        "messages": [{"role": "user", "content": json.dumps(payload, sort_keys=True)}],
+        "output_config": {
+            "effort": EFFORT,
+            "format": {"type": "json_schema", "schema": PROPOSAL_JSON_SCHEMA},
+        },
+    }
+
+
 class Transport(Protocol):
     """One request, one JSON object. Unit tests inject a stub."""
 
@@ -112,25 +133,7 @@ class AnthropicTransport:
 
     def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            response = self._client.messages.create(
-                model=MODEL_ID,
-                max_tokens=MAX_TOKENS,
-                system=SYSTEM,
-                thinking={"type": "adaptive"},
-                messages=[
-                    {
-                        "role": "user",
-                        "content": json.dumps(payload, sort_keys=True),
-                    }
-                ],
-                output_config={
-                    "effort": EFFORT,
-                    "format": {
-                        "type": "json_schema",
-                        "schema": PROPOSAL_JSON_SCHEMA,
-                    },
-                },
-            )
+            response = self._client.messages.create(**build_request(payload))
         except Exception as exc:
             raise PlatformError(f"model call failed: {exc}") from exc
         stop_reason = getattr(response, "stop_reason", None)

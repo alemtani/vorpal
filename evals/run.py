@@ -28,7 +28,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import sys
@@ -80,6 +79,8 @@ from vorpal.evals import (  # noqa: E402
 from vorpal.ingest import clear_caches  # noqa: E402
 from vorpal.model import (  # noqa: E402
     AnthropicTransport,
+    CassetteStore,
+    CassetteTransport,
     recommend,
     run_stability,
     validate_proposal,
@@ -87,6 +88,7 @@ from vorpal.model import (  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
+CASSETTES = HERE / "cassettes"
 REPORT = HERE / "REPORT.md"
 
 
@@ -148,55 +150,22 @@ class CaptureTransport:
         return raw
 
 
-class CachedTransport:
-    """Replay saved raws. One file per fixture; never a sixth live call."""
-
-    def __init__(self, raws: list[dict]) -> None:
-        self.raws = list(raws)
-        self.i = 0
-        self.calls: list[dict] = []
-
-    def complete(self, payload: dict) -> dict:
-        self.calls.append(payload)
-        if self.i >= len(self.raws):
-            raise PlatformError("cache exhausted; will not open a live sixth call")
-        raw = self.raws[self.i]
-        self.i += 1
-        return raw
-
-
-def _payload_key(payload: Payload) -> str:
-    blob = json.dumps(payload.to_dict(), sort_keys=True, default=str)
-    return hashlib.sha256(blob.encode()).hexdigest()[:16]
-
-
-def _cache_path(kind: str, name: str) -> Path:
-    path = CACHE / kind
-    path.mkdir(parents=True, exist_ok=True)
-    return path / f"{name}.json"
-
-
 def ask_model(
     payload: Payload,
-    live,
+    transport,
     *,
-    kind: str,
-    name: str,
     stability: bool,
 ) -> tuple[Proposal | None, tuple[str, ...] | None, str | None]:
     """One proposal and, when not a coin_flip, five ids.
 
     Uses `run_stability` when we need five. Does not call `propose`. A
     violation is captured and scored, never retried.
+
+    `transport` is the cassette. A default run replays and spends nothing;
+    a miss raises here rather than quietly opening a live call.
     """
-    cache = _cache_path(kind, name)
-    if cache.exists():
-        saved = json.loads(cache.read_text())
-        raws = saved["raws"]
-        transport = CachedTransport(raws)
-    else:
-        transport = CaptureTransport(live)
-        raws = transport.raws
+    capture = CaptureTransport(transport)
+    raws = capture.raws
 
     error: str | None = None
     proposal: Proposal | None = None
@@ -204,7 +173,7 @@ def ask_model(
 
     try:
         if stability:
-            five = run_stability(payload, transport)
+            five = run_stability(payload, capture)
             if five is None:
                 # coin_flip on the first call. Recover that proposal from raws.
                 proposal, _v = validate_proposal(payload, raws[0])
@@ -212,25 +181,12 @@ def ask_model(
                 proposal = five[0]
                 five_ids = tuple(item.player_id for item in five)
         else:
-            proposal = recommend(payload, transport)
+            proposal = recommend(payload, capture)
     except PlatformError as exc:
         error = exc.message
         if raws:
             proposal, _v = validate_proposal(payload, raws[0])
 
-    if not cache.exists() and raws:
-        cache.write_text(
-            json.dumps(
-                {
-                    "key": _payload_key(payload),
-                    "raws": raws,
-                    "error": error,
-                    "coin_flip": bool(proposal and proposal.coin_flip),
-                },
-                indent=2,
-            )
-            + "\n"
-        )
     return proposal, five_ids, error
 
 
@@ -293,7 +249,7 @@ def run_policies(
     kind: str,
     payload: Payload,
     fixtures: GateFixtures,
-    live,
+    transport,
     with_stability: bool,
     actually_picked: str | None = None,
     case_why: str | None = None,
@@ -305,9 +261,7 @@ def run_policies(
     argmax_vols, adp_follow, ecr_follow. That is the four-column table.
     """
     out: list[FixtureRun] = []
-    proposal, five_ids, error = ask_model(
-        payload, live, kind=kind, name=name, stability=with_stability
-    )
+    proposal, five_ids, error = ask_model(payload, transport, stability=with_stability)
     model_fx = replace(fixtures, stability_ids=five_ids)
     out.append(
         _result_row(
@@ -342,7 +296,7 @@ def run_policies(
     return out
 
 
-def run_golden(live) -> list[FixtureRun]:
+def run_golden(transport) -> list[FixtureRun]:
     """12 human verdicts. This family is in the four-column table.
 
     Each case forbids picks nobody needs a model to rule out, and
@@ -364,7 +318,7 @@ def run_golden(live) -> list[FixtureRun]:
                 kind="golden",
                 payload=case.payload,
                 fixtures=fixtures,
-                live=live,
+                transport=transport,
                 with_stability=True,
                 case_why=case.why,
             )
@@ -372,7 +326,7 @@ def run_golden(live) -> list[FixtureRun]:
     return runs
 
 
-def run_regret(live, fp_key: str, players) -> list[FixtureRun]:
+def run_regret(transport, fp_key: str, players) -> list[FixtureRun]:
     """Wait-or-take on completed drafts. This family is in the table.
 
     Not "was the pick good." Fail iff rec was still available at our
@@ -453,7 +407,7 @@ def run_regret(live, fp_key: str, players) -> list[FixtureRun]:
                     kind="regret",
                     payload=payload,
                     fixtures=gate_fx,
-                    live=live,
+                    transport=transport,
                     with_stability=True,
                     actually_picked=fixture.actually_picked,
                     case_why=fixture.provenance,
@@ -462,7 +416,7 @@ def run_regret(live, fp_key: str, players) -> list[FixtureRun]:
     return runs
 
 
-def run_human(live, fp_key: str, players) -> list[FixtureRun]:
+def run_human(transport, fp_key: str, players) -> list[FixtureRun]:
     """Replay the operator's two seat-1 mocks. Not in the four-column table.
 
     28 turns, freeze the board, ask what each policy would rec, record
@@ -571,7 +525,7 @@ def run_human(live, fp_key: str, players) -> list[FixtureRun]:
                     kind="human",
                     payload=built.payload,
                     fixtures=gate_fx,
-                    live=live,
+                    transport=transport,
                     with_stability=False,
                     actually_picked=mine.player_id,
                 )
@@ -668,21 +622,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="run one fixture family",
     )
+    parser.add_argument(
+        "--record",
+        action="store_true",
+        help="call the model for anything not already recorded, and commit it. "
+        "The only thing here that spends money.",
+    )
     args = parser.parse_args(argv)
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("ANTHROPIC_API_KEY unset", file=sys.stderr)
-        return 2
+    live = None
+    if args.record:
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            print("ANTHROPIC_API_KEY unset; --record needs it", file=sys.stderr)
+            return 2
+        live = RetryTransport(AnthropicTransport())
     fp_key = os.environ.get("FANTASYPROS_API_KEY")
     RESULTS.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
 
-    live = RetryTransport(AnthropicTransport())
+    transport = CassetteTransport(
+        CassetteStore(CASSETTES), live=live, record=args.record
+    )
     all_runs: list[FixtureRun] = []
 
     try:
         if args.only in (None, "golden"):
-            all_runs.extend(run_golden(live))
+            all_runs.extend(run_golden(transport))
             (RESULTS / "golden.json").write_text(
                 json.dumps(
                     [_serialize(r) for r in all_runs if r.kind == "golden"], indent=2
@@ -696,7 +661,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print("[setup] fetching /players", flush=True)
                 players = load_players()
                 print(f"[setup] {len(players)} players", flush=True)
-                all_runs.extend(run_regret(live, fp_key, players))
+                all_runs.extend(run_regret(transport, fp_key, players))
                 (RESULTS / "regret.json").write_text(
                     json.dumps(
                         [_serialize(r) for r in all_runs if r.kind == "regret"],
@@ -711,7 +676,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if "players" not in dir():
                     print("[setup] fetching /players", flush=True)
                     players = load_players()
-                all_runs.extend(run_human(live, fp_key, players))
+                all_runs.extend(run_human(transport, fp_key, players))
                 (RESULTS / "human.json").write_text(
                     json.dumps(
                         [_serialize(r) for r in all_runs if r.kind == "human"], indent=2

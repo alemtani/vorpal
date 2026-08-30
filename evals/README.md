@@ -1,14 +1,24 @@
 # Evals
 
-Live model run. Four policies on each board: **model**, **argmax_vols**,
-**adp_follow**, **ecr_follow**. A gate where model and VOLS post the same
-rate has no discriminating power (SPEC.md §5).
+Four policies on each board: **model**, **argmax_vols**, **adp_follow**,
+**ecr_follow**. A gate where model and VOLS post the same rate has no
+discriminating power (SPEC.md §5).
 
 ```
 uv run python -m evals.run
 uv run python -m evals.run --only golden
 uv run python -m evals.run --only regret
 uv run python -m evals.run --only human
+```
+
+**A default run replays cassettes and spends nothing.** No
+`ANTHROPIC_API_KEY` needed. A board with no recording raises and names
+the key; it never falls through to a live call.
+
+`--record` is the only thing that spends. See `evals/cassettes/README.md`.
+
+```
+uv run python -m evals.run --only golden --record
 ```
 
 Eval path is `recommend` / `run_stability`. A violation is the score.
@@ -32,4 +42,4 @@ cases; only three can show the model is doing anything.
 that the cases are well-formed and that the gates agree with the
 hand-written verdicts on synthetic proposals. They do not call the
 model. The live table is this runner. Putting the model's recorded
-answer on the CI gate is #25, blocked on cassettes (#24).
+answer on the CI gate is #25, which the cassettes now unblock.

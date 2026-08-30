@@ -1,0 +1,105 @@
+{
+  "key": "57809b70a41de9e8bbd6d0d17f59398b85bd050d50c9313a785e848895f1dcb3",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 170.0, \"bye\": 8, \"delta_starter_points\": 0.0, \"ecr\": 168, \"ecr_max\": 168, \"ecr_min\": 168, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-depth\", \"player_id\": \"wr-depth\", \"points\": 132.0, \"position\": \"WR\", \"vols\": 12.0}, {\"adp\": 172.0, \"bye\": 13, \"delta_starter_points\": 0.0, \"ecr\": 171, \"ecr_max\": 171, \"ecr_min\": 171, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-depth\", \"player_id\": \"rb-depth\", \"points\": 130.0, \"position\": \"RB\", \"vols\": 10.0}, {\"adp\": 166.0, \"bye\": 14, \"delta_starter_points\": 118.0, \"ecr\": 175, \"ecr_max\": 175, \"ecr_min\": 175, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"K\", \"BN\"], \"name\": \"k-a\", \"player_id\": \"k-a\", \"points\": 125.0, \"position\": \"K\", \"vols\": 5.0}, {\"adp\": 175.0, \"bye\": 6, \"delta_starter_points\": 115.0, \"ecr\": 180, \"ecr_max\": 180, \"ecr_min\": 180, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"K\", \"BN\"], \"name\": \"k-b\", \"player_id\": \"k-b\", \"points\": 124.0, \"position\": \"K\", \"vols\": 4.0}, {\"adp\": 168.0, \"bye\": 10, \"delta_starter_points\": 110.0, \"ecr\": 178, \"ecr_max\": 178, \"ecr_min\": 178, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"DEF\", \"BN\"], \"name\": \"def-a\", \"player_id\": \"def-a\", \"points\": 124.0, \"position\": \"DEF\", \"vols\": 4.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"wr-depth\", \"replacement\": {\"DEF\": {\"player_id\": \"repl-def\", \"points\": 100.0}, \"K\": {\"player_id\": \"repl-k\", \"points\": 100.0}, \"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 1, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 1, \"required\": 1}, \"RB\": {\"filled\": 2, \"required\": 2}, \"TE\": {\"filled\": 1, \"required\": 1}, \"WR\": {\"filled\": 2, \"required\": 2}}, \"next_user_pick\": 172, \"pick_no\": 165, \"picks_until_next\": 7, \"recent\": [], \"user_roster\": [{\"bye\": 6, \"name\": \"qb-held\", \"player_id\": \"qb-held\", \"position\": \"QB\"}, {\"bye\": 8, \"name\": \"rb-held-1\", \"player_id\": \"rb-held-1\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"rb-held-2\", \"player_id\": \"rb-held-2\", \"position\": \"RB\"}, {\"bye\": 7, \"name\": \"wr-held-1\", \"player_id\": \"wr-held-1\", \"position\": \"WR\"}, {\"bye\": 11, \"name\": \"wr-held-2\", \"player_id\": \"wr-held-2\", \"position\": \"WR\"}, {\"bye\": 12, \"name\": \"te-held\", \"player_id\": \"te-held\", \"position\": \"TE\"}, {\"bye\": 9, \"name\": \"flex-held\", \"player_id\": \"flex-held\", \"position\": \"WR\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "k-a",
+        "wr-depth"
+      ],
+      "coin_flip": true,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "def-a",
+      "slot_filled": "DEF",
+      "why": "Both DEF and K starting slots are empty with only 7 picks until my next turn, and every remaining board slot is essentially last-round filler. def-a is the only DEF on the board while two kickers (k-a, k-b) remain, so the scarcer starter gets taken first and K can wait until pick 172. Its delta_starter_points of 110 over replacement dwarfs the ~12 bench points wr-depth would add as a fifth WR I would never start. Coin flip only in the sense that k-a's 118 delta is marginally higher, but the two-kicker supply makes DEF the correct order."
+    }
+  ]
+}

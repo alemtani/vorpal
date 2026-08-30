@@ -1,0 +1,147 @@
+{
+  "key": "4474fa6c49f9f91da20f715ecb484a4722fabe89f61d9573ee0594475ec7e955",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 18.0, \"bye\": 10, \"delta_starter_points\": 31.0, \"ecr\": 16, \"ecr_max\": 16, \"ecr_min\": 16, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-a\", \"player_id\": \"rb-a\", \"points\": 182.0, \"position\": \"RB\", \"vols\": 62.0}, {\"adp\": 20.0, \"bye\": 7, \"delta_starter_points\": 29.0, \"ecr\": 19, \"ecr_max\": 19, \"ecr_min\": 19, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-a\", \"player_id\": \"wr-a\", \"points\": 178.0, \"position\": \"WR\", \"vols\": 58.0}, {\"adp\": 24.0, \"bye\": 5, \"delta_starter_points\": 25.0, \"ecr\": 23, \"ecr_max\": 23, \"ecr_min\": 23, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-b\", \"player_id\": \"wr-b\", \"points\": 170.0, \"position\": \"WR\", \"vols\": 50.0}, {\"adp\": 30.0, \"bye\": 12, \"delta_starter_points\": 15.5, \"ecr\": 29, \"ecr_max\": 29, \"ecr_min\": 29, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-a\", \"player_id\": \"te-a\", \"points\": 151.0, \"position\": \"TE\", \"vols\": 31.0}, {\"adp\": 35.0, \"bye\": 6, \"delta_starter_points\": 12.0, \"ecr\": 34, \"ecr_max\": 34, \"ecr_min\": 34, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"QB\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"qb-a\", \"player_id\": \"qb-a\", \"points\": 144.0, \"position\": \"QB\", \"vols\": 24.0}, {\"adp\": 150.0, \"bye\": 14, \"delta_starter_points\": 1.5, \"ecr\": 185, \"ecr_max\": 185, \"ecr_min\": 185, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"K\", \"BN\"], \"name\": \"k-early\", \"player_id\": \"k-early\", \"points\": 123.0, \"position\": \"K\", \"vols\": 3.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"rb-a\", \"replacement\": {\"K\": {\"player_id\": \"repl-k\", \"points\": 100.0}, \"QB\": {\"player_id\": \"repl-qb\", \"points\": 100.0}, \"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 0, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 0, \"required\": 1}, \"WR\": {\"filled\": 0, \"required\": 2}}, \"next_user_pick\": 28, \"pick_no\": 21, \"picks_until_next\": 7, \"recent\": [], \"user_roster\": [{\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is both the best available by ECR (16) and the VOLS leader (62), and he fills the open RB2 next to rb-held with no bye overlap. Seven picks until my next turn means the top tier won't survive, so taking the highest-value board asset now is clean. wr-a is close in value but WR can be addressed at 28 with wr-b-caliber options more likely to slip."
+    },
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is the best available by ECR (16) and the VOLS leader (62), and he fills the open RB2 next to rb-held with no bye overlap. With seven picks until 28, the top tier will be gone, so take the highest-value starter now rather than reaching for positional balance; wr-a and wr-b are the fallbacks and one should still be reachable later."
+    },
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is the best available by ECR (16) and the VOLS leader (62), and he fills the open RB2 next to rb-held with no bye overlap. Waiting 7 picks means he is gone; wr-a and wr-b are close but both trail in value and the WR room can be addressed at pick 28 with similar-tier options."
+    },
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is the best available by ECR (16), leads VOLS at 62, and fills the open RB2 next to rb-held with no bye overlap. With seven picks until 28, the top of this board won't survive, so take the highest-value starter now rather than hoping wr-a or wr-b falls back."
+    },
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is the top ECR (16), the VOLS leader (62), and fills the open RB2 next to rb-held with no bye overlap. With seven picks until 28, the wideouts here are likelier to be replaceable by comparable ECR bodies than a top-16 back, so take the highest-value player and the starter slot at once."
+    }
+  ]
+}

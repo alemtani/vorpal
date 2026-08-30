@@ -1,0 +1,170 @@
+{
+  "key": "3741349e6695053a4ba7627715f05e5e3366cb522cc73af6c5ac5e945619539e",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 80.0, \"bye\": 9, \"delta_starter_points\": 12.0, \"ecr\": 78, \"ecr_max\": 78, \"ecr_min\": 78, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-bye-clash\", \"player_id\": \"wr-bye-clash\", \"points\": 150.0, \"position\": \"WR\", \"vols\": 30.0}, {\"adp\": 82.0, \"bye\": 5, \"delta_starter_points\": 29.0, \"ecr\": 80, \"ecr_max\": 80, \"ecr_min\": 80, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-bye-clear\", \"player_id\": \"wr-bye-clear\", \"points\": 149.0, \"position\": \"WR\", \"vols\": 29.0}, {\"adp\": 85.0, \"bye\": 11, \"delta_starter_points\": 10.5, \"ecr\": 84, \"ecr_max\": 84, \"ecr_min\": 84, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-e\", \"player_id\": \"rb-e\", \"points\": 141.0, \"position\": \"RB\", \"vols\": 21.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"wr-bye-clash\", \"replacement\": {\"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 1, \"required\": 1}, \"RB\": {\"filled\": 2, \"required\": 2}, \"TE\": {\"filled\": 1, \"required\": 1}, \"WR\": {\"filled\": 1, \"required\": 2}}, \"next_user_pick\": 93, \"pick_no\": 76, \"picks_until_next\": 17, \"recent\": [], \"user_roster\": [{\"bye\": 9, \"name\": \"qb-held\", \"player_id\": \"qb-held\", \"position\": \"QB\"}, {\"bye\": 9, \"name\": \"rb-held-1\", \"player_id\": \"rb-held-1\", \"position\": \"RB\"}, {\"bye\": 4, \"name\": \"rb-held-2\", \"player_id\": \"rb-held-2\", \"position\": \"RB\"}, {\"bye\": 9, \"name\": \"wr-held\", \"player_id\": \"wr-held\", \"position\": \"WR\"}, {\"bye\": 7, \"name\": \"te-held\", \"player_id\": \"te-held\", \"position\": \"TE\"}], \"weekly\": [{\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 1}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 2}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 3}, {\"empty\": [\"DEF\", \"K\", \"RB\", \"WR\", \"FLEX\"], \"starter_points\": 72.0, \"week\": 4}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 5}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 6}, {\"empty\": [\"DEF\", \"K\", \"TE\", \"WR\", \"FLEX\"], \"starter_points\": 72.0, \"week\": 7}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 8}, {\"empty\": [\"DEF\", \"K\", \"QB\", \"RB\", \"WR\", \"WR\", \"FLEX\"], \"starter_points\": 36.0, \"week\": 9}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 10}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 11}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 12}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 13}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 14}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 15}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 16}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 17}, {\"empty\": [\"DEF\", \"K\", \"WR\", \"FLEX\"], \"starter_points\": 90.0, \"week\": 18}]}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "BYE_STACK",
+        "VOLS_DISSENT",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "WR2 is the open starter slot and both wideouts are essentially the same player by projection (150 vs 149) and ECR (78 vs 80). The tiebreaker is the calendar: my QB, RB1 and WR1 all sit in Week 9, and wr-bye-clash shares that bye, which is why its true starter contribution is only 12 points versus 29 for wr-bye-clear. The raw VOLS hint ignores schedule overlap. Taking the Week 5 bye keeps Week 9 from collapsing and fills WR plus feeds FLEX later; rb-e is redundant with two RBs already rostered and 17 picks until my next turn means I want the sturdier starter now."
+    },
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "BYE_STACK",
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "Week 9 already guts this roster (QB, RB, WR all out), so adding another bye-9 body in wr-bye-clash stacks the damage for almost no gain. wr-bye-clear is a virtual tie on projection (149 vs 150) but more than doubles actual starter value (+29 vs +12) because it fills the empty WR slot in the weeks that matter. Two ECR spots of cost is nothing at pick 76 with 17 picks until my next turn."
+    },
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "BYE_STACK",
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "Week 9 is already a disaster: QB, RB, and WR all sit, leaving 36 starter points. wr-bye-clash shares that bye and adds nothing to the hole, which is why its delta_starter_points is only 12 despite a near-identical points total. wr-bye-clear (bye 5) fills the open WR every week that matters and nearly triples the starter gain at 29. One ECR slot of cost is trivial for that. With 17 picks until my next turn, I take the WR that actually plays on my broken weeks."
+    },
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "BYE_STACK",
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "Week 9 is already a disaster: QB, RB, and WR starters all sit that week, leaving 36 starter points. wr-bye-clash adds a fourth bye-9 body and only nets 12 delta starter points, while wr-bye-clear (bye 5) fills the open WR every week that matters and nets 29. Nearly identical ECR/ADP and season points, so the schedule fit is the whole margin. 17 picks until my next turn means I cannot count on another startable WR here."
+    },
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "BYE_STACK",
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "Week 9 is already a disaster \\u2014 QB, RB, and WR all on bye, starter points crater to 36. wr-bye-clash adds a fourth bye-9 body and only lifts season starter points by 12; wr-bye-clear is essentially the same player by points (149 vs 150) on a bye-5 week where the lineup is otherwise healthy, worth 29 starter points. With 17 picks until my next turn I can't wait on the WR2 slot that's empty every week. The one-slot ECR gap is noise (std 2)."
+    }
+  ]
+}
