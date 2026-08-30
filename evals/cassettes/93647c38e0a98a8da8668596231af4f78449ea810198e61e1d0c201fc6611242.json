@@ -1,0 +1,106 @@
+{
+  "key": "93647c38e0a98a8da8668596231af4f78449ea810198e61e1d0c201fc6611242",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 176.0, \"bye\": 9, \"delta_starter_points\": 0.7, \"ecr\": 170, \"ecr_max\": 170, \"ecr_min\": 170, \"ecr_std\": 1.5, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"flat-a\", \"player_id\": \"flat-a\", \"points\": 121.4, \"position\": \"RB\", \"vols\": 1.4}, {\"adp\": 180.0, \"bye\": 6, \"delta_starter_points\": 0.55, \"ecr\": 174, \"ecr_max\": 205, \"ecr_min\": 96, \"ecr_std\": 32.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wide-b\", \"player_id\": \"wide-b\", \"points\": 121.1, \"position\": \"WR\", \"vols\": 1.1}, {\"adp\": 182.0, \"bye\": 11, \"delta_starter_points\": 0.4, \"ecr\": 176, \"ecr_max\": 176, \"ecr_min\": 176, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"flat-c\", \"player_id\": \"flat-c\", \"points\": 120.8, \"position\": \"TE\", \"vols\": 0.8}, {\"adp\": 184.0, \"bye\": 13, \"delta_starter_points\": 0.15, \"ecr\": 179, \"ecr_max\": 210, \"ecr_min\": 101, \"ecr_std\": 29.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wide-d\", \"player_id\": \"wide-d\", \"points\": 120.3, \"position\": \"RB\", \"vols\": 0.3}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 9, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 14}, \"hint_argmax_vols\": \"flat-a\", \"replacement\": {\"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 1, \"required\": 1}, \"FLEX\": {\"filled\": 1, \"required\": 1}, \"K\": {\"filled\": 1, \"required\": 1}, \"QB\": {\"filled\": 1, \"required\": 1}, \"RB\": {\"filled\": 2, \"required\": 2}, \"TE\": {\"filled\": 1, \"required\": 1}, \"WR\": {\"filled\": 2, \"required\": 2}}, \"next_user_pick\": 188, \"pick_no\": 177, \"picks_until_next\": 11, \"recent\": [], \"user_roster\": [{\"bye\": 6, \"name\": \"qb-held\", \"player_id\": \"qb-held\", \"position\": \"QB\"}, {\"bye\": 8, \"name\": \"rb-held-1\", \"player_id\": \"rb-held-1\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"rb-held-2\", \"player_id\": \"rb-held-2\", \"position\": \"RB\"}, {\"bye\": 7, \"name\": \"wr-held-1\", \"player_id\": \"wr-held-1\", \"position\": \"WR\"}, {\"bye\": 11, \"name\": \"wr-held-2\", \"player_id\": \"wr-held-2\", \"position\": \"WR\"}, {\"bye\": 12, \"name\": \"te-held\", \"player_id\": \"te-held\", \"position\": \"TE\"}, {\"bye\": 9, \"name\": \"flex-held\", \"player_id\": \"flex-held\", \"position\": \"WR\"}, {\"bye\": 10, \"name\": \"k-held\", \"player_id\": \"k-held\", \"position\": \"K\"}, {\"bye\": 14, \"name\": \"def-held\", \"player_id\": \"def-held\", \"position\": \"DEF\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "flat-a",
+        "wide-d"
+      ],
+      "coin_flip": true,
+      "flags": [
+        "ECR_DISAGREE",
+        "VOLS_DISSENT",
+        "UPSIDE",
+        "BYE_STACK"
+      ],
+      "player_id": "wide-b",
+      "slot_filled": "BN",
+      "why": "Every starting slot is already filled, so pick 177 is a pure bench lottery ticket and the projected gaps here are noise (121.4 vs 121.1 points, 0.3 VOLS). With value effectively flat, the tiebreaker is range of outcomes: wide-b carries an ECR spread of 96-205 (std 32), meaning some evaluators see a top-100 player, while flat-a is a locked-in 170 with no ceiling. On a bench spot 11 picks from my next selection, I'd rather hold the option with a real path to starting relevance than a static replacement-level body. Bye 6 overlaps my QB, but a bench flier's bye is close to irrelevant."
+    }
+  ]
+}

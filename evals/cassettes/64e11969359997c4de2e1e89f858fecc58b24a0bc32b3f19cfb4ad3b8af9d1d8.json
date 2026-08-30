@@ -1,0 +1,157 @@
+{
+  "key": "64e11969359997c4de2e1e89f858fecc58b24a0bc32b3f19cfb4ad3b8af9d1d8",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 28.0, \"bye\": 10, \"delta_starter_points\": 55.0, \"ecr\": 26, \"ecr_max\": 26, \"ecr_min\": 26, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-elite\", \"player_id\": \"te-elite\", \"points\": 175.0, \"position\": \"TE\", \"vols\": 55.0}, {\"adp\": 27.0, \"bye\": 6, \"delta_starter_points\": 30.0, \"ecr\": 25, \"ecr_max\": 25, \"ecr_min\": 25, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-g\", \"player_id\": \"rb-g\", \"points\": 170.0, \"position\": \"RB\", \"vols\": 50.0}, {\"adp\": 30.0, \"bye\": 9, \"delta_starter_points\": 28.0, \"ecr\": 29, \"ecr_max\": 29, \"ecr_min\": 29, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-g\", \"player_id\": \"wr-g\", \"points\": 168.0, \"position\": \"WR\", \"vols\": 48.0}, {\"adp\": 44.0, \"bye\": 7, \"delta_starter_points\": 18.0, \"ecr\": 42, \"ecr_max\": 42, \"ecr_min\": 42, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-next\", \"player_id\": \"te-next\", \"points\": 138.0, \"position\": \"TE\", \"vols\": 18.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"te-elite\", \"replacement\": {\"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 0, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 0, \"required\": 1}, \"WR\": {\"filled\": 1, \"required\": 2}}, \"next_user_pick\": 45, \"pick_no\": 28, \"picks_until_next\": 17, \"recent\": [], \"user_roster\": [{\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"wr-held\", \"player_id\": \"wr-held\", \"position\": \"WR\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "te-elite is both the best ECR on the board (26) and the VOLS leader (55 over replacement), so there's no tension to resolve. With 17 picks until pick 45, the gap to te-next (ECR 42, VOLS 18) is a 37-point cliff at a starting slot I have completely empty, and te-next almost certainly doesn't survive that wait. rb-g and wr-g are close in raw points but each fills a slot where I already have a starter, so the marginal value is smaller. No bye conflict with rb-held (8) or wr-held (5)."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "te-elite is the VOLS max (55) and the board's top scorer, and the TE cliff is real: the next tight end here is te-next at 18 VOLS, a 37-point drop I cannot bridge with 17 picks until my 45th selection. TE is an empty starter slot while RB and WR each already have one body, so the positional need lines up with the value. ECR technically prefers rb-g at 25 versus 26, a one-slot gap well inside margin and not worth surrendering the scarcest asset on the board. Bye 10 is clean against rb-held (8) and wr-held (5). rb-g and wr-g are close in raw points and their positions replenish far better between now and pick 45."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "te-elite is the VOLS leader by a wide margin (55 vs 50/48) and the tier cliff behind him is brutal: te-next is the only other TE on the board at 18 VOLS, a 37-point gap. With 17 picks until my next selection at 45, waiting on TE almost certainly means settling for replacement-level production at an empty starting slot. rb-g holds the nominal ECR edge by one spot, which is noise inside the ecr_std, and I already have an RB and WR started, so the positional leverage points at TE."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "te-elite is both the best available by ECR (26) and the VOLS leader (55), and it fills a completely empty TE slot. With 17 picks until my next turn at 45, the elite TE tier will be long gone and even te-next (ECR 42) is unlikely to survive; the drop from 175 to 138 points at the position is the largest positional gap on this board. rb-g and wr-g are close in raw value but I already have a starter at each spot and those tiers replenish better than TE."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "te-elite is both the top ECR on the board (26) and the VOLS leader (+55 over replacement), and the gap to the next tight end available (te-next, 18 VOLS) is enormous. With 17 picks until my next turn at 45, the elite TE will not survive while rb-g/wr-g-caliber production is more replaceable. Fills an empty TE starter slot and my roster already has an RB and WR started."
+    }
+  ]
+}

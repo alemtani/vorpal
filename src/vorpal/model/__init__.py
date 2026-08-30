@@ -7,10 +7,12 @@ from vorpal.model.call import (
     MODEL_ID,
     AnthropicTransport,
     StubTransport,
+    build_request,
     propose,
     recommend,
     run_stability,
 )
+from vorpal.model.cassette import CassetteStore, CassetteTransport, request_key
 from vorpal.model.validate import validate_proposal
 
 __all__ = [
@@ -19,9 +21,13 @@ __all__ = [
     "MAX_TOKENS",
     "MODEL_ID",
     "AnthropicTransport",
+    "CassetteStore",
+    "CassetteTransport",
     "StubTransport",
+    "build_request",
     "propose",
     "recommend",
+    "request_key",
     "run_stability",
     "validate_proposal",
 ]

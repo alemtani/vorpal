@@ -1,0 +1,160 @@
+{
+  "key": "8f64b543560659d441e21c9a8d7d93903ac7e4650e2effe567f3800f5ef75a68",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 70.0, \"bye\": 11, \"delta_starter_points\": 0.0, \"ecr\": 66, \"ecr_max\": 66, \"ecr_min\": 66, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-third\", \"player_id\": \"te-third\", \"points\": 144.0, \"position\": \"TE\", \"vols\": 24.0}, {\"adp\": 66.0, \"bye\": 7, \"delta_starter_points\": 22.0, \"ecr\": 63, \"ecr_max\": 63, \"ecr_min\": 63, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-a\", \"player_id\": \"wr-a\", \"points\": 142.0, \"position\": \"WR\", \"vols\": 22.0}, {\"adp\": 72.0, \"bye\": 13, \"delta_starter_points\": 18.0, \"ecr\": 70, \"ecr_max\": 70, \"ecr_min\": 70, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-b\", \"player_id\": \"wr-b\", \"points\": 138.0, \"position\": \"WR\", \"vols\": 18.0}, {\"adp\": 75.0, \"bye\": 6, \"delta_starter_points\": 9.0, \"ecr\": 74, \"ecr_max\": 74, \"ecr_min\": 74, \"ecr_std\": 2.0, \"gp\": 17.0, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-c\", \"player_id\": \"rb-c\", \"points\": 135.0, \"position\": \"RB\", \"vols\": 15.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"te-third\", \"replacement\": {\"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 1, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 1, \"required\": 1}, \"RB\": {\"filled\": 2, \"required\": 2}, \"TE\": {\"filled\": 1, \"required\": 1}, \"WR\": {\"filled\": 0, \"required\": 2}}, \"next_user_pick\": 76, \"pick_no\": 69, \"picks_until_next\": 7, \"recent\": [], \"user_roster\": [{\"bye\": 6, \"name\": \"qb-held\", \"player_id\": \"qb-held\", \"position\": \"QB\"}, {\"bye\": 8, \"name\": \"rb-held-1\", \"player_id\": \"rb-held-1\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"rb-held-2\", \"player_id\": \"rb-held-2\", \"position\": \"RB\"}, {\"bye\": 12, \"name\": \"te-held-1\", \"player_id\": \"te-held-1\", \"position\": \"TE\"}, {\"bye\": 9, \"name\": \"te-held-2\", \"player_id\": \"te-held-2\", \"position\": \"TE\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "thinking": {
+      "type": "adaptive"
+    }
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "Both WR starting spots are still empty while TE is already filled twice over, so te-third's raw VOLS edge is illusory \ninstead wr-a delivers the largest actual starter gain (+22) and is also the best ECR on the board at 63. With seven picks until 76, the WR tier here (wr-a/wr-b) is thin enough that waiting risks both going; take the better one now and hope wr-b or a comparable falls back."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "te-third"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "VOLS_DISSENT",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "Both WR starter slots are empty and I already roster two TEs, so te-third's raw VOLS edge is illusory \ndash it would ride the bench or take a FLEX spot I can fill later. wr-a is the best ECR on the board (63), leads in delta_starter_points (+22), and fills a required starting slot immediately. With seven picks until 76, the WR tier here won't hold."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "Both WR starting spots are empty and I already roster two TEs, so te-third's raw VOLS is phantom value \\u2014 it adds 0 to my starting lineup. wr-a is also the best ECR on the board (63) and delivers the largest starter gain (+22). With seven picks until 76, waiting on WR risks both wr-a and wr-b going."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "Both WR starting spots are still empty while TE is already filled twice over, so te-third's raw VOLS is phantom value \ta third tight end can't crack the lineup. wr-a is the best ECR on the board (63), leads in delta_starter_points (+22), and fills a required slot immediately. With seven picks until 76, waiting on WR risks losing both wr-a and wr-b."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER",
+        "VOLS_DISSENT"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "Both WR starting spots are empty and I already roster two TEs, so te-third's raw VOLS is fake value \\u2014 it would sit on my bench. wr-a is the best ECR on the board (63), leads in actual starter delta (+22), and fills a required slot with seven picks until my next turn. wr-b is the fallback if wr-a is gone."
+    }
+  ]
+}
