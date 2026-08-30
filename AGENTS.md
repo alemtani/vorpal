@@ -57,20 +57,27 @@ Do not exclude new code to keep the number.
 
 Non-obvious helpers get a short docstring (what they keep, what they cap).
 
-## Session protocol
+## Work tracking
 
-From `docs/PLAN.md` section 5.
+v1 sessions (S0–S9) are done. Do not add S11.
 
-Start in a worktree: `git worktree add ../vorpal-sN -b feat/<scope> main`.
-Touch only the files your prompt says you own.
+A change is an issue or a spec, never a numbered session.
+
+- **Issue:** one obvious approach, one or two commits. The PR closes it.
+- **needs-spec:** more than one viable approach, a human has to choose,
+  or the work spans several commits. Open an issue labeled `needs-spec`.
+  Do not start the implementation PR until a spec is accepted. The spec
+  is a later PR against `docs/SPEC.md` (or a short `docs/specs/<slug>.md`).
+
+Dependencies live on the issue (`blocked by #N`), not in PLAN.md.
+
+Start in a worktree: `git worktree add ../vorpal-<slug> -b feat/<slug> main`.
 
 If a generic type must change, stop and open a small PR against
 `src/vorpal/contracts.py` / `src/vorpal/platform/`. Do not silently fork
 the type in your package. Rebase after it merges.
 
-Before you open the PR: write `docs/handoffs/SN.md`, set your PLAN.md
-row to DONE, update prompts of sessions that depend on you. A PR that
-skips those is not finished.
+If the next person cannot see it from the code, put it in the PR body.
 
 ## Do not
 
@@ -101,7 +108,7 @@ skips those is not finished.
   is the join directory. Do not fetch Sleeper projections.
 - **VOLS is last starter, two passes.** Bench is not absorbed. Spec
   section 3. The pick is the model's; `hint_argmax_vols` is a calculator.
-- **ECR is not the pick** and is not a valuation input. S2 then S5.
+- **ECR is not the pick** and is not a valuation input. Ingest then payload.
 - **Standalone mocks:** `league_id` is JSON `null`. Slots from the mock,
   scoring from a borrowed league.
 - **Poll:** 3s while `drafting`, else 15s until `complete`. Observed

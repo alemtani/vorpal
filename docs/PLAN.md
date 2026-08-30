@@ -65,10 +65,10 @@ files, each with a rule:
 | `src/vorpal/contracts.py` | Frozen. D4. |
 | `src/vorpal/platform/base.py` | Frozen. New hosts are new files, not edits here. |
 | `src/vorpal/errors.py` | Frozen. Taxonomy is complete in the seed. |
-| `docs/PLAN.md` | A session edits only its own status row. |
+| `docs/PLAN.md` | Historical. Living work is GitHub issues. |
 
-Everything else is one directory, one owner. Handoff notes go in
-`docs/handoffs/SN.md`, one file per session, so they cannot conflict at all.
+Everything else is one directory, one owner. v1 handoffs live in
+`docs/handoffs/S0.md` … `S10.md` as archive. New work does not add `SN.md`.
 
 ### D6 — The model call is faked in unit tests, live only under a marker
 
@@ -93,7 +93,10 @@ eight parallel branches from all touching the same forty lines.
 
 ---
 
-## 2. The graph
+## 2. The graph (historical)
+
+v1 was built as S0–S10. That numbering is closed. Living work is GitHub
+issues; see AGENTS.md.
 
 ```mermaid
 flowchart TD
@@ -117,15 +120,9 @@ flowchart TD
   S8 --> S10
 ```
 
-S1 through S7 and S9 are **fully concurrent**. They share no file. They can be
-merged to `main` in any order as they go green.
-
-Critical path is S0 → S4 → S8 → S10. S4 (valuation) is the longest single
-session; start it first.
-
 ---
 
-## 3. Sessions
+## 3. Sessions (historical)
 
 | ID | Scope | Owns | Depends | Status |
 |---|---|---|---|---|
@@ -139,9 +136,10 @@ session; start it first.
 | S7 | HTML board, poll loop, data age | `src/vorpal/board/**` | S0 | DONE |
 | S8 | CLI, wiring, end-to-end test | `src/vorpal/cli.py`, `tests/e2e/**` | S1–S5, S7 | DONE |
 | S9 | Golden set + regret fixtures | `tests/golden/**`, `tests/regret/**` | S0 | DONE |
-| S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | NOT STARTED |
+| S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | DONE |
 
-Prompts: `docs/prompts/S1.md` … `docs/prompts/S10.md`.
+Remaining work is GitHub issues, not S11. Follow-ups from the eval run are
+listed in `evals/REPORT.md`.
 
 ---
 
@@ -164,28 +162,21 @@ night is worth nothing that night.
 
 ---
 
-## 5. Session protocol
+## 5. Work tracking
 
-Standing rules, also in AGENTS.md.
+Standing rules, also in AGENTS.md. v1 sessions are done. Do not add S11.
 
-**Start.** Create a worktree, never switch branches in a shared checkout:
+- **Issue:** one obvious approach, one or two commits. The PR closes it.
+- **needs-spec:** more than one viable approach, a human has to choose, or
+  the work spans several commits. Open an issue labeled `needs-spec`. Do
+  not start the implementation PR until a spec is accepted.
+
+Dependencies live on the issue (`blocked by #N`), not in this table.
+
+Start in a worktree:
 
 ```
-git worktree add ../vorpal-sN -b feat/<scope> main
+git worktree add ../vorpal-<slug> -b feat/<slug> main
 ```
 
-**During.** Touch only the files your prompt says you own. If you need a
-contract change, stop and open a separate contract PR (D4).
-
-**Finish.** Before you open the PR:
-
-1. Write `docs/handoffs/SN.md` — what you built, what you learned that the next
-   session cannot see from the code, anything in the spec that turned out to be
-   wrong or ambiguous.
-2. Update your own row in the §3 table above to `DONE` (or `BLOCKED: reason`).
-3. Update the prompt file of every session that depends on you, with the real
-   function signatures they will call and any gotcha you hit.
-4. If your work makes a *new* session necessary, write its prompt file and add
-   its row.
-
-A PR that does not do all four is not finished.
+If a generic type must change, stop and open a separate contract PR (D4).

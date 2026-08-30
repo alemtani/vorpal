@@ -1,0 +1,1209 @@
+[
+  {
+    "name": "mock_standalone_seat06_r05",
+    "kind": "regret",
+    "policy": "model",
+    "rec": "4881",
+    "alts": [
+      "11566",
+      "11564",
+      "12517"
+    ],
+    "flags": [
+      "EMPTY_STARTER"
+    ],
+    "why": "QB is still empty and Lamar Jackson is the top board value by a wide margin over the TE tier. Filling the starting QB slot with the highest-scoring player available is the clean, no-cost move here; Daniels/Maye are close enough that one should still be there later, but Lamar is the best of them now.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "8148",
+    "case_why": "Standalone mock, league_id null, cpu_autopick on: 32 of 192 picks were made by the platform's autopick, not by a person. A weaker record than the two league drafts, kept because a mock room drafts closer to raw ADP and that is a different failure mode to measure against.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "FAIL",
+        "reason": "rec survived and a listed alternative did not"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "mock_standalone_seat06_r05",
+    "kind": "regret",
+    "policy": "argmax_vols",
+    "rec": "4881",
+    "alts": [
+      "11566"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "8148",
+    "case_why": "Standalone mock, league_id null, cpu_autopick on: 32 of 192 picks were made by the platform's autopick, not by a person. A weaker record than the two league drafts, kept because a mock room drafts closer to raw ADP and that is a different failure mode to measure against.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "mock_standalone_seat06_r05",
+    "kind": "regret",
+    "policy": "adp_follow",
+    "rec": "10859",
+    "alts": [
+      "4881"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "8148",
+    "case_why": "Standalone mock, league_id null, cpu_autopick on: 32 of 192 picks were made by the platform's autopick, not by a person. A weaker record than the two league drafts, kept because a mock room drafts closer to raw ADP and that is a different failure mode to measure against.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "mock_standalone_seat06_r05",
+    "kind": "regret",
+    "policy": "ecr_follow",
+    "rec": "4881",
+    "alts": [
+      "11566"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "8148",
+    "case_why": "Standalone mock, league_id null, cpu_autopick on: 32 of 192 picks were made by the platform's autopick, not by a person. A weaker record than the two league drafts, kept because a mock room drafts closer to raw ADP and that is a different failure mode to measure against.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r03",
+    "kind": "regret",
+    "policy": "model",
+    "rec": "11632",
+    "alts": [
+      "7569",
+      "11631",
+      "11604"
+    ],
+    "flags": [
+      "EMPTY_STARTER",
+      "VOLS_DISSENT"
+    ],
+    "why": "QB is already locked in with Josh Allen, so the hint's Lamar Jackson would be a pure bench luxury with six starter slots still empty. Nabers is the best available by ECR (5) and the highest-projected non-QB on the board, filling WR2 next to Ja'Marr Chase. No RBs are on this capped board, so the WR/TE route is the only way to add starter points here.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "5927",
+    "case_why": "League-attached 12-team snake redraft, PPR, played to completion by twelve human seats. Read through the documented Sleeper draft and picks endpoints and redacted on the way in.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r03",
+    "kind": "regret",
+    "policy": "argmax_vols",
+    "rec": "4881",
+    "alts": [
+      "6904"
+    ],
+    "flags": [
+      "ECR_DISAGREE"
+    ],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "5927",
+    "case_why": "League-attached 12-team snake redraft, PPR, played to completion by twelve human seats. Read through the documented Sleeper draft and picks endpoints and redacted on the way in.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r03",
+    "kind": "regret",
+    "policy": "adp_follow",
+    "rec": "10859",
+    "alts": [
+      "4881"
+    ],
+    "flags": [
+      "VOLS_DISSENT",
+      "ECR_DISAGREE"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "5927",
+    "case_why": "League-attached 12-team snake redraft, PPR, played to completion by twelve human seats. Read through the documented Sleeper draft and picks endpoints and redacted on the way in.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r03",
+    "kind": "regret",
+    "policy": "ecr_follow",
+    "rec": "11632",
+    "alts": [
+      "4881"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "4881",
+    "actually_picked": "5927",
+    "case_why": "League-attached 12-team snake redraft, PPR, played to completion by twelve human seats. Read through the documented Sleeper draft and picks endpoints and redacted on the way in.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r09",
+    "kind": "regret",
+    "policy": "model",
+    "rec": "11631",
+    "alts": [
+      "5844",
+      "9484",
+      "BUF"
+    ],
+    "flags": [
+      "VOLS_DISSENT",
+      "EMPTY_STARTER",
+      "UPSIDE"
+    ],
+    "why": "QB is already locked with Josh Allen, so the VOLS argmax (Jayden Daniels) adds zero starting points. Brian Thomas is the only remaining true starter-quality skill player on the board and swings my weekly lineup by ~290 points of starter value while filling an empty FLEX. Kickers and defenses are late-round commodities I can grab in the final rounds; a WR1-caliber piece is not.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "11584",
+    "case_why": "Same completed draft, same seat, six rounds later. The late board is where VOLS compresses and wait-or-take stops being obvious.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r09",
+    "kind": "regret",
+    "policy": "argmax_vols",
+    "rec": "11566",
+    "alts": [
+      "5849"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "11584",
+    "case_why": "Same completed draft, same seat, six rounds later. The late board is where VOLS compresses and wait-or-take stops being obvious.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r09",
+    "kind": "regret",
+    "policy": "adp_follow",
+    "rec": "11533",
+    "alts": [
+      "11566"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "11584",
+    "case_why": "Same completed draft, same seat, six rounds later. The late board is where VOLS compresses and wait-or-take stops being obvious.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "FAIL",
+        "reason": "rec survived and a listed alternative did not"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "snake_redraft_seat02_r09",
+    "kind": "regret",
+    "policy": "ecr_follow",
+    "rec": "11566",
+    "alts": [
+      "5849"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "11584",
+    "case_why": "Same completed draft, same seat, six rounds later. The late board is where VOLS compresses and wait-or-take stops being obvious.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on the board"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_seat07_r02",
+    "kind": "regret",
+    "policy": "model",
+    "rec": "11566",
+    "alts": [
+      "6770",
+      "6904",
+      "8112"
+    ],
+    "flags": [
+      "ECR_DISAGREE",
+      "EMPTY_STARTER",
+      "UPSIDE"
+    ],
+    "why": "2QB format makes elite quarterbacks the scarcest asset, and my QB and SUPER_FLEX are both empty with five straight RB/WR picks ahead of me. Daniels is the board's VOLS leader at 322.5 points, a hair above Hurts and ~12 over Burrow, with a rushing floor that holds up in this scoring. Burrow carries the better consensus rank (ECR 4 vs 6) and tighter dispersion, so a rerun could easily land on him, but I'll take the projection edge and dual-threat upside here and address RB/WR on the turn.",
+    "coin_flip": true,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "8151",
+    "case_why": "Completed 12-team superflex snake, 18 rounds, K and no DEF. The second round of a superflex draft is where the quarterback run happens, so it is the pick worth freezing.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "NOT_PERFORMED",
+        "reason": "coin_flip"
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "FAIL",
+        "reason": "rec survived and a listed alternative did not"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_seat07_r02",
+    "kind": "regret",
+    "policy": "argmax_vols",
+    "rec": "11566",
+    "alts": [
+      "6904"
+    ],
+    "flags": [
+      "ECR_DISAGREE"
+    ],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "8151",
+    "case_why": "Completed 12-team superflex snake, 18 rounds, K and no DEF. The second round of a superflex draft is where the quarterback run happens, so it is the pick worth freezing.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "FAIL",
+        "reason": "rec survived and a listed alternative did not"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_seat07_r02",
+    "kind": "regret",
+    "policy": "adp_follow",
+    "rec": "10229",
+    "alts": [
+      "11566"
+    ],
+    "flags": [
+      "VOLS_DISSENT",
+      "ECR_DISAGREE"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "8151",
+    "case_why": "Completed 12-team superflex snake, 18 rounds, K and no DEF. The second round of a superflex draft is where the quarterback run happens, so it is the pick worth freezing.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no ECR on rec"
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "NOT_PERFORMED",
+        "reason": "rec has no bye"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_seat07_r02",
+    "kind": "regret",
+    "policy": "ecr_follow",
+    "rec": "6770",
+    "alts": [
+      "11566"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "11566",
+    "actually_picked": "8151",
+    "case_why": "Completed 12-team superflex snake, 18 rounds, K and no DEF. The second round of a superflex draft is where the quarterback run happens, so it is the pick worth freezing.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "regret",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  }
+]

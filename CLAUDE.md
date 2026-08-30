@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 Read `AGENTS.md` first. It holds the rules: what this tool does, what it
-must never do, the session protocol, and the facts agents get wrong.
+must never do, how work is tracked, and the facts agents get wrong.
 This file is the working detail — commands and layout. When the two
 disagree, `AGENTS.md` wins.
 
@@ -35,8 +35,8 @@ bugs. `live` hits the network and never runs in CI.
 | `resolve/` | Slots, scoring source, seat, refusals, banners. |
 | `valuation/` | Scoring, two-pass VOLS, weekly vector, marginal value. Pure. No IO. |
 
-Read `docs/handoffs/SN.md` before you touch package N. It has the exact
-signatures the next session builds on.
+Read `docs/handoffs/` for package signatures from the v1 build. New work
+does not write `SN.md`.
 
 ## The shape to keep
 
@@ -46,6 +46,6 @@ host. See "A league is a table, not a branch" in `AGENTS.md`.
 
 ## Before you open a PR
 
-Write `docs/handoffs/SN.md`. Set your `docs/PLAN.md` row to DONE. Update
-the prompts of sessions that depend on you. Run the full suite, `ruff
-check`, and `ruff format --check`. A PR that skips those is not finished.
+Link the GitHub issue. If the next person cannot see it from the code,
+put it in the PR body. Run the full suite, `ruff check`, and
+`ruff format --check`. A PR that skips those is not finished.

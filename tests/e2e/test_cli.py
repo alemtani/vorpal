@@ -11,7 +11,7 @@ import respx
 from league import ROSTER, SEASON, load
 
 from vorpal import cli
-from vorpal.cli import PROPOSE_WITHIN_PICKS, _label, _Proposals, main
+from vorpal.cli import _label, _Proposals, main
 from vorpal.contracts import Banner
 from vorpal.errors import VorpalError
 from vorpal.model import StubTransport
@@ -297,48 +297,57 @@ class _CountingProposals(_Proposals):
         self._pick_no = pick_no
         return self._proposal, ()
 
+    def _placeholder(self, payload: Any) -> tuple[Any, tuple[Banner, ...]]:
+        return f"calculator for {payload.state.pick_no}", ()
 
-def test_the_first_board_always_asks_the_model() -> None:
+
+def test_a_board_that_is_not_your_pick_does_not_ask_the_model() -> None:
+    proposals = _CountingProposals()
+    proposal, _banners = proposals.for_payload(
+        _FakePayload(pick_no=1, picks_until_next=40)
+    )
+    assert proposals.calls == 0
+    assert proposal == "calculator for 1"
+
+
+def test_one_or_two_picks_away_is_still_not_your_pick() -> None:
+    """The old window of 2 burned a call on every pick in front of the seat."""
+    proposals = _CountingProposals()
+    for until in (2, 1):
+        proposals.for_payload(_FakePayload(pick_no=10, picks_until_next=until))
+    assert proposals.calls == 0
+
+
+def test_the_model_runs_only_when_the_operator_is_on_the_clock() -> None:
     proposals = _CountingProposals()
     proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=40))
+    proposal, banners = proposals.for_payload(
+        _FakePayload(pick_no=18, picks_until_next=0)
+    )
     assert proposals.calls == 1
+    assert proposal == "proposal for 18"
+    assert banners == ()
 
 
-def test_the_same_pick_never_asks_twice() -> None:
+def test_the_same_pick_on_the_clock_never_asks_twice() -> None:
     proposals = _CountingProposals()
     for _ in range(20):
         proposal, banners = proposals.for_payload(
-            _FakePayload(pick_no=1, picks_until_next=1)
+            _FakePayload(pick_no=18, picks_until_next=0)
         )
-    # Twenty polls of an unchanged board are one call, and the answer is
-    # still for this pick, so nothing warns the operator.
     assert proposals.calls == 1
-    assert proposal == "proposal for 1"
+    assert proposal == "proposal for 18"
     assert banners == ()
 
 
-def test_a_pick_far_from_the_seat_reuses_the_last_answer_and_says_so() -> None:
+def test_after_your_pick_the_page_goes_back_to_the_calculator() -> None:
     proposals = _CountingProposals()
-    proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=1))
-    proposal, banners = proposals.for_payload(
-        _FakePayload(pick_no=3, picks_until_next=20)
+    proposals.for_payload(_FakePayload(pick_no=18, picks_until_next=0))
+    proposal, _banners = proposals.for_payload(
+        _FakePayload(pick_no=19, picks_until_next=19)
     )
     assert proposals.calls == 1
-    assert proposal == "proposal for 1"
-    assert [banner.code for banner in banners] == ["proposal_not_current"]
-    assert "pick 1, not 3" in banners[0].message
-
-
-def test_the_model_runs_again_once_the_seat_is_near() -> None:
-    proposals = _CountingProposals()
-    proposals.for_payload(_FakePayload(pick_no=1, picks_until_next=1))
-    proposals.for_payload(_FakePayload(pick_no=3, picks_until_next=20))
-    proposal, banners = proposals.for_payload(
-        _FakePayload(pick_no=20, picks_until_next=PROPOSE_WITHIN_PICKS)
-    )
-    assert proposals.calls == 2
-    assert proposal == "proposal for 20"
-    assert banners == ()
+    assert proposal == "calculator for 19"
 
 
 def test_no_seat_means_no_clock_so_every_new_pick_asks() -> None:
@@ -395,11 +404,11 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
     code = main(argv, transport=HintTransport(), sleep=lambda _s: None, now=lambda: 0.0)
     assert code == 0
-    # Pick 1 is one away from the seat, so the model runs. Pick 3 is twenty
-    # away: the board turns over before the operator can act on that answer.
-    assert asked == [1]
+    # Seat 2 is never on the clock in this script (pick 1 is one away, pick 3
+    # is twenty away). The model must not run for other people's picks.
+    assert asked == []
     # Four polls, three boards. The third poll found pick 3 again and built
     # nothing. The fourth rebuilt only because `complete` is on the page.
     assert built == [(1, "drafting"), (3, "drafting"), (3, "complete")]
     page = (tmp_path / "board.html").read_text(encoding="utf-8")
-    assert "proposal_not_current" in page
+    assert "proposal_not_current" not in page
