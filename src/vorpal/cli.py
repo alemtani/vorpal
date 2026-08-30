@@ -48,12 +48,10 @@ FP_KEY_ENV = "FANTASYPROS_API_KEY"
 DEFAULT_OUTPUT = Path("board.html")
 FP_MIN_INTERVAL_S = 1.1
 
-# How close to the operator's pick the model runs. A pick further out than
-# this is answered from the last call: the board will have turned over
-# before the operator can act on it anyway. Two is the floor that still
-# works from any seat — after your own pick, snake order puts at least two
-# picks in front of your next one from every slot but the turn.
-PROPOSE_WITHIN_PICKS = 2
+# The model runs only when this seat is on the clock (`picks_until_next == 0`).
+# A window of 2 used to pre-call on the picks in front; that is three bills
+# per operator pick and a stale rec shown as current. Other people's picks
+# get the calculator.
 
 # Each class keeps its own word. Collapsing them costs the operator the one
 # thing the message is for: whether a better file, a retry, or a different
@@ -211,7 +209,7 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
-    frames = _Frames(_Proposals(transport))
+    frames = _Frames(_Proposals(transport, always=args.once))
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return frames.get(
@@ -290,18 +288,16 @@ class _Frames:
 class _Proposals:
     """Decides when the model runs. Draft night is mostly other people's picks.
 
-    ``recompute`` fires on every poll — 3s while the draft is live. Calling
-    the model each time is thousands of calls for the handful of picks the
-    operator can act on. So: call on the first board, call again when the
-    picks change and the seat is within ``PROPOSE_WITHIN_PICKS`` of the
-    clock, and otherwise serve the last answer with a banner saying which
-    pick it was for. Nothing here changes what a call returns.
+    ``recompute`` fires on every poll — 3s while the draft is live. The model
+    runs only when this seat is on the clock. One pick away still waits.
+    Between turns the page shows the calculator, not a stale rec.
     """
 
-    __slots__ = ("_banners", "_pick_no", "_proposal", "_transport")
+    __slots__ = ("_always", "_banners", "_pick_no", "_proposal", "_transport")
 
-    def __init__(self, transport) -> None:
+    def __init__(self, transport, *, always: bool = False) -> None:
         self._transport = transport
+        self._always = always
         self._proposal: Proposal | None = None
         self._banners: tuple[Banner, ...] = ()
         self._pick_no: int | None = None
@@ -309,19 +305,18 @@ class _Proposals:
     def for_payload(self, payload: Payload) -> tuple[Proposal, tuple[Banner, ...]]:
         """The proposal to show for this payload, and any banners it carries."""
         pick_no = payload.state.pick_no
-        if self._proposal is None or self._should_call(pick_no, payload.state):
-            return self._call(payload, pick_no)
-        if pick_no == self._pick_no:
+        if not self._on_clock(payload.state):
+            return self._placeholder(payload)
+        if self._proposal is not None and pick_no == self._pick_no:
             return self._proposal, self._banners
-        return self._proposal, self._banners + (self._stale(pick_no),)
+        return self._call(payload, pick_no)
 
-    def _should_call(self, pick_no: int, state: DraftState) -> bool:
-        if pick_no == self._pick_no:
-            return False
-        # No seat means no clock to wait for. Answer every new pick.
-        if state.picks_until_next is None:
+    def _on_clock(self, state: DraftState) -> bool:
+        # --once is "give me a rec for this board." The loop is draft night.
+        if self._always:
             return True
-        return state.picks_until_next <= PROPOSE_WITHIN_PICKS
+        # No seat means no clock. Answer every new pick so the page is not empty.
+        return state.picks_until_next is None or state.picks_until_next == 0
 
     def _call(
         self, payload: Payload, pick_no: int
@@ -338,13 +333,24 @@ class _Proposals:
         self._pick_no = pick_no
         return result.proposal, banners
 
-    def _stale(self, pick_no: int) -> Banner:
-        return Banner(
-            code="proposal_not_current",
-            message=(
-                f"Recommendation is for pick {self._pick_no}, not {pick_no}. "
-                f"It refreshes within {PROPOSE_WITHIN_PICKS} picks of yours."
+    def _placeholder(self, payload: Payload) -> tuple[Proposal, tuple[Banner, ...]]:
+        """Calculator pick. No model. Used on everyone else's turn."""
+        rec = next(
+            row for row in payload.board if row.player_id == payload.hint_argmax_vols
+        )
+        alts = tuple(
+            row.player_id for row in payload.board if row.player_id != rec.player_id
+        )[:2]
+        return (
+            Proposal(
+                player_id=rec.player_id,
+                alternatives=alts,
+                slot_filled=rec.legal_slots[0],
+                coin_flip=False,
+                why="Not your pick. Calculator until you are on the clock.",
+                flags=(),
             ),
+            (),
         )
 
 

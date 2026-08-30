@@ -1,0 +1,3561 @@
+[
+  {
+    "name": "kicker_round_two",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "rb-a",
+    "alts": [
+      "wr-a",
+      "wr-b"
+    ],
+    "flags": [],
+    "why": "rb-a is both the best available by ECR (16) and the VOLS leader (62), filling the open RB2 next to rb-held with no bye overlap. With seven picks until 28, the wideouts are likelier to survive the wait than a top-16 back, so take the scarcer, higher-value asset now and address WR on the turn.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-a",
+    "actually_picked": null,
+    "case_why": "The best kicker left is worth three points over the last kicker anybody will draft, and the best receiver left is worth fifty-eight over his replacement; spending pick 21 on the three-point one is not a judgement call.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "kicker_round_two",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "rb-a",
+    "alts": [
+      "wr-a"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-a",
+    "actually_picked": null,
+    "case_why": "The best kicker left is worth three points over the last kicker anybody will draft, and the best receiver left is worth fifty-eight over his replacement; spending pick 21 on the three-point one is not a judgement call.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "kicker_round_two",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "rb-a",
+    "alts": [
+      "wr-a"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-a",
+    "actually_picked": null,
+    "case_why": "The best kicker left is worth three points over the last kicker anybody will draft, and the best receiver left is worth fifty-eight over his replacement; spending pick 21 on the three-point one is not a judgement call.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "kicker_round_two",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "rb-a",
+    "alts": [
+      "wr-a"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-a",
+    "actually_picked": null,
+    "case_why": "The best kicker left is worth three points over the last kicker anybody will draft, and the best receiver left is worth fifty-eight over his replacement; spending pick 21 on the three-point one is not a judgement call.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "third_te_while_wr_empty",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "wr-a",
+    "alts": [
+      "wr-b",
+      "te-third"
+    ],
+    "flags": [
+      "EMPTY_STARTER",
+      "VOLS_DISSENT"
+    ],
+    "why": "Both WR starting spots are empty and I already roster two TEs, so te-third's raw VOLS is trapped on my bench \\u2014 his real marginal value to this lineup is zero. wr-a is the best player on the board by ECR (63) and leads in actual starter gain (+22), so he fills a hole and wins the value check at the same time. With seven picks until 76, waiting on WR risks losing both wr-a and wr-b.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-third",
+    "actually_picked": null,
+    "case_why": "The league starts one tight end and two are already rostered, so a third can never enter the lineup, while both receiver slots are empty and either receiver on this board starts in week one.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "third_te_while_wr_empty",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "te-third",
+    "alts": [
+      "wr-a"
+    ],
+    "flags": [
+      "ECR_DISAGREE"
+    ],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-third",
+    "actually_picked": null,
+    "case_why": "The league starts one tight end and two are already rostered, so a third can never enter the lineup, while both receiver slots are empty and either receiver on this board starts in week one.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "third_te_while_wr_empty",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "wr-a",
+    "alts": [
+      "te-third"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-third",
+    "actually_picked": null,
+    "case_why": "The league starts one tight end and two are already rostered, so a third can never enter the lineup, while both receiver slots are empty and either receiver on this board starts in week one.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "third_te_while_wr_empty",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "wr-a",
+    "alts": [
+      "te-third"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-third",
+    "actually_picked": null,
+    "case_why": "The league starts one tight end and two are already rostered, so a third can never enter the lineup, while both receiver slots are empty and either receiver on this board starts in week one.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "defense_round_three",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "rb-b",
+    "alts": [
+      "wr-b",
+      "te-b"
+    ],
+    "flags": [],
+    "why": "rb-b is the best available by ECR (26) and the VOLS leader (48 over replacement), and it fills the open RB2 next to rb-held. wr-b is close behind and would also start, but the RB edge plus a clean bye (9 vs held 8/5) makes rb-b the pick. With five picks until 33, at most one of rb-b/wr-b survives, so take the higher-value one now.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-b",
+    "actually_picked": null,
+    "case_why": "Defenses are interchangeable enough that the first one off the board is worth four points over the last, and this board still holds starting running backs worth forty-eight.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "defense_round_three",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "rb-b",
+    "alts": [
+      "wr-b"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-b",
+    "actually_picked": null,
+    "case_why": "Defenses are interchangeable enough that the first one off the board is worth four points over the last, and this board still holds starting running backs worth forty-eight.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "defense_round_three",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "rb-b",
+    "alts": [
+      "wr-b"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-b",
+    "actually_picked": null,
+    "case_why": "Defenses are interchangeable enough that the first one off the board is worth four points over the last, and this board still holds starting running backs worth forty-eight.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "defense_round_three",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "rb-b",
+    "alts": [
+      "wr-b"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-b",
+    "actually_picked": null,
+    "case_why": "Defenses are interchangeable enough that the first one off the board is worth four points over the last, and this board still holds starting running backs worth forty-eight.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "backup_qb_in_one_qb_league",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "rb-d",
+    "alts": [
+      "wr-c",
+      "te-c"
+    ],
+    "flags": [
+      "EMPTY_STARTER"
+    ],
+    "why": "rb-d is the best ECR on the board, tops VOLS (38) and delta-starter (19), and fills the open RB2 slot before a 17-pick gap. wr-c is close and would fill WR2, but the RB edge plus flex flexibility wins; qb-backup is dead weight with QB already filled.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-d",
+    "actually_picked": null,
+    "case_why": "One quarterback slot, one quarterback rostered, and no superflex: a second quarterback has no week in which he can start, while a running back and a receiver slot are both still open.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "backup_qb_in_one_qb_league",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "rb-d",
+    "alts": [
+      "wr-c"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-d",
+    "actually_picked": null,
+    "case_why": "One quarterback slot, one quarterback rostered, and no superflex: a second quarterback has no week in which he can start, while a running back and a receiver slot are both still open.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "backup_qb_in_one_qb_league",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "rb-d",
+    "alts": [
+      "wr-c"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-d",
+    "actually_picked": null,
+    "case_why": "One quarterback slot, one quarterback rostered, and no superflex: a second quarterback has no week in which he can start, while a running back and a receiver slot are both still open.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "backup_qb_in_one_qb_league",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "rb-d",
+    "alts": [
+      "wr-c"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-d",
+    "actually_picked": null,
+    "case_why": "One quarterback slot, one quarterback rostered, and no superflex: a second quarterback has no week in which he can start, while a running back and a receiver slot are both still open.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "bye_stack",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "wr-bye-clear",
+    "alts": [
+      "wr-bye-clash",
+      "rb-e"
+    ],
+    "flags": [
+      "ECR_DISAGREE",
+      "BYE_STACK",
+      "EMPTY_STARTER",
+      "VOLS_DISSENT"
+    ],
+    "why": "Both WRs are essentially the same player by projection (150 vs 149) and ECR (78 vs 80), but my roster already stacks QB, RB1 and WR on bye week 9 \\u2014 week 9 starter points crater to 36. wr-bye-clear (bye 5) adds 29 points of real starter value versus 12 for the bye-9 duplicate, filling the open WR2 immediately and leaving FLEX for the next pick.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-bye-clash",
+    "actually_picked": null,
+    "case_why": "The quarterback, a running back and the only rostered receiver are all off in week 9 already; a fourth week-9 player books a receiver slot that stays empty that week when an equal receiver on bye 5 is one row down.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "bye_stack",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "wr-bye-clash",
+    "alts": [
+      "wr-bye-clear"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-bye-clash",
+    "actually_picked": null,
+    "case_why": "The quarterback, a running back and the only rostered receiver are all off in week 9 already; a fourth week-9 player books a receiver slot that stays empty that week when an equal receiver on bye 5 is one row down.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "bye_stack",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "wr-bye-clash",
+    "alts": [
+      "wr-bye-clear"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-bye-clash",
+    "actually_picked": null,
+    "case_why": "The quarterback, a running back and the only rostered receiver are all off in week 9 already; a fourth week-9 player books a receiver slot that stays empty that week when an equal receiver on bye 5 is one row down.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "bye_stack",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "wr-bye-clash",
+    "alts": [
+      "wr-bye-clear"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-bye-clash",
+    "actually_picked": null,
+    "case_why": "The quarterback, a running back and the only rostered receiver are all off in week 9 already; a fourth week-9 player books a receiver slot that stays empty that week when an equal receiver on bye 5 is one row down.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_qb_run",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "qb-sf-a",
+    "alts": [
+      "qb-sf-b",
+      "rb-f"
+    ],
+    "flags": [
+      "EMPTY_STARTER",
+      "POSITION_RUN"
+    ],
+    "why": "Empty SUPER_FLEX with 11 picks until my next turn, and nearly every team in between still needs a second QB \\u2014 both SF-caliber arms will be gone. qb-sf-a is the best ECR on the board, the VOLS leader (71 vs 45 for the next non-QB), and slots straight into the open superflex for a ~35-point starter gain over replacement. rb-f/wr-f types are far more replaceable at pick 66.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "qb-sf-a",
+    "actually_picked": null,
+    "case_why": "Two startable quarterbacks are left, eight of the ten teams picking before our next turn still have an empty superflex, so both are gone by then and the superflex slot is empty for the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_qb_run",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "qb-sf-a",
+    "alts": [
+      "qb-sf-b"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "qb-sf-a",
+    "actually_picked": null,
+    "case_why": "Two startable quarterbacks are left, eight of the ten teams picking before our next turn still have an empty superflex, so both are gone by then and the superflex slot is empty for the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_qb_run",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "qb-sf-a",
+    "alts": [
+      "qb-sf-b"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "qb-sf-a",
+    "actually_picked": null,
+    "case_why": "Two startable quarterbacks are left, eight of the ten teams picking before our next turn still have an empty superflex, so both are gone by then and the superflex slot is empty for the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "superflex_qb_run",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "qb-sf-a",
+    "alts": [
+      "qb-sf-b"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "qb-sf-a",
+    "actually_picked": null,
+    "case_why": "Two startable quarterbacks are left, eight of the ten teams picking before our next turn still have an empty superflex, so both are gone by then and the superflex slot is empty for the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "empty_starter_late",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "k-a",
+    "alts": [
+      "def-a",
+      "k-b",
+      "wr-depth"
+    ],
+    "flags": [
+      "ECR_DISAGREE",
+      "EMPTY_STARTER",
+      "VOLS_DISSENT"
+    ],
+    "why": "Both K and DEF starters are empty and this is the last stretch of the draft, so the value here is entirely in filling those holes rather than adding a fifth bench WR. wr-depth leads raw VOLS but slots only into an already-filled FLEX, so its delta to my starting lineup is 0. k-a carries the largest starter delta on the board (118 over replacement) plus the best ECR of the three kicker/defense options, and its ADP of 166 says it likely does not survive the 7 picks until 172, whereas the board is capped so I should not assume def-a is truly the last defense standing. I take the biggest starter upgrade now and plan to close out DEF next turn.",
+    "coin_flip": true,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Two starting slots are empty and exactly two picks remain, so any pick that is not a kicker or a defense leaves a slot scoring zero every week of the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "NOT_PERFORMED",
+        "reason": "coin_flip"
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "empty_starter_late",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Two starting slots are empty and exactly two picks remain, so any pick that is not a kicker or a defense leaves a slot scoring zero every week of the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "FAIL",
+        "reason": "rec and alternatives miss the require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "empty_starter_late",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "k-a",
+    "alts": [
+      "wr-depth"
+    ],
+    "flags": [
+      "VOLS_DISSENT",
+      "ECR_DISAGREE"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Two starting slots are empty and exactly two picks remain, so any pick that is not a kicker or a defense leaves a slot scoring zero every week of the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "empty_starter_late",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Two starting slots are empty and exactly two picks remain, so any pick that is not a kicker or a defense leaves a slot scoring zero every week of the season.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "FAIL",
+        "reason": "rec is in the forbid set"
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "FAIL",
+        "reason": "rec and alternatives miss the require set"
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "second_kicker_last_rounds",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [
+      "BYE_STACK"
+    ],
+    "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is both the best available by ECR (168) and the top VOLS (12.0 over replacement), edging rb-depth's 10.0. With seven picks until my next turn and a capped board, taking the highest-value depth piece now is straightforward; the bye-8 overlap with rb-held-1 is noted but irrelevant for a bench body.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Same two rounds and the same board as the case above, with the kicker slot filled: a second kicker cannot enter a lineup in any week, and the receiver can the first time somebody ahead of him is on bye.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "second_kicker_last_rounds",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Same two rounds and the same board as the case above, with the kicker slot filled: a second kicker cannot enter a lineup in any week, and the receiver can the first time somebody ahead of him is on bye.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "second_kicker_last_rounds",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Same two rounds and the same board as the case above, with the kicker slot filled: a second kicker cannot enter a lineup in any week, and the receiver can the first time somebody ahead of him is on bye.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "second_kicker_last_rounds",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "wr-depth",
+    "alts": [
+      "rb-depth"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-depth",
+    "actually_picked": null,
+    "case_why": "Same two rounds and the same board as the case above, with the kicker slot filled: a second kicker cannot enter a lineup in any week, and the receiver can the first time somebody ahead of him is on bye.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "te_cliff",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "te-elite",
+    "alts": [
+      "rb-g",
+      "wr-g"
+    ],
+    "flags": [
+      "EMPTY_STARTER"
+    ],
+    "why": "te-elite is both the best ECR on the board (26) and the VOLS leader (55), so there is no tension to resolve. The TE cliff is stark: the next tight end available is worth 18 VOLS, a 37-point starter gap, and with 17 picks until my next selection at 45 there is no realistic path back to this tier. It fills an empty TE starter slot while rb-g and wr-g only add to positions I already have one of, and their FLEX-eligible replacements are far likelier to survive the wait.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-elite",
+    "actually_picked": null,
+    "case_why": "The gap from the first tight end to the second is thirty-seven points and the gap at every other position on this board is two, so the tight end slot is where the pick buys the most and the second tight end is a third-round price for a replacement.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "FAIL",
+        "reason": "silent ECR dissent"
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "te_cliff",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "te-elite",
+    "alts": [
+      "rb-g"
+    ],
+    "flags": [
+      "ECR_DISAGREE"
+    ],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-elite",
+    "actually_picked": null,
+    "case_why": "The gap from the first tight end to the second is thirty-seven points and the gap at every other position on this board is two, so the tight end slot is where the pick buys the most and the second tight end is a third-round price for a replacement.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "te_cliff",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "rb-g",
+    "alts": [
+      "te-elite"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-elite",
+    "actually_picked": null,
+    "case_why": "The gap from the first tight end to the second is thirty-seven points and the gap at every other position on this board is two, so the tight end slot is where the pick buys the most and the second tight end is a third-round price for a replacement.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "te_cliff",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "rb-g",
+    "alts": [
+      "te-elite"
+    ],
+    "flags": [
+      "VOLS_DISSENT"
+    ],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "te-elite",
+    "actually_picked": null,
+    "case_why": "The gap from the first tight end to the second is thirty-seven points and the gap at every other position on this board is two, so the tight end slot is where the pick buys the most and the second tight end is a third-round price for a replacement.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "position_run",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "wr-run-a",
+    "alts": [
+      "wr-run-b",
+      "rb-h"
+    ],
+    "flags": [
+      "POSITION_RUN",
+      "EMPTY_STARTER"
+    ],
+    "why": "Five straight WRs are off the board and my two WR starter slots are both empty, so this is exactly the run I can't sit out. wr-run-a is the best available by ECR (44), the VOLS leader (41), and sits atop a steep cliff: after wr-run-a and wr-run-b, the next WR is worth 14 points over replacement. With seven picks until 52, expecting both run WRs to survive is wishful. rb-h is the reasonable alternative but I already have a starting RB and its raw starter delta is half of wr-run-a's.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-run-a",
+    "actually_picked": null,
+    "case_why": "Five of the last six picks were receivers, both of our receiver slots are empty, and the drop from the second receiver left to the third is twenty-five points, so the run ends this tier before our next turn.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "position_run",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "wr-run-a",
+    "alts": [
+      "wr-run-b"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-run-a",
+    "actually_picked": null,
+    "case_why": "Five of the last six picks were receivers, both of our receiver slots are empty, and the drop from the second receiver left to the third is twenty-five points, so the run ends this tier before our next turn.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "position_run",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "wr-run-a",
+    "alts": [
+      "wr-run-b"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-run-a",
+    "actually_picked": null,
+    "case_why": "Five of the last six picks were receivers, both of our receiver slots are empty, and the drop from the second receiver left to the third is twenty-five points, so the run ends this tier before our next turn.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "position_run",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "wr-run-a",
+    "alts": [
+      "wr-run-b"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "wr-run-a",
+    "actually_picked": null,
+    "case_why": "Five of the last six picks were receivers, both of our receiver slots are empty, and the drop from the second receiver left to the third is twenty-five points, so the run ends this tier before our next turn.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "vols_compressed",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "wide-b",
+    "alts": [
+      "flat-a",
+      "wide-d"
+    ],
+    "flags": [
+      "ECR_DISAGREE",
+      "VOLS_DISSENT",
+      "UPSIDE"
+    ],
+    "why": "Every starting slot is already filled, so this is a pure bench dart at pick 177. The board's projections are functionally identical here (121.4 vs 121.1 points, a 0.3-point gap that is noise), which makes the tiebreaker upside rather than the VOLS calculator. flat-a is the argmax and the best ECR, but its ecr_min/max are pinned at 170 with std 1.5 - the market has fully agreed it is a replacement-level RB with no path to relevance. wide-b carries ecr_std 32.0 with a min of 96, meaning a meaningful slice of evaluators see a startable WR3/FLEX. With 11 picks until my next turn and no roster hole to protect, I want the outcome that can actually change a lineup, not the one that guarantees 121 bench points. wide-d offers a similar variance profile at RB but is both lower-ranked and behind two rostered RBs plus a filled FLEX.",
+    "coin_flip": true,
+    "error": null,
+    "hint": "flat-a",
+    "actually_picked": null,
+    "case_why": "Every player left is within one and a half points of replacement, so VOLS has stopped separating them, and the only rows with an expert who ranks them a hundred places higher are the only rows that can still win a week.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "stability",
+        "outcome": "NOT_PERFORMED",
+        "reason": "coin_flip"
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "vols_compressed",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "flat-a",
+    "alts": [
+      "wide-b"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "flat-a",
+    "actually_picked": null,
+    "case_why": "Every player left is within one and a half points of replacement, so VOLS has stopped separating them, and the only rows with an expert who ranks them a hundred places higher are the only rows that can still win a week.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "vols_compressed",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "flat-a",
+    "alts": [
+      "wide-b"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "flat-a",
+    "actually_picked": null,
+    "case_why": "Every player left is within one and a half points of replacement, so VOLS has stopped separating them, and the only rows with an expert who ranks them a hundred places higher are the only rows that can still win a week.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "vols_compressed",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "flat-a",
+    "alts": [
+      "wide-b"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "flat-a",
+    "actually_picked": null,
+    "case_why": "Every player left is within one and a half points of replacement, so VOLS has stopped separating them, and the only rows with an expert who ranks them a hundred places higher are the only rows that can still win a week.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "seat_unknown",
+    "kind": "golden",
+    "policy": "model",
+    "rec": "rb-i",
+    "alts": [
+      "wr-i",
+      "te-i"
+    ],
+    "flags": [],
+    "why": "rb-i is both the best available by ECR (24) and the VOLS leader (44), and he fills the open RB2 spot alongside rb-held with no bye overlap. wr-i is a near-equal value one ECR slot back and remains the fallback, but taking the RB here locks the scarcer starting slot while still leaving WR2/TE addressable in later rounds.",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-i",
+    "actually_picked": null,
+    "case_why": "With no seat there is no next pick number, so wait-or-take cannot be reasoned about at all and the pick has to be the best starter on the board; a defense is still not that.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "seat_unknown",
+    "kind": "golden",
+    "policy": "argmax_vols",
+    "rec": "rb-i",
+    "alts": [
+      "wr-i"
+    ],
+    "flags": [],
+    "why": "argmax_vols",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-i",
+    "actually_picked": null,
+    "case_why": "With no seat there is no next pick number, so wait-or-take cannot be reasoned about at all and the pick has to be the best starter on the board; a defense is still not that.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "seat_unknown",
+    "kind": "golden",
+    "policy": "adp_follow",
+    "rec": "rb-i",
+    "alts": [
+      "wr-i"
+    ],
+    "flags": [],
+    "why": "adp_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-i",
+    "actually_picked": null,
+    "case_why": "With no seat there is no next pick number, so wait-or-take cannot be reasoned about at all and the pick has to be the best starter on the board; a defense is still not that.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  },
+  {
+    "name": "seat_unknown",
+    "kind": "golden",
+    "policy": "ecr_follow",
+    "rec": "rb-i",
+    "alts": [
+      "wr-i"
+    ],
+    "flags": [],
+    "why": "ecr_follow",
+    "coin_flip": false,
+    "error": null,
+    "hint": "rb-i",
+    "actually_picked": null,
+    "case_why": "With no seat there is no next pick number, so wait-or-take cannot be reasoned about at all and the pick has to be the best starter on the board; a defense is still not that.",
+    "results": [
+      {
+        "gate": "schema",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_forbid",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "golden_require",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_dissent",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "bye_hole",
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
+      },
+      {
+        "gate": "stability",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "vols_invariant",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no replacement-rank deltas"
+      },
+      {
+        "gate": "regret",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no completed-draft fixture"
+      },
+      {
+        "gate": "replay",
+        "outcome": "NOT_PERFORMED",
+        "reason": "no dated file"
+      }
+    ]
+  }
+]

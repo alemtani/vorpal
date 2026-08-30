@@ -115,6 +115,11 @@ flowchart TD
   S6 --> S10[S10 eval run + baselines report]
   S9 --> S10
   S8 --> S10
+  S10 --> S11[S11 paid FP + operator mock]
+  S7 --> S12[S12 draft-night board]
+  S10 --> S12
+  S5 --> S13[S13 cassettes]
+  S10 --> S13
 ```
 
 S1 through S7 and S9 are **fully concurrent**. They share no file. They can be
@@ -139,7 +144,10 @@ session; start it first.
 | S7 | HTML board, poll loop, data age | `src/vorpal/board/**` | S0 | DONE |
 | S8 | CLI, wiring, end-to-end test | `src/vorpal/cli.py`, `tests/e2e/**` | S1–S5, S7 | DONE |
 | S9 | Golden set + regret fixtures | `tests/golden/**`, `tests/regret/**` | S0 | DONE |
-| S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | NOT STARTED |
+| S10 | Eval run, baseline table, dress rehearsal | `evals/**`, report | S6, S8, S9 | BLOCKED: operator mock not started; FP public cap; Anthropic credits |
+| S11 | Paid FP, human replay, operator mock | `evals/REPORT.md` update | S10 | NOT STARTED |
+| S12 | Draft-night board layout | `src/vorpal/board/**` | S7, S10 | NOT STARTED |
+| S13 | Model cassettes (replay by request hash) | `evals/cassette/**` | S5, S10 | NOT STARTED |
 
 Prompts: `docs/prompts/S1.md` … `docs/prompts/S10.md`.
 
