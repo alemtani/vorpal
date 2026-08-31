@@ -331,8 +331,8 @@ Living work is GitHub issues, not S11.
 | [#21](https://github.com/alemtani/vorpal/issues/21) | Dress rehearsal of a mock the operator sits in |
 | [#22](https://github.com/alemtani/vorpal/issues/22) | Snapshot a completed draft to JSON |
 | [#23](https://github.com/alemtani/vorpal/issues/23) | `te_cliff` silent `ECR_DISAGREE` |
-| [#24](https://github.com/alemtani/vorpal/issues/24) | needs-spec: model cassettes |
-| [#25](https://github.com/alemtani/vorpal/issues/25) | CI scores golden cassettes (blocked by #24) |
+| [#24](https://github.com/alemtani/vorpal/issues/24) | model cassettes |
+| [#25](https://github.com/alemtani/vorpal/issues/25) | CI scores golden cassettes |
 | [#26](https://github.com/alemtani/vorpal/issues/26) | needs-spec: grow the golden set |
 | [#27](https://github.com/alemtani/vorpal/issues/27) | needs-spec: board tools |
 | [#28](https://github.com/alemtani/vorpal/issues/28) | needs-spec: projection-season sim |

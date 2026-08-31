@@ -20,6 +20,12 @@ Nothing here came off a league. Every player id is invented and readable
 (`k-early` is a kicker, `te-third` is the tight end you already have two
 of). No manager, no league id, no host id.
 
+## CI
+
+pytest replays the committed cassettes and fails the build on
+`golden_forbid` or `golden_require`. It does not fail on `bye_hole`
+(#31). It does not run `evals/run.py`.
+
 ## The cases
 
 | Case | Situation | Verdict |
