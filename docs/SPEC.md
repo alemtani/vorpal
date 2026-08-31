@@ -1,6 +1,6 @@
 # vorpal
 
-**Status:** proposal, pre-implementation.
+**Status:** v1 implemented.
 **v1:** Sleeper NFL, snake redraft, offense-only. Personal tool.
 
 An agent. Code builds a board of numbers. The model picks. You click in

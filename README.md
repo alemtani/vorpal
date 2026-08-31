@@ -6,7 +6,12 @@ Fantasy draft agent. Code builds the board. The model recommends. You click.
 
 ## Status
 
-Pre-implementation. See [docs/SPEC.md](docs/SPEC.md).
+v1 is implemented. Sleeper redraft, FantasyPros forecast, VOLS board, one
+model rec per pick. You click. Contract: [docs/SPEC.md](docs/SPEC.md).
+
+Eleven binary eval gates. CI replays recorded golden answers and fails the
+build if a rec hits a forbid or misses a require. It does not call the
+model. The four-column runner (`evals/run.py`) is local, not CI.
 
 Configured by draft ID and operator identity. Scoring from a league (the
 draft's own, or a borrowed one for mocks). Stats and ADP from the platform.
