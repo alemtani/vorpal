@@ -36,10 +36,11 @@ Golden cases: `tests/golden/README.md`. Regret fixtures:
 `tests/regret/README.md`. `argmax_vols` already passes 9 of 12 golden
 cases; only three can show the model is doing anything.
 
-## What CI already does
+## What CI does
 
 `pytest -m "not live"` includes `pytest -m golden`. Those tests check
-that the cases are well-formed and that the gates agree with the
-hand-written verdicts on synthetic proposals. They do not call the
-model. The live table is this runner. Putting the model's recorded
-answer on the CI gate is #25, which the cassettes now unblock.
+that the cases are well-formed, that the gates agree with the
+hand-written verdicts on synthetic proposals, and that the recorded
+model answers pass `golden_forbid` and `golden_require`. They do not
+call the model. `bye_hole` is not a CI fail until #31 is settled. The
+four-column table is this runner. Do not put it on the CI job.

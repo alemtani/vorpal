@@ -1,7 +1,10 @@
 # Cassettes
 
 One recorded model answer per request, committed. `evals/run.py` replays
-these. A default run spends nothing.
+these. A default run spends nothing. pytest scores the golden
+recordings on `golden_forbid` and `golden_require` and fails the build
+on a miss or a bad rec. `bye_hole` is not a CI fail until #31 is
+settled. The live runner stays out of CI.
 
 ## The key is the request, not the fixture name
 

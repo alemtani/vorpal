@@ -10,6 +10,9 @@ both gates pass. That is the gate and the case checking each other,
 which is as close to a test of a hand-written verdict as we can get
 without a second human.
 
+The recorded model answers are scored in `test_cassettes.py`. A failure
+there is a claim about the model, not about these case files.
+
 Marked `golden`: a failure here is a claim about a board, not a bug in
 the gate code.
 """
