@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
+from re import search
 
 import pytest
 
-from vorpal.contracts import Banner, BoardRow, Payload, Proposal
+from vorpal.contracts import Banner, BoardRow, Flag, Payload, Proposal, Slot, WeeklyCell
 
 SNAPSHOTS = Path(__file__).parent / "snapshots"
 
@@ -16,6 +18,17 @@ def _assert_snapshot(name: str, actual: str) -> None:
     path = SNAPSHOTS / name
     expected = path.read_text(encoding="utf-8")
     assert actual == expected
+
+
+def _style(html: str) -> str:
+    start = html.find("<style>")
+    return html[start : html.find("</style>")]
+
+
+def _rec_heading(html: str) -> str:
+    match = search(r'<h1 class="rec"[^>]*>([^<]*)</h1>', html)
+    assert match is not None
+    return match.group(1)
 
 
 def test_render_is_importable_as_a_pure_function(
@@ -71,6 +84,26 @@ def test_page_shows_recommendation_slot_alternatives_why_and_flags(
     assert "BYE_STACK" in html
 
 
+def test_rec_is_first_before_weekly_and_board(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(make_payload(), make_proposal(), 0, ())
+    rec_at = html.find('class="recommendation"')
+    assert rec_at != -1
+    assert rec_at < html.find('class="weekly"')
+    assert rec_at < html.find('class="board"')
+    rec = html[rec_at : html.find("</section>", rec_at)]
+    pos_at = rec.find('class="pos"')
+    slot_at = rec.find('class="slot-filled"')
+    why_at = rec.find('class="why"')
+    alts_at = rec.find('class="alternatives"')
+    assert pos_at != -1 and slot_at != -1 and why_at != -1 and alts_at != -1
+    assert pos_at < slot_at < why_at < alts_at
+
+
 def test_board_shows_vols_and_delta_side_by_side_and_gp_when_below_17(
     make_payload: Callable[..., Payload],
     make_proposal: Callable[..., Proposal],
@@ -93,22 +126,74 @@ def test_board_shows_vols_and_delta_side_by_side_and_gp_when_below_17(
     assert "data-gp=" not in p3_row
 
 
-def test_weekly_vector_has_18_weeks_and_calls_out_empty_startable_slots(
+def test_headers_are_not_payload_field_names(
     make_payload: Callable[..., Payload],
     make_proposal: Callable[..., Proposal],
 ) -> None:
     from vorpal.board import render
 
     html = render(make_payload(), make_proposal(), 0, ())
-    for week in range(1, 19):
-        assert f'data-week="{week}"' in html
-    week9 = html[html.find('data-week="9"') : html.find('data-week="10"')]
+    assert "delta_starter_points" not in html
+
+
+def test_empty_weeks_are_called_out_without_dumping_eighteen_rows(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(make_payload(), make_proposal(), 0, ())
+    assert 'data-week="9"' in html
+    week9 = html[html.find('data-week="9"') : html.find('data-week="9"') + 200]
     assert "RB" in week9
     assert "FLEX" in week9
     assert "empty-slot" in week9
+    for week in (1, 2, 10, 18):
+        assert f'data-week="{week}"' not in html
 
 
-def test_every_banner_is_loud_including_refusals(
+def test_informational_banners_fold_into_a_compact_notice_line(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    raw_json = '{"status":500,"body":{"error":"upstream"}}'
+    banners = (
+        Banner(
+            code="unknown_scoring_keys",
+            message="Nonzero scoring keys with no matching stat column: bonus_rec_te.",
+        ),
+        Banner(
+            code="scoring_borrowed",
+            message=(
+                "Scoring comes from league 123. The mock has no scoring table "
+                "(metadata.scoring_type is a label, not a table)."
+            ),
+        ),
+        Banner(
+            code="keepers_possible",
+            message="Keepers possible. Players with a truthy is_keeper are dropped.",
+        ),
+        Banner(code="board_capped", message="board is capped; do not read scarcity"),
+        Banner(code="platform_error", message=raw_json),
+    )
+    html = render(make_payload(config_banners=()), make_proposal(), 0, banners)
+    style = _style(html)
+    rec_at = html.find('class="recommendation"')
+    assert rec_at != -1
+    assert "font-size: 1.5rem" not in style
+    assert "notice" in html.lower()
+    assert raw_json not in html
+    assert "dynasty" not in html
+    rec_block = html[rec_at : html.find("</section>", rec_at)]
+    assert "bonus_rec_te" not in rec_block
+    assert "league 123" not in rec_block
+    assert raw_json not in rec_block
+    assert "A Back" in rec_block
+
+
+def test_refusal_messages_are_still_in_the_page_once_folded(
     make_payload: Callable[..., Payload],
     make_proposal: Callable[..., Proposal],
 ) -> None:
@@ -122,13 +207,7 @@ def test_every_banner_is_loud_including_refusals(
     assert "dynasty is out of v1" in html
     assert "fix the override file" in html
     assert "board is capped" in html
-    assert html.count('class="banner"') >= 3
-    assert "role=" in html and "alert" in html
-    style_start = html.find("<style>")
-    style = html[style_start : html.find("</style>")]
-    assert ".banner" in style
-    assert "font-weight: 800" in style or "font-weight:800" in style
-    assert "#c00" in style or "#cc0000" in style or "background: #c" in style
+    assert "notice" in html.lower()
 
 
 def test_data_age_is_always_present(
@@ -251,7 +330,7 @@ def test_coin_flip_is_visible_when_set(
     assert 'data-coin-flip="false"' in off
 
 
-def test_unknown_recommendation_id_still_renders_the_id(
+def test_stale_rec_says_so_and_shows_the_calculator_name(
     make_payload: Callable[..., Payload],
     make_proposal: Callable[..., Proposal],
 ) -> None:
@@ -263,9 +342,113 @@ def test_unknown_recommendation_id_still_renders_the_id(
         0,
         (),
     )
-    assert "missing" in html
-    assert "nope" in html
+    heading = _rec_heading(html)
+    assert heading == "A Back"
+    assert "stale" in html.lower()
+    assert heading != "missing"
+    assert "nope" not in html
     assert "next " not in html.split("Data age:")[1][:200]
+
+
+def test_rec_heading_is_never_a_host_id(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(
+        make_payload(board=()),
+        make_proposal(player_id="4045", alternatives=()),
+        0,
+        (),
+    )
+    heading = _rec_heading(html)
+    assert heading != "4045"
+    assert "4045" not in heading
+    assert "stale" in html.lower()
+
+
+def test_vols_dissent_why_names_the_vols_pick(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(
+        make_payload(),
+        make_proposal(
+            player_id="p2",
+            alternatives=("p3",),
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT,),
+            why="bye week stacks on the empty RB",
+        ),
+        0,
+        (),
+    )
+    why = html[html.find('class="why"') : html.find('class="why"') + 240]
+    assert "A Back is the VOLS pick; we are not taking A Back because" in why
+    assert "bye week stacks on the empty RB" in why
+    assert _rec_heading(html) == "B Receiver"
+
+
+def test_ecr_disagree_why_names_the_ecr_pick(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    from vorpal.board import render
+
+    board = (
+        make_row(player_id="p1", name="A Back", ecr=1, vols=40.0, gp=16.0, adp=1.5),
+        make_row(
+            player_id="p2",
+            name="B Receiver",
+            position="WR",
+            ecr=20,
+            vols=30.0,
+            delta_starter_points=8.0,
+            points=240.0,
+            adp=12.0,
+            legal_slots=(Slot.WR, Slot.FLEX),
+        ),
+    )
+    html = render(
+        make_payload(board=board),
+        make_proposal(
+            player_id="p2",
+            alternatives=("p1",),
+            slot_filled=Slot.WR,
+            flags=(Flag.ECR_DISAGREE,),
+            why="the empty WR is a bigger hole",
+        ),
+        0,
+        (),
+    )
+    why = html[html.find('class="why"') : html.find('class="why"') + 240]
+    assert "A Back is the ECR pick; we are not taking A Back because" in why
+    assert "the empty WR is a bigger hole" in why
+
+
+def test_already_formed_dissent_why_is_not_wrapped_again(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    why = "A Back is the VOLS pick; we are not taking A Back because the bye stacks"
+    html = render(
+        make_payload(),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT,),
+            why=why,
+        ),
+        0,
+        (),
+    )
+    assert html.count("A Back is the VOLS pick") == 1
 
 
 def test_empty_alternatives_still_has_a_list(
@@ -300,3 +483,150 @@ def test_render_unavailable_with_no_banners_still_shows_the_message() -> None:
     assert "gone" in html
     assert "not current" in html.lower()
     assert 'data-code="unavailable"' in html
+
+
+def test_render_unavailable_does_not_dump_raw_platform_json() -> None:
+    from vorpal.board.render import render_unavailable
+
+    raw = '{"error":"upstream","status":502}'
+    html = render_unavailable(raw, 0, ())
+    assert raw not in html
+    assert "not current" in html.lower()
+
+
+def test_no_banners_omits_the_notice_line(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(make_payload(config_banners=()), make_proposal(), 0, ())
+    assert 'class="notices"' not in html
+    assert "<summary>" not in html
+
+
+def test_weeks_without_empty_slots_are_not_listed(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    weekly = (WeeklyCell(week=1, starter_points=90.0, empty=()),)
+    html = render(make_payload(weekly=weekly), make_proposal(), 0, ())
+    assert "no empty startable slots" in html
+    assert "data-week=" not in html
+
+
+def test_stale_rec_falls_back_to_proposal_slot_when_calculator_has_no_slots(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    from vorpal.board import render
+
+    calc = make_row(player_id="p1", name="A Back", legal_slots=())
+    html = render(
+        make_payload(board=(calc,)),
+        make_proposal(player_id="missing", slot_filled=Slot.FLEX),
+        0,
+        (),
+    )
+    assert "fills FLEX" in html
+    assert _rec_heading(html) == "A Back"
+
+
+def test_ecr_disagree_without_ranks_keeps_the_model_why(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    from vorpal.board import render
+
+    board = (
+        make_row(player_id="p1", name="A Back", ecr=None, vols=40.0),
+        make_row(
+            player_id="p2",
+            name="B Receiver",
+            position="WR",
+            ecr=None,
+            vols=30.0,
+            legal_slots=(Slot.WR, Slot.FLEX),
+        ),
+    )
+    html = render(
+        make_payload(board=board),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.ECR_DISAGREE,),
+            why="the empty WR is a bigger hole",
+        ),
+        0,
+        (),
+    )
+    assert "is the ECR pick" not in html
+    assert "the empty WR is a bigger hole" in html
+
+
+def test_vols_dissent_without_hint_on_board_keeps_the_model_why(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    payload = replace(make_payload(), hint_argmax_vols="ghost")
+    html = render(
+        payload,
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT,),
+            why="bye week stacks",
+        ),
+        0,
+        (),
+    )
+    assert "is the VOLS pick" not in html
+    assert "bye week stacks" in html
+
+
+def test_already_formed_ecr_why_is_not_wrapped_again(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    from vorpal.board import render
+
+    board = (
+        make_row(player_id="p1", name="A Back", ecr=1, vols=40.0),
+        make_row(
+            player_id="p2",
+            name="B Receiver",
+            position="WR",
+            ecr=20,
+            vols=30.0,
+            legal_slots=(Slot.WR, Slot.FLEX),
+        ),
+    )
+    why = "A Back is the ECR pick; we are not taking A Back because the empty WR"
+    html = render(
+        make_payload(board=board),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.ECR_DISAGREE,),
+            why=why,
+        ),
+        0,
+        (),
+    )
+    assert html.count("A Back is the ECR pick") == 1
+
+
+def test_json_array_platform_error_is_not_dumped() -> None:
+    from vorpal.board.render import render_unavailable
+
+    raw = '[{"error":"upstream"}]'
+    html = render_unavailable(raw, 0, ())
+    assert raw not in html
+    assert "platform error" in html
