@@ -270,36 +270,38 @@ caller decides what they mean.
   wide-spread upside pick that some experts rank inside the ceiling and others
   far outside. `ecr_std` is the upside input; a floor that ignores `ecr_min`
   would discard exactly the picks that input is for.
-- `VOLS_DISSENT` or `ECR_DISAGREE` set → `why` must name that pick: "X is the
-  VOLS pick; we are not taking X because …" (same form for ECR, naming
-  `ecr_best`). Floor: `why` string-contains that player's name or id (#20).
-  Not a quality judge on the sentence — `why` stays human and not scored. The
-  prompt sentences enforcing this live in `SYSTEM` (`src/vorpal/model/call.py`),
-  for the implementer to append; changing `SYSTEM` reshapes every cassette
-  `request_key`, so this spec does not touch that file. Current `SYSTEM`:
-
-  > You recommend one pick from this draft board. The board is the world:
-  > player_id and every alternative must be a player_id on board.
-  > hint_argmax_vols is a calculator, not the answer. If you pick someone
-  > else you must set VOLS_DISSENT. If you are not the best available ECR
-  > you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin.
-  > The board is capped; do not read scarcity from its length. Wait versus
-  > take is yours. Set coin_flip when a rerun of this same board could
-  > reasonably name a different player. flags is a closed set: \[Flag
-  > values\].
-
-  Append:
-
-  > When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id
-  > or name, in the form: "X is the VOLS pick; we are not taking X because
-  > …". When you set ECR_DISAGREE, why must name ecr_best's player the same
-  > way: "X is the ECR pick; we are not taking X because …".
-
-  **Open:** whether a miss here is a §4 violation (retry, then degrade like
-  any other) or a §5 eval-only check. A draft-night retry costs a pick-clock
-  round trip; eval-only lets a silent-name rec through to the operator.
 - Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the
   override has it). Not a second scorer.
+
+**`why` naming the dissent pick is a §5 eval, not a §4 violation.** When
+`VOLS_DISSENT` or `ECR_DISAGREE` is set, `why` must name that pick: "X is the
+VOLS pick; we are not taking X because …" (same form for ECR, naming
+`ecr_best`). The floor — `why` string-contains that player's name or id (#20)
+— is checked in evals (§5), never on the pick clock: a miss must not retry or
+degrade, and draft night ships the rec to the operator whether or not `why`
+contains the name. Not a quality judge on the sentence — `why` stays human
+and not scored.
+
+The prompt sentences enforcing this live in `SYSTEM` (`src/vorpal/model/call.py`),
+for the implementer to append; changing `SYSTEM` reshapes every cassette
+`request_key`, so this spec does not touch that file. Current `SYSTEM`:
+
+> You recommend one pick from this draft board. The board is the world:
+> player_id and every alternative must be a player_id on board.
+> hint_argmax_vols is a calculator, not the answer. If you pick someone
+> else you must set VOLS_DISSENT. If you are not the best available ECR
+> you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin.
+> The board is capped; do not read scarcity from its length. Wait versus
+> take is yours. Set coin_flip when a rerun of this same board could
+> reasonably name a different player. flags is a closed set: \[Flag
+> values\].
+
+Append:
+
+> When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id
+> or name, in the form: "X is the VOLS pick; we are not taking X because
+> …". When you set ECR_DISAGREE, why must name ecr_best's player the same
+> way: "X is the ECR pick; we are not taking X because …".
 
 **Draft night:** one retry on a violation, then fall back to `hint_argmax_vols`
 — the calculator answer — with a banner naming what the model got wrong. A
@@ -326,6 +328,7 @@ Let `T = config.teams`. `ecr_best` = min ECR among `board` players that have an 
 | VOLS dissent | Rec = `hint_argmax_vols` **xor** `VOLS_DISSENT` ∈ flags |
 | ECR dissent | No ECR → skip. Else rec is `ecr_best` **xor** `ECR_DISAGREE` ∈ flags |
 | ECR sanity | No ECR on rec → skip. Else `ecr(rec) ≤ ecr_best + margin` **or** `ecr_min(rec) ≤ ecr_best + margin`. Floor, not a target: one round off early, two late |
+| `why` contains-floor | Neither flag set → skip. Else `why` string-contains the named player's name or id — `hint_argmax_vols` for `VOLS_DISSENT`, `ecr_best` for `ECR_DISAGREE` (#20). Eval-only: a miss here never retries or degrades draft night (§4) |
 | Bye hole | Adding rec does not create a new empty startable slot on `rec.bye` when an alternative with a different bye exists on the board |
 | Stability | `coin_flip` → skip. Else ≥ 3 of 5 identical payloads return the same `player_id` |
 | VOLS invariant | Hypothetical pass 2 moves no position's replacement rank by more than 2 |
@@ -380,11 +383,18 @@ Local display, documented draft API only.
 ### Feedback capture (#29)
 
 Trigger: the operator's click is not the rec, **or** `coin_flip` is true and
-the click lands outside both the rec and `alternatives`. On that trigger:
+the click lands outside both the rec and `alternatives`. At skip:
 
-1. Capture a one-sentence why-not from the operator.
+1. Capture a one-sentence why-not from the operator, best-effort after the
+   click — it must not block 3s/`drafting` polling. The operator is off that
+   pick's timer once they have clicked, so a missing why-not proceeds rather
+   than stalling the loop.
 2. Persist the LLM trace for that `propose` call.
-3. Auto-open a GitHub issue linking the trace and the #22 snapshot.
+
+At draft complete, once the #22 snapshot exists: auto-open a GitHub issue
+linking that trace, the why-not, and the #22 snapshot. The issue waits for
+completion so it can link the snapshot; the why-not and trace are still
+captured at skip, not at completion.
 
 Do not wait for the operator to volunteer a why-not. Agreement with the
 rec stays silent — never prompt on a pick taken as given.
@@ -393,12 +403,6 @@ Privacy matches #22: player ids only, no league id, no manager names.
 
 The #22 file-on-disk snapshot can ship first; capture does not wait on
 axial-code, judge, or a fix (§5).
-
-**Open:**
-- Whether the GitHub issue opens at skip time (the #22 snapshot may not exist
-  yet) or at draft complete (when the file does).
-- Whether a missing why-not blocks the poll loop, or is captured best-effort
-  after the click — the operator is off that pick's timer by then.
 
 ---
 
