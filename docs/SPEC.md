@@ -344,14 +344,18 @@ gate on wait-vs-take, which §1 hands to the model outright.
 
 **Feedback capture (#29).** The reactive path that grows the golden/regret set.
 When the operator skips the rec — or `coin_flip` is true and the click lands
-outside both the rec and `alternatives` — draft night captures a why-not, the
-call's trace, and a snapshot (§6). Alex reviews the resulting GitHub issue.
-Only a genuine issue, not taste, gets an axial code and a golden **or** regret
-case plus a fix; that promotion is a later PR, not this one. Capture itself
-must not wait on axial-code, judge, or fix — the #22 file-on-disk snapshot can
-ship first, and this spec unblocks the trace, issue, and why-not around it.
-No LLM-as-judge anywhere in this loop: Alex's read is the only judgment, same
-rule as the rest of this section.
+outside both the rec and `alternatives` — draft night persists a skip record
+at that moment: an empty why-not slot plus the call's trace, never a prompt
+mid-draft (§6). Why-not text for every differing pick is collected once, by
+one aggregate form at draft complete. At draft complete, once the #22
+snapshot exists, a GitHub issue opens linking the traces, the why-nots (when
+present), and the snapshot. Alex reviews it. Only a genuine issue, not taste,
+gets an axial code and a golden **or** regret case plus a fix; that promotion
+is a later PR, not this one. Capture itself must not wait on axial-code,
+judge, or fix — the #22 file-on-disk snapshot can ship first, and this spec
+unblocks the trace, issue, and why-not around it. No LLM-as-judge anywhere in
+this loop: Alex's read is the only judgment, same rule as the rest of this
+section.
 
 ### Baselines
 
@@ -383,21 +387,26 @@ Local display, documented draft API only.
 ### Feedback capture (#29)
 
 Trigger: the operator's click is not the rec, **or** `coin_flip` is true and
-the click lands outside both the rec and `alternatives`. At skip:
+the click lands outside both the rec and `alternatives`. At skip, persist a
+skip record — an empty why-not slot for that pick, plus the `propose` call's
+LLM trace — with no prompt to the operator. A snake first/last seat may be
+back on the clock immediately; asking why-not mid-draft is wrong for that
+seat, so the record does not wait on an answer.
 
-1. Capture a one-sentence why-not from the operator, best-effort after the
-   click — it must not block 3s/`drafting` polling. The operator is off that
-   pick's timer once they have clicked, so a missing why-not proceeds rather
-   than stalling the loop.
-2. Persist the LLM trace for that `propose` call.
+Why-not text fills that slot once, at draft complete: one aggregate form
+listing every pick that differed from the rec, not a prompt after each skip.
+Filling it in is best-effort — a skipped form, or a blank row in it, must not
+block the 3s/`drafting` poll or the complete-time capture; the slot for that
+pick just stays empty.
 
 At draft complete, once the #22 snapshot exists: auto-open a GitHub issue
-linking that trace, the why-not, and the #22 snapshot. The issue waits for
-completion so it can link the snapshot; the why-not and trace are still
-captured at skip, not at completion.
+linking the traces, the why-nots (when present), and the #22 snapshot. The
+issue waits for completion so it can link the snapshot; the trace and
+why-not slot are already captured from each skip.
 
-Do not wait for the operator to volunteer a why-not. Agreement with the
-rec stays silent — never prompt on a pick taken as given.
+Do not wait for the operator to volunteer a why-not — the aggregate form asks
+for every differing pick at complete. Agreement with the rec stays silent:
+never prompt on a pick taken as given.
 
 Privacy matches #22: player ids only, no league id, no manager names.
 
