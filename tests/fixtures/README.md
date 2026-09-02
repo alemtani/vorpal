@@ -19,3 +19,4 @@ not stored here. Player ids are Sleeper ids (NFL players, not managers).
 | `fantasypros/consensus_rankings_ppr.json` | Live overall PPR ECR (`position=ALL`). `rank_ecr` is overall draft order. |
 | `fantasypros/consensus_rankings_ppr_{qb,rb,wr,te,k,dst}.json` | Positional lists. Parse-join tests only. Not the runtime ECR source. |
 | `fantasypros/consensus_rankings_op.json` | Live superflex overall (`position=OP`). |
+| `fantasypros/paging_{page2,offset10,limit100}.json` | Live probe of undocumented paging params on overall PPR draft ECR. Written when `FANTASYPROS_API_KEY` is set. |

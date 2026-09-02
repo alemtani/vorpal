@@ -468,6 +468,46 @@ def record(args: argparse.Namespace) -> list[str]:
     return notes
 
 
+def _record_fp_paging(
+    client: httpx.Client,
+    *,
+    fixtures: Path,
+    season: str,
+    fp_headers: dict[str, str],
+) -> list[str]:
+    """Hit page=2, offset=10, limit=100 on the overall PPR draft sheet."""
+    notes: list[str] = []
+    probes = (
+        ("page2", "page=2"),
+        ("offset10", "offset=10"),
+        ("limit100", "limit=100"),
+    )
+    for label, extra in probes:
+        time.sleep(FP_MIN_INTERVAL_S)
+        url = (
+            f"{FANTASYPROS}/nfl/{season}/consensus-rankings"
+            f"?position=ALL&scoring=PPR&type=draft&{extra}"
+        )
+        print(f"fetching {url}", file=sys.stderr)
+        response = client.get(url, headers=fp_headers, timeout=60.0)
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, dict):
+            raise SystemExit(f"FantasyPros paging {label} was not an object")
+        write_json(
+            fixtures / "fantasypros" / f"paging_{label}.json",
+            redact_fantasypros(payload),
+        )
+        n = len(payload.get("players") or [])
+        notes.append(
+            f"paging {label}: players={n} count={payload.get('count')} "
+            f"limit={payload.get('limit')} "
+            f"public_api_limited={payload.get('public_api_limited')} "
+            f"tier={payload.get('tier')!r}"
+        )
+    return notes
+
+
 def record_fantasypros(
     client: httpx.Client,
     *,
@@ -512,6 +552,14 @@ def record_fantasypros(
             unverified = fixtures / "fantasypros" / "UNVERIFIED"
             if unverified.exists():
                 unverified.unlink()
+            notes.extend(
+                _record_fp_paging(
+                    client,
+                    fixtures=fixtures,
+                    season=season,
+                    fp_headers=fp_headers,
+                )
+            )
             merged_players: list[Any] = []
             proj_envelope: dict[str, Any] = {}
             for pos in FP_PPR_POSITIONS:

@@ -102,3 +102,54 @@ def parse_adp_map(payloads: Sequence[Any]) -> dict[str, float]:
             if yahoo and yahoo not in out:
                 out[yahoo] = adp
     return out
+
+
+def fp_row_ids(payload: Any) -> set[str]:
+    """Player ids present in a rankings or projections payload."""
+    ids: set[str] = set()
+    for item in fp_player_list(payload):
+        pid = fp_player_id(item)
+        if pid:
+            ids.add(pid)
+    return ids
+
+
+def fp_truncated(payload: Any) -> bool:
+    """True when the envelope's ``count`` is larger than the returned list.
+
+    Missing ``count`` is not a cap: empty test doubles must not trigger
+    paging probes.
+    """
+    if not isinstance(payload, dict):
+        return False
+    catalog = as_int(payload.get("count"))
+    if catalog is None:
+        return False
+    return len(fp_player_list(payload)) < catalog
+
+
+def paging_added_rows(base: Any, extra: Any) -> bool:
+    """True when extra has at least one player id that base does not."""
+    return bool(fp_row_ids(extra) - fp_row_ids(base))
+
+
+def merge_fp_player_payloads(payloads: Sequence[Any]) -> Any:
+    """First envelope wins. Players concatenate; first id keeps its row."""
+    players: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    envelope: dict[str, Any] | None = None
+    for payload in payloads:
+        if envelope is None and isinstance(payload, dict):
+            envelope = dict(payload)
+        for item in fp_player_list(payload):
+            pid = fp_player_id(item)
+            if pid:
+                if pid in seen:
+                    continue
+                seen.add(pid)
+            players.append(item)
+    if envelope is not None:
+        out = dict(envelope)
+        out["players"] = players
+        return out
+    return players
