@@ -49,3 +49,6 @@ host. See "A league is a table, not a branch" in `AGENTS.md`.
 Link the GitHub issue. If the next person cannot see it from the code,
 put it in the PR body. Run the full suite, `ruff check`, and
 `ruff format --check`. A PR that skips those is not finished.
+
+`docs/PROOF.md` says which proof a change owes — a test, a golden/regret
+case, a dress rehearsal, or a changed night-board snapshot. Carry it.
