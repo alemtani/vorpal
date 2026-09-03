@@ -140,6 +140,14 @@ def test_system_names_the_why_forms_for_dissent_flags() -> None:
     assert "X is the ECR pick; we are not taking X because" in SYSTEM
 
 
+def test_system_asks_for_the_dissent_frame_once() -> None:
+    """Issue #57: the model satisfied "by id or name" by writing the frame
+    twice, once by name and once by id. SYSTEM must rule that out rather
+    than merely allow either form."""
+    assert "not both" in SYSTEM
+    assert "Do not repeat either frame" in SYSTEM
+
+
 def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
     recorded = _recorded()
     captured: dict = {}

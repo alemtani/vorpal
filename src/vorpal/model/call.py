@@ -48,10 +48,11 @@ SYSTEM = (
     "Wait versus take is yours. Set coin_flip when a rerun of this same board "
     "could reasonably name a different player. flags is a closed set: "
     + ", ".join(flag.value for flag in Flag)
-    + ". When you set VOLS_DISSENT, why must name hint_argmax_vols's player "
-    'by id or name, in the form: "X is the VOLS pick; we are not taking X '
-    "because …\". When you set ECR_DISAGREE, why must name ecr_best's player "
-    'the same way: "X is the ECR pick; we are not taking X because …".'
+    + ". When you set VOLS_DISSENT, why must state this once, using either "
+    "hint_argmax_vols's id or name but not both: \"X is the VOLS pick; we "
+    'are not taking X because …". When you set ECR_DISAGREE, why must '
+    "state ecr_best's player the same way, once: \"X is the ECR pick; we "
+    'are not taking X because …". Do not repeat either frame.'
 )
 
 PROPOSAL_JSON_SCHEMA: dict[str, Any] = {
