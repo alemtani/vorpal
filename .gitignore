@@ -16,3 +16,7 @@ dist/
 private/
 *.local.json
 tools/record_sources.local.json
+
+# paid / personal FantasyPros CSV exports, dropped by hand (SPEC.md section 3)
+data/fp/
+private/fp/

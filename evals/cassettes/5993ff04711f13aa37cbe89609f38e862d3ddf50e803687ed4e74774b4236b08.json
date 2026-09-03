@@ -1,5 +1,5 @@
 {
-  "key": "57809b70a41de9e8bbd6d0d17f59398b85bd050d50c9313a785e848895f1dcb3",
+  "key": "5993ff04711f13aa37cbe89609f38e862d3ddf50e803687ed4e74774b4236b08",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -88,18 +88,18 @@
   "samples": [
     {
       "alternatives": [
-        "k-a",
-        "wr-depth"
+        "def-a",
+        "k-b"
       ],
       "coin_flip": true,
       "flags": [
         "ECR_DISAGREE",
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
+        "VOLS_DISSENT",
+        "EMPTY_STARTER"
       ],
-      "player_id": "def-a",
-      "slot_filled": "DEF",
-      "why": "Both DEF and K starting slots are empty with only 7 picks until my next turn, and every remaining board slot is essentially last-round filler. def-a is the only DEF on the board while two kickers (k-a, k-b) remain, so the scarcer starter gets taken first and K can wait until pick 172. Its delta_starter_points of 110 over replacement dwarfs the ~12 bench points wr-depth would add as a fifth WR I would never start. Coin flip only in the sense that k-a's 118 delta is marginally higher, but the two-kicker supply makes DEF the correct order."
+      "player_id": "k-a",
+      "slot_filled": "K",
+      "why": "Two starting slots are still blank (K and DEF) with only this pick and one more before the draft ends, so a bench body cannot help the lineup. wr-depth is the VOLS pick, but it lands on an already-full flex/bench and adds zero starter points, and wr-depth is the ECR pick by the same board ranking, so the small ranking gap is worth trading for an actual filled slot. k-a carries the largest starter gain (118 over replacement) of anything here, and def-a or k-b should survive the seven picks until pick 172 to close the last hole."
     }
   ]
 }

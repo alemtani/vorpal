@@ -15,14 +15,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 
-from vorpal.board import Frame, render, run_loop, write_html
+from vorpal.board import Frame, run_loop
 from vorpal.board.feedback import (
     FeedbackCollector,
     gh_issue_create,
     skips_path_for,
     tty_why_not_form,
 )
-from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
 from vorpal.contracts import (
     Banner,
     Draft,
@@ -47,6 +46,7 @@ from vorpal.ingest import load_forecast
 from vorpal.model import AnthropicTransport, SampleRecorder, propose
 from vorpal.payload import build_payload, build_rows, build_state
 from vorpal.platform import LeagueClient
+from vorpal.platform.presets import PRESETS, preset_league
 from vorpal.resolve import Resolved, resolve
 from vorpal.sleeper import SleeperClient
 from vorpal.valuation import ScoredPlayer, compute_vols, score_player
@@ -82,10 +82,19 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="your Sleeper username or user_id",
     )
-    parser.add_argument(
+    scoring = parser.add_mutually_exclusive_group()
+    scoring.add_argument(
         "--scoring-league-id",
         default=None,
         help="league to borrow scoring from; required for a standalone mock",
+    )
+    scoring.add_argument(
+        "--scoring",
+        default=None,
+        choices=PRESETS,
+        help="borrow a canonical Sleeper default scoring table for a standalone "
+        "mock, instead of a league. Slots still come from the mock; superflex "
+        "is read from the mock's slots, not from the preset",
     )
     parser.add_argument(
         "--slot",
@@ -112,9 +121,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="where to cache GET /players (default is under your home directory)",
     )
     parser.add_argument(
-        "--once",
+        "--fast",
         action="store_true",
-        help="write one board and exit; do not poll",
+        help="fast mode: ~2.5x quicker rec at premium price. Worth it on a "
+        "short mock clock; a real draft with a longer timer does not need it",
     )
     return parser
 
@@ -137,7 +147,7 @@ def main(
         _run(
             args,
             host_client,
-            transport if transport is not None else AnthropicTransport(),
+            transport if transport is not None else AnthropicTransport(fast=args.fast),
             sleep=sleep,
             now=now,
             open_issue=open_issue,
@@ -177,11 +187,12 @@ def _run(
     picks = client.get_picks(args.draft_id)
     operator = client.get_user(args.operator)
     league = client.get_league(draft.league_id) if draft.league_id else None
-    scoring_league = (
-        client.get_league(args.scoring_league_id)
-        if args.scoring_league_id is not None
-        else None
-    )
+    if args.scoring is not None:
+        scoring_league = preset_league(args.scoring, draft.season, draft.host)
+    elif args.scoring_league_id is not None:
+        scoring_league = client.get_league(args.scoring_league_id)
+    else:
+        scoring_league = None
 
     # Resolve twice on purpose. The ADP variant decides which forecast to
     # fetch, and the fetched columns decide the unknown-key banner, which
@@ -229,9 +240,7 @@ def _run(
         why_not_form=why_not_form or tty_why_not_form,
         open_issue=open_issue or _open_issue,
     )
-    frames = _Frames(
-        _Proposals(traced, always=args.once, on_trace=feedback.remember_trace)
-    )
+    frames = _Frames(_Proposals(traced, on_trace=feedback.remember_trace))
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return frames.get(
@@ -244,20 +253,6 @@ def _run(
             extra=forecast_banners,
         )
 
-    if args.once:
-        frame = recompute(draft, picks)
-        write_html(
-            out,
-            render(frame.payload, frame.proposal, 0.0, frame.banners),
-        )
-        if draft.status == "complete":
-            collector = SnapshotCollector()
-            collector.observe(frame)
-            snap = snapshot_path_for(out)
-            collector.write(snap, picks)
-            feedback.observe(frame, picks)
-            feedback.finish(snap)
-        return
     run_loop(
         _BoundClient(client, args.draft_id),
         recompute,
@@ -324,7 +319,6 @@ class _Proposals:
     """
 
     __slots__ = (
-        "_always",
         "_banners",
         "_on_trace",
         "_pick_no",
@@ -332,9 +326,8 @@ class _Proposals:
         "_transport",
     )
 
-    def __init__(self, transport, *, always: bool = False, on_trace=None) -> None:
+    def __init__(self, transport, *, on_trace=None) -> None:
         self._transport = transport
-        self._always = always
         self._on_trace = on_trace
         self._proposal: Proposal | None = None
         self._banners: tuple[Banner, ...] = ()
@@ -350,10 +343,8 @@ class _Proposals:
         return self._call(payload, pick_no)
 
     def _on_clock(self, state: DraftState) -> bool:
-        # --once is "give me a rec for this board." The loop is draft night.
-        if self._always:
-            return True
         # No seat means no clock. Answer every new pick so the page is not empty.
+        # Past the last pick, picks_until_next is None, so snapshots still call.
         return state.picks_until_next is None or state.picks_until_next == 0
 
     def _call(

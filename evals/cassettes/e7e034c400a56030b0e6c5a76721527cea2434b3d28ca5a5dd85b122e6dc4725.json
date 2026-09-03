@@ -1,5 +1,5 @@
 {
-  "key": "93647c38e0a98a8da8668596231af4f78449ea810198e61e1d0c201fc6611242",
+  "key": "e7e034c400a56030b0e6c5a76721527cea2434b3d28ca5a5dd85b122e6dc4725",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -88,19 +88,16 @@
   "samples": [
     {
       "alternatives": [
-        "flat-a",
+        "wide-b",
         "wide-d"
       ],
       "coin_flip": true,
       "flags": [
-        "ECR_DISAGREE",
-        "VOLS_DISSENT",
-        "UPSIDE",
-        "BYE_STACK"
+        "UPSIDE"
       ],
-      "player_id": "wide-b",
+      "player_id": "flat-a",
       "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so pick 177 is a pure bench lottery ticket and the projected gaps here are noise (121.4 vs 121.1 points, 0.3 VOLS). With value effectively flat, the tiebreaker is range of outcomes: wide-b carries an ECR spread of 96-205 (std 32), meaning some evaluators see a top-100 player, while flat-a is a locked-in 170 with no ceiling. On a bench spot 11 picks from my next selection, I'd rather hold the option with a real path to starting relevance than a static replacement-level body. Bye 6 overlaps my QB, but a bench flier's bye is close to irrelevant."
+      "why": "Every starting slot is already filled, so pick 177 is pure bench value and the four remaining options are separated by under a point of projection. flat-a is the top board ECR at 170 and the highest VOLS, and its tight consensus range (170-170) means the market is not hiding anything either way. wide-b's ecr_min of 96 is the tempting dart, but with 11 picks until my next turn I would rather bank the cleanest RB depth behind two held starters than chase a 32-point std guess. Coin flip acknowledged: a rerun could reasonably prefer wide-b's spread."
     }
   ]
 }

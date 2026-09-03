@@ -1,4 +1,4 @@
-"""The eleven gates.
+"""The twelve gates.
 
 A gate answers one yes/no question about one recommendation. It never
 scores, ranks, or grades. Three outcomes only:
@@ -12,7 +12,7 @@ has no opinion, and the report counts it separately so a missing file can
 never look like a passing grade.
 
 Every gate has the same signature, `(payload, proposal, fixtures)`, so
-`evaluate` can run all eleven in one pass. Gates that do not need the
+`evaluate` can run all twelve in one pass. Gates that do not need the
 board ignore `payload`; gates that need nothing extra ignore `fixtures`.
 """
 
@@ -42,6 +42,14 @@ MAX_RANK_SHIFT = 2
 # Stability asks the same question five times. Three is the majority.
 STABILITY_RUNS = 5
 STABILITY_AGREE = 3
+
+# SYSTEM asks a dissenting `why` for "X is the VOLS pick; we are not taking X
+# because …" (ECR the same way). `why_contains_floor` keeps only the label
+# from that form, one per flag; the words around it are not scored.
+DISSENT_LABEL: dict[Flag, str] = {
+    Flag.VOLS_DISSENT: "VOLS pick",
+    Flag.ECR_DISAGREE: "ECR pick",
+}
 
 
 def draft_margin(payload: Payload) -> int:
@@ -248,6 +256,66 @@ def ecr_sanity(
     return _fail(Gate.ECR_SANITY, "rec is past ecr_best + margin")
 
 
+def why_contains_floor(
+    payload: Payload,
+    proposal: Proposal | None,
+    fixtures: GateFixtures | None = None,
+) -> GateResult:
+    """Did `why` name the pick it dissented from, and say which pick it was?
+
+    Eval-only floor (SPEC.md #20, section 5): plain substring checks, never
+    an LLM judge. For each dissent flag set, `why` must contain the named
+    player — name or id — and the matching `DISSENT_LABEL`: `VOLS_DISSENT`
+    names `hint_argmax_vols` as the `VOLS pick`, `ECR_DISAGREE` names the
+    board row at `ecr_best` as the `ECR pick`. A name with no label, or with
+    the other flag's label, is a miss: it does not say which pick it was.
+    Neither flag set is a skip, not a pass — there is nothing to check. A
+    flag set with no row to check it against (empty hint, no ECR on the
+    board) skips that half rather than failing a check that cannot run.
+
+    This never touches section 4: a miss here is scored, not retried or
+    degraded on the pick clock.
+    """
+    del fixtures
+    missing = _need_proposal(Gate.WHY_CONTAINS_FLOOR, proposal)
+    if missing is not None:
+        return missing
+    assert proposal is not None
+    checks: list[tuple[str, BoardRow | None]] = []
+    if Flag.VOLS_DISSENT in proposal.flags:
+        hint_row = (
+            _row(payload, payload.hint_argmax_vols)
+            if payload.hint_argmax_vols
+            else None
+        )
+        checks.append((DISSENT_LABEL[Flag.VOLS_DISSENT], hint_row))
+    if Flag.ECR_DISAGREE in proposal.flags:
+        best = ecr_best(payload)
+        ecr_row = (
+            next((row for row in payload.board if row.ecr == best), None)
+            if best is not None
+            else None
+        )
+        checks.append((DISSENT_LABEL[Flag.ECR_DISAGREE], ecr_row))
+    if not checks:
+        return _skip(Gate.WHY_CONTAINS_FLOOR, "neither flag set")
+    performed = False
+    misses: list[str] = []
+    for label, row in checks:
+        if row is None:
+            continue
+        performed = True
+        if row.name not in proposal.why and row.player_id not in proposal.why:
+            misses.append(f"why does not name the {label} ({row.name})")
+        elif label not in proposal.why:
+            misses.append(f"why names {row.name} but not as the {label}")
+    if not performed:
+        return _skip(Gate.WHY_CONTAINS_FLOOR, "no row to name for the set flags")
+    if misses:
+        return _fail(Gate.WHY_CONTAINS_FLOOR, "; ".join(misses))
+    return _pass(Gate.WHY_CONTAINS_FLOOR)
+
+
 def bye_hole(
     payload: Payload,
     proposal: Proposal | None,
@@ -451,6 +519,7 @@ GATES: tuple[tuple[Gate, GateFn], ...] = (
     (Gate.VOLS_DISSENT, vols_dissent),
     (Gate.ECR_DISSENT, ecr_dissent),
     (Gate.ECR_SANITY, ecr_sanity),
+    (Gate.WHY_CONTAINS_FLOOR, why_contains_floor),
     (Gate.BYE_HOLE, bye_hole),
     (Gate.STABILITY, stability),
     (Gate.VOLS_INVARIANT, vols_invariant),
@@ -468,7 +537,7 @@ def evaluate(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> tuple[GateResult, ...]:
-    """Run all eleven gates against one proposal, in Gate enum order."""
+    """Run all twelve gates against one proposal, in Gate enum order."""
     return tuple(fn(payload, proposal, fixtures) for _gate, fn in GATES)
 
 

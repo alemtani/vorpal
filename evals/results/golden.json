@@ -8,10 +8,8 @@
       "wr-a",
       "wr-b"
     ],
-    "flags": [
-      "EMPTY_STARTER"
-    ],
-    "why": "rb-a is both the best available by ECR (16) and the VOLS leader (62), and he fills the open RB2 next to rb-held with no bye overlap. Seven picks until my next turn means the top tier won't survive, so taking the highest-value board asset now is clean. wr-a is close in value but WR can be addressed at 28 with wr-b-caliber options more likely to slip.",
+    "flags": [],
+    "why": "rb-a is the top board value by both consensus rank and starter-points gain, and he fills my second RB slot behind rb-held with no bye overlap. With seven picks until my next turn, the WRs here are the more replaceable tier, so I take the back now and address receiver at 28.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-a",
@@ -47,6 +45,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -122,6 +125,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -195,6 +203,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -266,6 +279,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -307,7 +325,7 @@
       "EMPTY_STARTER",
       "VOLS_DISSENT"
     ],
-    "why": "Both WR starting spots are still empty while TE is already filled twice over, so te-third's raw VOLS edge is illusory \ninstead wr-a delivers the largest actual starter gain (+22) and is also the best ECR on the board at 63. With seven picks until 76, the WR tier here (wr-a/wr-b) is thin enough that waiting risks both going; take the better one now and hope wr-b or a comparable falls back.",
+    "why": "Both WR starting spots are still empty and te-third is the VOLS pick, but I already roster two tight ends, so a third only adds bench points that never enter the lineup. wr-a is also the top ECR name here and carries the largest actual starter gain on this roster, filling a required slot seven picks before my next turn.",
     "coin_flip": false,
     "error": null,
     "hint": "te-third",
@@ -341,6 +359,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -382,7 +405,7 @@
     "flags": [
       "ECR_DISAGREE"
     ],
-    "why": "argmax_vols",
+    "why": "argmax_vols (wr-a wr-a is the ECR pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-third",
@@ -416,6 +439,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -457,7 +485,7 @@
     "flags": [
       "VOLS_DISSENT"
     ],
-    "why": "adp_follow",
+    "why": "adp_follow (te-third te-third is the VOLS pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-third",
@@ -491,6 +519,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -532,7 +565,7 @@
     "flags": [
       "VOLS_DISSENT"
     ],
-    "why": "ecr_follow",
+    "why": "ecr_follow (te-third te-third is the VOLS pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-third",
@@ -566,6 +599,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -606,7 +644,7 @@
       "te-b"
     ],
     "flags": [],
-    "why": "rb-b is the best available by ECR (26) and the VOLS leader (48 over replacement), and it fills the open RB2 next to rb-held. wr-b is close in value but slightly behind on both counts, and te-b's edge (26 VOLS) doesn't justify passing on the top back. With five picks until 33, this tier won't hold.",
+    "why": "rb-b is the best available by ECR and the top VOLS value, and he fills the open second RB spot alongside rb-held. The 48-point edge over replacement is the largest on the board, and with five picks until pick 33 both rb-b and wr-b will not survive, so take the higher-value piece now.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-b",
@@ -642,6 +680,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -717,6 +760,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -790,6 +838,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -861,6 +914,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -895,10 +953,13 @@
     "policy": "model",
     "rec": "rb-d",
     "alts": [
-      "wr-c"
+      "wr-c",
+      "te-c"
     ],
-    "flags": [],
-    "why": "rb-d is the best ECR on the board, leads in VOLS (38) and starter delta (+19), and fills the open RB2 slot. With 17 picks until pick 69, waiting on this tier isn't viable; wr-c is a close second and would fill WR2, but rb-d edges it on both value and need. qb-backup adds nothing in a 1QB build and te-c is redundant behind te-held.",
+    "flags": [
+      "EMPTY_STARTER"
+    ],
+    "why": "rb-d fills the open RB2 with the board's top ECR and the largest starter-points gain, and with 17 picks until pick 69 there's no reason to wait on the best back available. Bye week 7 doesn't collide with anything on the roster, and wr-c stays the fallback if the WR2 hole matters more later.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-d",
@@ -934,6 +995,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -1009,6 +1075,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1082,6 +1153,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1153,6 +1229,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -1192,11 +1273,11 @@
     ],
     "flags": [
       "ECR_DISAGREE",
-      "BYE_STACK",
       "VOLS_DISSENT",
+      "BYE_STACK",
       "EMPTY_STARTER"
     ],
-    "why": "WR2 is the open starter slot and both wideouts are essentially the same player by projection (150 vs 149) and ECR (78 vs 80). The tiebreaker is the calendar: my QB, RB1 and WR1 all sit in Week 9, and wr-bye-clash shares that bye, which is why its true starter contribution is only 12 points versus 29 for wr-bye-clear. The raw VOLS hint ignores schedule overlap. Taking the Week 5 bye keeps Week 9 from collapsing and fills WR plus feeds FLEX later; rb-e is redundant with two RBs already rostered and 17 picks until my next turn means I want the sturdier starter now.",
+    "why": "Week 9 already guts this roster: QB, RB1 and WR1 all sit, leaving 36 starter points. wr-bye-clash is the VOLS pick and wr-bye-clash is the ECR pick, but its bye piles onto that same dead week, which is why the starter-points gain is only 12 against 29 for the week-5 alternative. Nearly identical raw production (149 vs 150) and two ECR spots apart, so the tiebreak is entirely schedule fit; taking the clean bye fills the open WR and improves the worst week on the board.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-bye-clash",
@@ -1230,6 +1311,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -1307,6 +1393,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1380,6 +1471,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1451,6 +1547,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -1489,10 +1590,9 @@
       "rb-f"
     ],
     "flags": [
-      "EMPTY_STARTER",
-      "POSITION_RUN"
+      "EMPTY_STARTER"
     ],
-    "why": "Superflex is empty and 11 picks separate me from my next turn, with most of the intervening rosters still needing a second QB \\u2014 the two SF-eligible arms here almost certainly won't both survive. qb-sf-a is the best available by ECR (44), leads the board in VOLS (71) and delta_starter_points (35.5), and its 191 points versus a 100-point QB replacement dwarfs the ~45 edge rb-f or wr-f offer at their spots. Taking the top arm now rather than gambling on qb-sf-b lasting.",
+    "why": "SUPER_FLEX is still empty and eleven picks separate me from my next turn, with most of the teams in between showing the same unfilled superflex need. qb-sf-a is the top ECR name here and the largest starter-points gain on the board, so there is no reason to get clever: take the QB now and fill RB2/TE/FLEX from the deeper pool later.",
     "coin_flip": false,
     "error": null,
     "hint": "qb-sf-a",
@@ -1528,6 +1628,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -1603,6 +1708,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1674,6 +1784,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -1749,6 +1864,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1779,17 +1899,17 @@
     "name": "empty_starter_late",
     "kind": "golden",
     "policy": "model",
-    "rec": "def-a",
+    "rec": "k-a",
     "alts": [
-      "k-a",
-      "wr-depth"
+      "def-a",
+      "k-b"
     ],
     "flags": [
       "ECR_DISAGREE",
-      "EMPTY_STARTER",
-      "VOLS_DISSENT"
+      "VOLS_DISSENT",
+      "EMPTY_STARTER"
     ],
-    "why": "Both DEF and K starting slots are empty with only 7 picks until my next turn, and every remaining board slot is essentially last-round filler. def-a is the only DEF on the board while two kickers (k-a, k-b) remain, so the scarcer starter gets taken first and K can wait until pick 172. Its delta_starter_points of 110 over replacement dwarfs the ~12 bench points wr-depth would add as a fifth WR I would never start. Coin flip only in the sense that k-a's 118 delta is marginally higher, but the two-kicker supply makes DEF the correct order.",
+    "why": "Two starting slots are still blank (K and DEF) with only this pick and one more before the draft ends, so a bench body cannot help the lineup. wr-depth is the VOLS pick, but it lands on an already-full flex/bench and adds zero starter points, and wr-depth is the ECR pick by the same board ranking, so the small ranking gap is worth trading for an actual filled slot. k-a carries the largest starter gain (118 over replacement) of anything here, and def-a or k-b should survive the seven picks until pick 172 to close the last hole.",
     "coin_flip": true,
     "error": null,
     "hint": "wr-depth",
@@ -1823,6 +1943,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -1900,6 +2025,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -1938,7 +2068,7 @@
       "VOLS_DISSENT",
       "ECR_DISAGREE"
     ],
-    "why": "adp_follow",
+    "why": "adp_follow (wr-depth wr-depth is the VOLS pick) (wr-depth wr-depth is the ECR pick)",
     "coin_flip": false,
     "error": null,
     "hint": "wr-depth",
@@ -1972,6 +2102,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -2049,6 +2184,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -2084,7 +2224,7 @@
       "rb-depth"
     ],
     "flags": [],
-    "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is the best available by ECR (168), leads the board in VOLS (12.0), and offers the largest points cushion over replacement. rb-depth is a close second and a fine consolation if the pick were to flip, but there is no reason to reach past the top of a capped board with kicker already rostered.",
+    "why": "Every starting slot is already filled, so this is pure bench value and the cheapest way to add it is the best remaining player. wr-depth leads this board in both ECR and points-over-replacement (132 vs a 100-point WR baseline), and receiver is the spot where an injury or a bust in the WR2/FLEX group is most likely to force a lineup change. rb-depth is a near-equal fallback if the run comes back around at 172, and a kicker is worthless with k-held rostered.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-depth",
@@ -2120,6 +2260,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -2195,6 +2340,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -2266,6 +2416,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -2341,6 +2496,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -2377,9 +2537,10 @@
       "wr-g"
     ],
     "flags": [
+      "ECR_DISAGREE",
       "EMPTY_STARTER"
     ],
-    "why": "te-elite is both the best ECR on the board (26) and the VOLS leader (55 over replacement), so there's no tension to resolve. With 17 picks until pick 45, the gap to te-next (ECR 42, VOLS 18) is a 37-point cliff at a starting slot I have completely empty, and te-next almost certainly doesn't survive that wait. rb-g and wr-g are close in raw points but each fills a slot where I already have a starter, so the marginal value is smaller. No bye conflict with rb-held (8) or wr-held (5).",
+    "why": "rb-g is the ECR pick, one slot ahead and a fine value, but the gap is a single rank while the positional edge is not close: te-elite carries a 55-point starter delta at a position where the next name on the board is 37 points worse. With 17 picks until my next turn, the elite tight end tier does not survive and I would be choosing between replacement-level TEs at pick 45, whereas RB and WR depth of this caliber keeps flowing. Filling TE now leaves RB2, WR2 and FLEX all servicable from the middle rounds.",
     "coin_flip": false,
     "error": null,
     "hint": "te-elite",
@@ -2408,11 +2569,16 @@
       },
       {
         "gate": "ecr_dissent",
-        "outcome": "FAIL",
-        "reason": "silent ECR dissent"
+        "outcome": "PASS",
+        "reason": null
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -2454,7 +2620,7 @@
     "flags": [
       "ECR_DISAGREE"
     ],
-    "why": "argmax_vols",
+    "why": "argmax_vols (rb-g rb-g is the ECR pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-elite",
@@ -2488,6 +2654,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -2529,7 +2700,7 @@
     "flags": [
       "VOLS_DISSENT"
     ],
-    "why": "adp_follow",
+    "why": "adp_follow (te-elite te-elite is the VOLS pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-elite",
@@ -2563,6 +2734,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -2604,7 +2780,7 @@
     "flags": [
       "VOLS_DISSENT"
     ],
-    "why": "ecr_follow",
+    "why": "ecr_follow (te-elite te-elite is the VOLS pick)",
     "coin_flip": false,
     "error": null,
     "hint": "te-elite",
@@ -2638,6 +2814,11 @@
       },
       {
         "gate": "ecr_sanity",
+        "outcome": "PASS",
+        "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
         "outcome": "PASS",
         "reason": null
       },
@@ -2682,7 +2863,7 @@
       "EMPTY_STARTER",
       "BYE_STACK"
     ],
-    "why": "Five straight WRs just came off the board and both WR starter slots are empty, so the run is squeezing exactly the position I need. wr-run-a is the best ECR available (44), the VOLS argmax (41), and sits just above the cliff: after him and wr-run-b, the next WR is worth only 14 over replacement. With 7 picks until 52, I can realistically only expect one of this tier to survive, so I take the top one now and hope wr-run-b or te-h wheels back. Minor bye-6 overlap with qb-held is not enough to downgrade him.",
+    "why": "Five straight WRs came off the board and I have zero of two WR starters filled, so the top receiver here is both the value and the need. wr-run-a leads the board in ECR and in starter-points gained (+41 over replacement), and the next tier after wr-run-b drops off a cliff to wr-after-cliff at +14 with seven picks before I'm back up. rb-h and te-h can wait; a second RB or the TE is far likelier to survive to pick 52 than a mid-40s receiver in the middle of a run. Only nit is the week 6 overlap with qb-held, which is easy to paper over off the bench.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-run-a",
@@ -2718,6 +2899,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -2793,6 +2979,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -2864,6 +3055,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -2939,6 +3135,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -2969,18 +3170,15 @@
     "name": "vols_compressed",
     "kind": "golden",
     "policy": "model",
-    "rec": "wide-b",
+    "rec": "flat-a",
     "alts": [
-      "flat-a",
+      "wide-b",
       "wide-d"
     ],
     "flags": [
-      "ECR_DISAGREE",
-      "VOLS_DISSENT",
-      "UPSIDE",
-      "BYE_STACK"
+      "UPSIDE"
     ],
-    "why": "Every starting slot is already filled, so pick 177 is a pure bench lottery ticket and the projected gaps here are noise (121.4 vs 121.1 points, 0.3 VOLS). With value effectively flat, the tiebreaker is range of outcomes: wide-b carries an ECR spread of 96-205 (std 32), meaning some evaluators see a top-100 player, while flat-a is a locked-in 170 with no ceiling. On a bench spot 11 picks from my next selection, I'd rather hold the option with a real path to starting relevance than a static replacement-level body. Bye 6 overlaps my QB, but a bench flier's bye is close to irrelevant.",
+    "why": "Every starting slot is already filled, so pick 177 is pure bench value and the four remaining options are separated by under a point of projection. flat-a is the top board ECR at 170 and the highest VOLS, and its tight consensus range (170-170) means the market is not hiding anything either way. wide-b's ecr_min of 96 is the tempting dart, but with 11 picks until my next turn I would rather bank the cleanest RB depth behind two held starters than chase a 32-point std guess. Coin flip acknowledged: a rerun could reasonably prefer wide-b's spread.",
     "coin_flip": true,
     "error": null,
     "hint": "flat-a",
@@ -3018,9 +3216,14 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
-        "outcome": "PASS",
-        "reason": null
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
       },
       {
         "gate": "stability",
@@ -3091,6 +3294,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -3162,6 +3370,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -3237,6 +3450,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -3273,7 +3491,7 @@
       "te-i"
     ],
     "flags": [],
-    "why": "rb-i is the best available by ECR (24) and leads VOLS at 44, filling the open RB2 slot alongside rb-held. wr-i is essentially a coin-flip-adjacent alternative one ECR spot back, but the RB edge and slot fit break the tie; te-i is a clear step down in value.",
+    "why": "rb-i is the top ECR and VOLS player on the board and fills the open RB2 next to rb-held, with the largest starter-points gain available. wr-i is essentially even in value but RB depth erodes faster and the WR spot can be covered by the FLEX later; te-i is a clear tier below.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-i",
@@ -3309,6 +3527,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
@@ -3384,6 +3607,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -3457,6 +3685,11 @@
         "reason": null
       },
       {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
+      },
+      {
         "gate": "bye_hole",
         "outcome": "FAIL",
         "reason": "rec opens an empty startable slot an alt would fill"
@@ -3528,6 +3761,11 @@
         "gate": "ecr_sanity",
         "outcome": "PASS",
         "reason": null
+      },
+      {
+        "gate": "why_contains_floor",
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",

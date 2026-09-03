@@ -1,5 +1,5 @@
 {
-  "key": "7e8e04e1c91fb53dee735360e97f67e9de891ec0cf6b16ef2857dd82284a25ee",
+  "key": "d1eb77c437a5fe82c5dcd579e23979835e71ca28019110a5d2a83082f26d98a8",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -93,26 +93,50 @@
       ],
       "coin_flip": false,
       "flags": [
-        "EMPTY_STARTER",
-        "POSITION_RUN"
-      ],
-      "player_id": "qb-sf-a",
-      "slot_filled": "SUPER_FLEX",
-      "why": "Superflex is empty and 11 picks separate me from my next turn, with most of the intervening rosters still needing a second QB \\u2014 the two SF-eligible arms here almost certainly won't both survive. qb-sf-a is the best available by ECR (44), leads the board in VOLS (71) and delta_starter_points (35.5), and its 191 points versus a 100-point QB replacement dwarfs the ~45 edge rb-f or wr-f offer at their spots. Taking the top arm now rather than gambling on qb-sf-b lasting."
-    },
-    {
-      "alternatives": [
-        "qb-sf-b",
-        "rb-f"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "POSITION_RUN",
         "EMPTY_STARTER"
       ],
       "player_id": "qb-sf-a",
       "slot_filled": "SUPER_FLEX",
-      "why": "qb-sf-a is both the best available by ECR (44) and the VOLS leader (71), so there is no tension to resolve. My SUPER_FLEX is empty and nearly every team drafting in the 11-pick gap before my next turn still needs a second QB, so both SF-caliber arms are very unlikely to survive to 66 while rb-f/wr-f types are replaceable at that range. Taking the top QB now locks a ~91-point edge over QB replacement in the SF slot rather than hoping for the leftover."
+      "why": "SUPER_FLEX is still empty and eleven picks separate me from my next turn, with most of the teams in between showing the same unfilled superflex need. qb-sf-a is the top ECR name here and the largest starter-points gain on the board, so there is no reason to get clever: take the QB now and fill RB2/TE/FLEX from the deeper pool later."
+    },
+    {
+      "alternatives": [
+        "qb-sf-b",
+        "rb-f"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "qb-sf-a",
+      "slot_filled": "SUPER_FLEX",
+      "why": "SUPER_FLEX is still empty and a second starting-caliber QB is worth ~71 points over replacement here, far more than the RB/WR options on the board. qb-sf-a is the best available by consensus and the top value calculation alike, and with 11 picks before my next turn both quarterbacks are unlikely to survive; taking the better one now locks the biggest remaining starter upgrade."
+    },
+    {
+      "alternatives": [
+        "qb-sf-b",
+        "rb-f"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "qb-sf-a",
+      "slot_filled": "SUPER_FLEX",
+      "why": "Superflex is still empty and 11 picks pass before I'm up again, so the second starting QB slot is the biggest hole on the roster. qb-sf-a is the top board name by both ECR and starter value, and the gap from him to the flex-only options (rb-f, wr-f) is roughly 25 points of weekly starter lift. Every other team between now and pick 66 also needs a superflex body, so waiting risks landing well behind qb-sf-b's tier."
+    },
+    {
+      "alternatives": [
+        "qb-sf-b",
+        "rb-f"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "qb-sf-a",
+      "slot_filled": "SUPER_FLEX",
+      "why": "Superflex is still empty and the two QBs on the board are worth ~70 points over replacement, roughly triple what the best RB or WR here offers in that slot. With 11 picks until my next turn, the odds both quality superflex arms survive are poor, and qb-sf-a is the better of the pair on points and ECR while also being the top overall value available. Taking him now locks the biggest weekly edge; I can still fill RB2, TE, FLEX and K from a deeper pool later."
     },
     {
       "alternatives": [
@@ -126,35 +150,7 @@
       ],
       "player_id": "qb-sf-a",
       "slot_filled": "SUPER_FLEX",
-      "why": "Superflex is empty and 11 picks separate you from your next turn, with nearly every team between here still needing a QB for that slot. qb-sf-a is both the top ECR on the board and the VOLS leader (71 over replacement, ~26 more than the best RB/WR), so there is no tension between value and need. Waiting risks both QBs going and forcing a flex-body into SUPER_FLEX for a ~25-point weekly haircut."
-    },
-    {
-      "alternatives": [
-        "qb-sf-b",
-        "rb-f"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER",
-        "POSITION_RUN"
-      ],
-      "player_id": "qb-sf-a",
-      "slot_filled": "SUPER_FLEX",
-      "why": "Superflex is still empty and 11 picks pass before I'm back, with nearly every team between here needing a second QB. qb-sf-a is both the best ECR on the board (44) and the top VOLS (71), so there's no tension: he fills the SUPER_FLEX at a ~35-point edge over the flex-eligible skill options. qb-sf-b is the fallback if this were a wait, but expecting both QBs to survive 11 picks in a SF room is a bad bet."
-    },
-    {
-      "alternatives": [
-        "qb-sf-b",
-        "rb-f"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER",
-        "POSITION_RUN"
-      ],
-      "player_id": "qb-sf-a",
-      "slot_filled": "SUPER_FLEX",
-      "why": "SUPER_FLEX is empty and this board's two QBs (191/188 pts) tower over the flex-eligible alternatives at 165/164, worth roughly +26 starter points in that slot. qb-sf-a is both the best ECR available (44) and the argmax VOLS (71), so there's no tension between the calculator and the board. With 11 picks until 66 and the between-states showing multiple teams still needing a superflex QB, both QBs are unlikely to survive; taking the better one now is clean. rb-f and wr-f are replaceable from the pool later."
+      "why": "Superflex is still empty and 8 of the 10 teams picking between now and 66 also need a second passer, so the two startable QBs on the board will not both survive an 11-pick gap. qb-sf-a is the top ECR name here and carries the largest starter-points swing (35.5 over replacement) versus roughly 22 for the RB or WR alternatives, so it slots straight into SUPER_FLEX with no bye conflict against qb-held's week 8. RB2 and TE can be addressed next turn where the drop-off is far shallower."
     }
   ]
 }

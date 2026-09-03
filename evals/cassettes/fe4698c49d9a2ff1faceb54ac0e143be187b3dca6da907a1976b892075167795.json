@@ -1,5 +1,5 @@
 {
-  "key": "c9e8058ac88c5e8fc04be45b8dcf65da6831d9bef72fc0540f418ca12f64e6e6",
+  "key": "fe4698c49d9a2ff1faceb54ac0e143be187b3dca6da907a1976b892075167795",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -99,7 +99,49 @@
       ],
       "player_id": "wr-run-a",
       "slot_filled": "WR",
-      "why": "Five straight WRs just came off the board and both WR starter slots are empty, so the run is squeezing exactly the position I need. wr-run-a is the best ECR available (44), the VOLS argmax (41), and sits just above the cliff: after him and wr-run-b, the next WR is worth only 14 over replacement. With 7 picks until 52, I can realistically only expect one of this tier to survive, so I take the top one now and hope wr-run-b or te-h wheels back. Minor bye-6 overlap with qb-held is not enough to downgrade him."
+      "why": "Five straight WRs came off the board and I have zero of two WR starters filled, so the top receiver here is both the value and the need. wr-run-a leads the board in ECR and in starter-points gained (+41 over replacement), and the next tier after wr-run-b drops off a cliff to wr-after-cliff at +14 with seven picks before I'm back up. rb-h and te-h can wait; a second RB or the TE is far likelier to survive to pick 52 than a mid-40s receiver in the middle of a run. Only nit is the week 6 overlap with qb-held, which is easy to paper over off the bench."
+    },
+    {
+      "alternatives": [
+        "wr-run-b",
+        "rb-h"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "POSITION_RUN",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-run-a",
+      "slot_filled": "WR",
+      "why": "Five straight WRs just went off the board and I still have both WR slots empty, so the top receiver here is the clean pick. wr-run-a leads the board in both ECR and starter value (+41 over replacement), and with seven picks until my next turn the tier behind wr-run-b falls off hard to wr-after-cliff. Taking the best of the run now leaves rb-h or te-h as plausible pivots at 52."
+    },
+    {
+      "alternatives": [
+        "wr-run-b",
+        "rb-h"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "POSITION_RUN",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-run-a",
+      "slot_filled": "WR",
+      "why": "Five straight WRs off the board and both my WR starter spots are still open, so the top receiver here is the clean answer. wr-run-a is the best available by ECR and also the biggest starter upgrade on the board (+41 over replacement), and with seven picks until my next turn the tier behind these two falls off hard to wr-after-cliff. wr-run-b is the fallback if this run keeps rolling; rb-h is fine value but my second RB and FLEX can be filled later from a deeper pool."
+    },
+    {
+      "alternatives": [
+        "wr-run-b",
+        "rb-h"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "POSITION_RUN",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-run-a",
+      "slot_filled": "WR",
+      "why": "Five straight WRs came off the board and both my WR starting spots are empty, so the top receiver here is the clean pick. wr-run-a leads this board in both ECR and starter-points value, and with seven picks until pick 52 the tier behind it falls off hard \\u2014 wr-after-cliff is a 27-point drop. Taking the best receiver now leaves RB2/FLEX and TE addressable later."
     },
     {
       "alternatives": [
@@ -114,50 +156,7 @@
       ],
       "player_id": "wr-run-a",
       "slot_filled": "WR",
-      "why": "Five straight WRs just came off the board and I still have both WR starters empty with seven picks until my next turn, so the run is aimed directly at my biggest hole. wr-run-a is the best ECR on the board (44), the VOLS leader (41 over replacement), and there is a visible cliff behind wr-run-b down to wr-after-cliff at 14. Taking the top of the tier now and hoping rb-h or te-h class depth survives to 52 is the better side of the wait-versus-take question. The bye-6 overlap with my QB is a minor cost, not a reason to pass."
-    },
-    {
-      "alternatives": [
-        "wr-run-b",
-        "rb-h"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "POSITION_RUN",
-        "EMPTY_STARTER"
-      ],
-      "player_id": "wr-run-a",
-      "slot_filled": "WR",
-      "why": "Five straight WRs just went off the board and I still have both WR slots empty with seven picks until my next turn. wr-run-a is the best ECR available, the VOLS leader at +41, and sits right above a hard cliff: after wr-run-b (+39) the next WR is wr-after-cliff at +14. I can't get both run-a and run-b, so I take the top one now and hope a mid-tier WR or te-h survives to 52."
-    },
-    {
-      "alternatives": [
-        "wr-run-b",
-        "rb-h"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "POSITION_RUN",
-        "EMPTY_STARTER"
-      ],
-      "player_id": "wr-run-a",
-      "slot_filled": "WR",
-      "why": "Five straight WRs just went off the board and I still have both WR slots empty. wr-run-a is the best available by ECR (44), the top VOLS (41.0) and sits right at the front of a steep cliff: after wr-run-b (39) the next WR is worth 14 over replacement. With seven picks until 52, at most one of wr-run-a/wr-run-b survives, so take the better one now and hope a mid-tier WR or te-h wraps back. rb-h is the fallback if you preferred filling RB2, but the positional edge and the run both point WR."
-    },
-    {
-      "alternatives": [
-        "wr-run-b",
-        "rb-h"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "POSITION_RUN",
-        "EMPTY_STARTER",
-        "BYE_STACK"
-      ],
-      "player_id": "wr-run-a",
-      "slot_filled": "WR",
-      "why": "Five straight WRs off the board and both WR starter slots are empty, so the run is real and it points at the two remaining values. wr-run-a is the best ECR (44), the VOLS leader (41), and sits right above a steep cliff: after wr-run-b (39) the next WR is worth only 14 over replacement. With seven picks until 52, expecting both run WRs to survive is wishful. rb-h is fine but RB2 can be patched from the flex-eligible pool later, and te-h's 22 doesn't compete here. Only nit is the bye-6 overlap with qb-held, which is a scheduling annoyance, not a reason to pass on the top board value."
+      "why": "Five straight WRs off the board and both my WR starting spots are empty, so I take the top receiver left rather than gamble on the position surviving seven picks. wr-run-a leads this board in projected points and starter value, and the drop from wr-run-b to wr-after-cliff shows the tier ends soon. Shares a bye week 6 with my quarterback, which is tolerable this early with plenty of bench picks left to cover it. rb-h and te-h fill needs but neither offers this much value over replacement, and TE should still be gettable at 52."
     }
   ]
 }

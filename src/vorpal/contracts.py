@@ -80,6 +80,7 @@ class Gate(StrEnum):
     VOLS_DISSENT = "vols_dissent"
     ECR_DISSENT = "ecr_dissent"
     ECR_SANITY = "ecr_sanity"
+    WHY_CONTAINS_FLOOR = "why_contains_floor"
     BYE_HOLE = "bye_hole"
     STABILITY = "stability"
     VOLS_INVARIANT = "vols_invariant"

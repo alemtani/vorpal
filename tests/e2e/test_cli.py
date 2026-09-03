@@ -57,7 +57,6 @@ def _argv(tmp_path: Path, *extra: str) -> list[str]:
         str(tmp_path / "board.html"),
         "--players-cache",
         str(tmp_path / "players.json"),
-        "--once",
         *extra,
     ]
 
@@ -68,7 +67,41 @@ def _run(tmp_path: Path, *extra: str, transport: Any = None) -> tuple[int, Any]:
     return code, transport
 
 
+def _pick(player_id: str) -> dict[str, Any]:
+    return {
+        "draft_id": "draft_snake_redraft",
+        "player_id": player_id,
+        "picked_by": "user_09",
+        "roster_id": 1,
+        "round": 1,
+        "draft_slot": 1,
+        "pick_no": 1,
+        "is_keeper": None,
+        "metadata": {"position": "RB", "first_name": "Rb", "last_name": "Number1"},
+    }
+
+
+def _operator_on_the_clock(api: respx.MockRouter) -> None:
+    """Slot 1 has picked. Seat 2 is on the clock, so the model runs."""
+    api["picks"].mock(return_value=httpx.Response(200, json=[_pick("slot1")]))
+
+
+def _payloads(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
+    """Capture each built payload. Off the clock, the model is not called."""
+    captured: list[Any] = []
+    real = cli.build_payload
+
+    def capturing(*args: Any, **kwargs: Any) -> Any:
+        payload = real(*args, **kwargs)
+        captured.append(payload)
+        return payload
+
+    monkeypatch.setattr(cli, "build_payload", capturing)
+    return captured
+
+
 def test_one_command_writes_a_board(api: respx.MockRouter, tmp_path: Path) -> None:
+    _operator_on_the_clock(api)
     code, transport = _run(tmp_path)
     assert code == 0
     page = (tmp_path / "board.html").read_text(encoding="utf-8")
@@ -76,6 +109,45 @@ def test_one_command_writes_a_board(api: respx.MockRouter, tmp_path: Path) -> No
     assert transport.calls, "the model was never asked"
     rec = transport.calls[0]["hint_argmax_vols"]
     assert rec in page or _name_of(transport.calls[0], rec) in page
+
+
+def test_once_is_not_a_flag(api: respx.MockRouter, tmp_path: Path) -> None:
+    """The poll loop is the only path. A complete draft writes and returns."""
+    with pytest.raises(SystemExit):
+        main([*_argv(tmp_path), "--once"], transport=HintTransport())
+
+
+def test_off_the_clock_does_not_ask_the_model(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    """The default fixture is seat 2 with no picks, so picks_until_next is 1."""
+    code, transport = _run(tmp_path)
+    assert code == 0
+    assert transport.calls == []
+    page = (tmp_path / "board.html").read_text(encoding="utf-8")
+    assert "Not your pick" in page
+
+
+@pytest.mark.parametrize("flag,expected", [((), False), (("--fast",), True)])
+def test_fast_flag_gates_fast_mode(
+    api: respx.MockRouter,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    flag: tuple[str, ...],
+    expected: bool,
+) -> None:
+    """--fast opts the default transport into fast mode; it is off otherwise."""
+    captured: dict[str, Any] = {}
+
+    class _Fake(HintTransport):
+        def __init__(self, client: Any = None, *, fast: bool = False) -> None:
+            super().__init__()
+            captured["fast"] = fast
+
+    monkeypatch.setattr(cli, "AnthropicTransport", _Fake)
+    code = main(_argv(tmp_path, *flag))  # transport=None -> constructs _Fake
+    assert code == 0
+    assert captured["fast"] is expected
 
 
 def _name_of(payload: dict[str, Any], player_id: str) -> str:
@@ -96,19 +168,21 @@ def test_the_forecast_is_fetched_once_however_long_the_draft_runs(
 
 
 def test_the_payload_carries_the_seat_the_draft_order_gives(
-    api: respx.MockRouter, tmp_path: Path
+    api: respx.MockRouter, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _, transport = _run(tmp_path)
-    payload = transport.calls[0]
-    assert payload["config"]["slot"] == 2
-    assert payload["state"]["next_user_pick"] == 2
-    assert payload["state"]["picks_until_next"] == 1
-    assert [team["slot"] for team in payload["state"]["between"]] == [1]
+    captured = _payloads(monkeypatch)
+    _run(tmp_path)
+    payload = captured[0]
+    assert payload.config.slot == 2
+    assert payload.state.next_user_pick == 2
+    assert payload.state.picks_until_next == 1
+    assert [team.slot for team in payload.state.between] == [1]
 
 
 def test_the_board_carries_vols_adp_ecr_and_the_bye(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
+    _operator_on_the_clock(api)
     _, transport = _run(tmp_path)
     row = transport.calls[0]["board"][0]
     assert row["vols"] > 0
@@ -130,6 +204,7 @@ def test_banners_reach_stderr_before_the_board_is_written(
 def test_a_degraded_model_answer_still_writes_a_board(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
+    _operator_on_the_clock(api)
     code, _ = _run(tmp_path, transport=StubTransport({"nonsense": True}))
     assert code == 0
     page = (tmp_path / "board.html").read_text(encoding="utf-8")
@@ -139,6 +214,7 @@ def test_a_degraded_model_answer_still_writes_a_board(
 def test_a_drafted_player_leaves_the_board(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
+    _operator_on_the_clock(api)
     _, clean = _run(tmp_path)
     taken = clean.calls[0]["hint_argmax_vols"]
     api["picks"].mock(return_value=httpx.Response(200, json=[_pick(taken)]))
@@ -148,26 +224,13 @@ def test_a_drafted_player_leaves_the_board(
     assert after.calls[0]["state"]["pick_no"] == 2
 
 
-def _pick(player_id: str) -> dict[str, Any]:
-    return {
-        "draft_id": "draft_snake_redraft",
-        "player_id": player_id,
-        "picked_by": "user_09",
-        "roster_id": 1,
-        "round": 1,
-        "draft_slot": 1,
-        "pick_no": 1,
-        "is_keeper": None,
-        "metadata": {"position": "RB", "first_name": "Rb", "last_name": "Number1"},
-    }
-
-
 def test_the_poll_loop_stops_on_a_complete_draft(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
     slept: list[float] = []
-    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
-    code = main(argv, transport=HintTransport(), sleep=slept.append, now=lambda: 0.0)
+    code = main(
+        _argv(tmp_path), transport=HintTransport(), sleep=slept.append, now=lambda: 0.0
+    )
     assert code == 0
     assert slept == []
     assert (tmp_path / "board.html").exists()
@@ -221,10 +284,37 @@ def test_a_standalone_mock_borrows_scoring_from_the_named_league(
     draft["season"] = SEASON
     draft["draft_order"] = {"user_operator": 2}
     api["draft"].mock(return_value=httpx.Response(200, json=draft))
+    _operator_on_the_clock(api)
     code, transport = _run(tmp_path, "--scoring-league-id", "league_snake_redraft")
     assert code == 0
     codes = {banner["code"] for banner in transport.calls[0]["config"]["banners"]}
     assert {"slots_from_mock", "scoring_borrowed"} <= codes
+
+
+def test_a_standalone_mock_uses_a_scoring_preset(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    draft = load("sleeper", "draft_mock_standalone.json")
+    draft["draft_id"] = "draft_snake_redraft"
+    draft["season"] = SEASON
+    draft["draft_order"] = {"user_operator": 2}
+    api["draft"].mock(return_value=httpx.Response(200, json=draft))
+    _operator_on_the_clock(api)
+    code, transport = _run(tmp_path, "--scoring", "ppr")
+    assert code == 0
+    codes = {banner["code"] for banner in transport.calls[0]["config"]["banners"]}
+    assert {"slots_from_mock", "scoring_borrowed"} <= codes
+    # No league route is needed: the preset is the scoring source.
+    assert not api["league"].called
+
+
+def test_a_preset_and_a_scoring_league_cannot_both_be_given(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    with pytest.raises(SystemExit):
+        _run(
+            tmp_path, "--scoring", "ppr", "--scoring-league-id", "league_snake_redraft"
+        )
 
 
 def test_an_override_csv_replaces_the_projection_host(
@@ -233,6 +323,7 @@ def test_an_override_csv_replaces_the_projection_host(
     _projections_down(api)
     csv = tmp_path / "override.csv"
     csv.write_text(_override_csv(), encoding="utf-8")
+    _operator_on_the_clock(api)
     code, transport = _run(tmp_path, "--override", str(csv))
     assert code == 0
     codes = {banner["code"] for banner in transport.calls[0]["config"]["banners"]}
@@ -402,8 +493,12 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     monkeypatch.setattr(cli, "propose", counting_propose)
     monkeypatch.setattr(cli, "build_payload", counting_build_payload)
 
-    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
-    code = main(argv, transport=HintTransport(), sleep=lambda _s: None, now=lambda: 0.0)
+    code = main(
+        _argv(tmp_path),
+        transport=HintTransport(),
+        sleep=lambda _s: None,
+        now=lambda: 0.0,
+    )
     assert code == 0
     # Seat 2 is never on the clock in this script (pick 1 is one away, pick 3
     # is twenty away). The model must not run for other people's picks.
@@ -418,7 +513,7 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
 def test_a_complete_draft_writes_a_redacted_snapshot(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
-    """--once on a completed mock still writes the file. Player ids only."""
+    """A completed mock writes the snapshot. Player ids only."""
     operator_pick = _pick("rb1")
     operator_pick["draft_slot"] = 2
     operator_pick["picked_by"] = "user_operator"

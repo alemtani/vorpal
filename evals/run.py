@@ -1,5 +1,5 @@
 # ruff: noqa: E402, E501, I001
-"""Live eval runner. Eleven gates, four policies, one report.
+"""Live eval runner. Twelve gates, four policies, one report.
 
 Three fixture families, four policies on each board:
 
@@ -635,7 +635,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not os.environ.get("ANTHROPIC_API_KEY"):
             print("ANTHROPIC_API_KEY unset; --record needs it", file=sys.stderr)
             return 2
-        live = RetryTransport(AnthropicTransport())
+        # Standard speed: recording a cassette is not on a clock, and fast mode
+        # is premium-priced. The cassette key excludes speed, so a fast-mode
+        # replay on draft night still matches this recording.
+        live = RetryTransport(AnthropicTransport(fast=False))
     fp_key = os.environ.get("FANTASYPROS_API_KEY")
     RESULTS.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)

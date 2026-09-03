@@ -170,7 +170,7 @@ def test_the_key_hashes_the_request_the_transport_actually_sends() -> None:
                 content=[SimpleNamespace(type="text", text=json.dumps(RECORDED))],
             )
 
-    AnthropicTransport(SimpleNamespace(messages=_Messages())).complete(body)
+    AnthropicTransport(SimpleNamespace(messages=_Messages()), fast=False).complete(body)
     assert captured == build_request(body)
     assert captured["messages"][0]["content"] == json.dumps(body, sort_keys=True)
 

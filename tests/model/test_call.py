@@ -32,6 +32,7 @@ from vorpal.model import (
     recommend,
     run_stability,
 )
+from vorpal.model.call import FAST_MODE_BETA, SYSTEM
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "recorded_proposal.json"
 
@@ -129,28 +130,75 @@ def test_model_id_matches_the_claude_api_skill() -> None:
     assert MODEL_ID == "claude-opus-5"
 
 
+def test_system_names_the_why_forms_for_dissent_flags() -> None:
+    """SPEC.md #20: SYSTEM must spell out the contains-floor form so the
+    model has a chance to satisfy it, even though the floor itself is
+    checked only in evals, never on the pick clock."""
+    assert "hint_argmax_vols" in SYSTEM
+    assert "ecr_best" in SYSTEM
+    assert "is the VOLS pick" in SYSTEM
+    assert "is the ECR pick" in SYSTEM
+    # #57: the label is stated once, not as a repeatable header.
+    assert "one time" in SYSTEM
+    assert "Do not repeat" in SYSTEM
+
+
+def _capturing_client(recorded: dict, captured: dict) -> SimpleNamespace:
+    """A fake client whose beta.messages.create records its kwargs."""
+
+    class _Messages:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            captured.update(kwargs)
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(recorded))],
+                stop_reason="end_turn",
+            )
+
+    return SimpleNamespace(beta=SimpleNamespace(messages=_Messages()))
+
+
 def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
+    recorded = _recorded()
+    captured: dict = {}
+    transport = AnthropicTransport(
+        client=_capturing_client(recorded, captured), fast=True
+    )
+    out = transport.complete(_payload().to_dict())
+    assert out == recorded
+    assert captured["model"] == MODEL_ID
+    assert "temperature" not in captured
+    assert captured.get("tools") is None
+    assert "output_config" in captured
+
+
+def test_anthropic_transport_uses_fast_mode_when_requested() -> None:
+    recorded = _recorded()
+    captured: dict = {}
+    transport = AnthropicTransport(
+        client=_capturing_client(recorded, captured), fast=True
+    )
+    transport.complete(_payload().to_dict())
+    assert captured["speed"] == "fast"
+    assert captured["betas"] == [FAST_MODE_BETA]
+
+
+def test_anthropic_transport_is_standard_speed_by_default() -> None:
     recorded = _recorded()
     captured: dict = {}
 
     class _Messages:
         def create(self, **kwargs: object) -> SimpleNamespace:
             captured.update(kwargs)
-            text = json.dumps(recorded)
             return SimpleNamespace(
-                content=[SimpleNamespace(type="text", text=text)],
+                content=[SimpleNamespace(type="text", text=json.dumps(recorded))],
                 stop_reason="end_turn",
             )
 
     client = SimpleNamespace(messages=_Messages())
-    transport = AnthropicTransport(client=client)
-    out = transport.complete(_payload().to_dict())
-    assert out == recorded
-    assert captured["model"] == MODEL_ID
-    assert "temperature" not in captured
-    assert "tools" not in captured
-    assert captured.get("tools") is None
-    assert "output_config" in captured
+    transport = AnthropicTransport(client=client)  # default: standard speed
+    assert transport.complete(_payload().to_dict()) == recorded
+    assert "speed" not in captured
+    assert "betas" not in captured
 
 
 def test_anthropic_transport_wraps_api_errors() -> None:
@@ -158,7 +206,9 @@ def test_anthropic_transport_wraps_api_errors() -> None:
         def create(self, **kwargs: object) -> None:
             raise RuntimeError("network down")
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="network down"):
         transport.complete(_payload().to_dict())
 
@@ -171,7 +221,9 @@ def test_anthropic_transport_rejects_a_refusal_stop() -> None:
                 stop_reason="refusal",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="refusal"):
         transport.complete(_payload().to_dict())
 
@@ -184,7 +236,9 @@ def test_anthropic_transport_rejects_a_response_with_no_text() -> None:
                 stop_reason="end_turn",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="no text"):
         transport.complete(_payload().to_dict())
 
@@ -197,7 +251,9 @@ def test_anthropic_transport_rejects_a_non_object_json_body() -> None:
                 stop_reason="end_turn",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="object"):
         transport.complete(_payload().to_dict())
 
@@ -210,7 +266,9 @@ def test_anthropic_transport_rejects_unparseable_json() -> None:
                 stop_reason="end_turn",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="JSON"):
         transport.complete(_payload().to_dict())
 
@@ -289,6 +347,26 @@ def test_propose_degrades_on_a_semantic_violation_too() -> None:
     assert [v.code for v in result.violations] == ["silent_vols_dissent"]
 
 
+def test_propose_does_not_degrade_on_a_why_that_misses_the_contains_floor() -> None:
+    """SPEC.md #20: naming the dissent pick in `why` is a §5 eval, never a
+    §4 violation. A dissent that flags correctly but writes a `why` with
+    no name or id must validate clean and ship in one attempt."""
+    unnamed = {
+        **_recorded(),
+        "player_id": "7564",
+        "slot_filled": "WR",
+        "flags": ["VOLS_DISSENT"],
+        "why": "better long-term value",
+    }
+    transport = StubTransport(unnamed)
+    result = propose(_payload(), transport)
+    assert result.degraded is False
+    assert result.violations == ()
+    assert result.attempts == 1
+    assert result.proposal.player_id == "7564"
+    assert len(transport.calls) == 1
+
+
 # --- eval run: a violation is the score, never a retry -------------------
 
 
@@ -327,7 +405,9 @@ def test_transport_asks_for_medium_effort_and_adaptive_thinking() -> None:
                 stop_reason="end_turn",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     transport.complete(_payload().to_dict())
     assert captured["thinking"] == {"type": "adaptive"}
     assert captured["output_config"]["effort"] == EFFORT
@@ -345,6 +425,8 @@ def test_a_truncated_response_says_so_instead_of_bad_json() -> None:
                 stop_reason="max_tokens",
             )
 
-    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
     with pytest.raises(PlatformError, match="max_tokens"):
         transport.complete(_payload().to_dict())

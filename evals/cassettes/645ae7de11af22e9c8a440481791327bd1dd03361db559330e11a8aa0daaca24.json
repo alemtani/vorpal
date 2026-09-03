@@ -1,5 +1,5 @@
 {
-  "key": "bed79544aa065ab676d05e70940563833b5f0850f4bb143300eb973b69307b46",
+  "key": "645ae7de11af22e9c8a440481791327bd1dd03361db559330e11a8aa0daaca24",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -88,23 +88,28 @@
   "samples": [
     {
       "alternatives": [
-        "wr-c"
+        "wr-c",
+        "te-c"
       ],
       "coin_flip": false,
-      "flags": [],
+      "flags": [
+        "EMPTY_STARTER"
+      ],
       "player_id": "rb-d",
       "slot_filled": "RB",
-      "why": "rb-d is the best ECR on the board, leads in VOLS (38) and starter delta (+19), and fills the open RB2 slot. With 17 picks until pick 69, waiting on this tier isn't viable; wr-c is a close second and would fill WR2, but rb-d edges it on both value and need. qb-backup adds nothing in a 1QB build and te-c is redundant behind te-held."
+      "why": "rb-d fills the open RB2 with the board's top ECR and the largest starter-points gain, and with 17 picks until pick 69 there's no reason to wait on the best back available. Bye week 7 doesn't collide with anything on the roster, and wr-c stays the fallback if the WR2 hole matters more later."
     },
     {
       "alternatives": [
         "wr-c"
       ],
-      "coin_flip": false,
-      "flags": [],
+      "coin_flip": true,
+      "flags": [
+        "UPSIDE"
+      ],
       "player_id": "rb-d",
       "slot_filled": "RB",
-      "why": "rb-d is both the best ECR on the board and the VOLS leader, and he fills the open RB2 slot with 17 picks until your next turn. wr-c is close behind and would fill WR2, but the RB edge in points and starter delta plus the long wait makes taking the higher-value back the cleaner move; qb-backup adds nothing with QB already filled."
+      "why": "rb-d is the best available by ECR and VOLS, and it fills the open RB2 slot with a 17-pick gap until my next turn. wr-c is essentially a tie in value and also fills a hole, so the two are close, but RB depth dries up faster and rb-d's bye (7) doesn't collide with anything on the roster."
     },
     {
       "alternatives": [
@@ -116,27 +121,32 @@
       ],
       "player_id": "rb-d",
       "slot_filled": "RB",
-      "why": "rb-d is the best available by ECR (50) and the VOLS leader (38), and he fills the open RB2 slot outright. With 17 picks until pick 69, waiting on this tier is not realistic \\u2014 both rb-d and wr-c will be gone. wr-c is close (VOLS 35) and would fill WR2, but the RB edge plus flex flexibility breaks the tie. qb-backup adds zero starter points behind qb-held, and te-c is redundant with te-held."
+      "why": "rb-d is both the top ECR name and the VOLS leader here, and he fills the open RB2 with the largest starter-points gain on the board. With 17 picks until pick 69, waiting on this tier is not realistic, so take the back now and let wr-c or a receiver later fill WR2/FLEX."
     },
     {
       "alternatives": [
         "wr-c"
       ],
       "coin_flip": false,
-      "flags": [],
+      "flags": [
+        "EMPTY_STARTER"
+      ],
       "player_id": "rb-d",
       "slot_filled": "RB",
-      "why": "rb-d is the best available by ECR and the VOLS leader, and he fills the open RB2 slot with 17 picks until my next turn. wr-c is close behind and would fill WR2, but the RB edge in both value over last starter and roster fit makes rb-d the cleaner take. qb-backup adds nothing in a 1QB build and te-c is redundant behind te-held."
+      "why": "rb-d is both the best available by ECR and the top value-over-last-starter option, and it fills the open RB2 slot with a 17-pick wait before my next turn. wr-c is close behind and would also fill a need, but rb-d's edge at a thinner position and the long gap make taking the RB now the safer call."
     },
     {
       "alternatives": [
-        "wr-c"
+        "wr-c",
+        "te-c"
       ],
       "coin_flip": false,
-      "flags": [],
+      "flags": [
+        "EMPTY_STARTER"
+      ],
       "player_id": "rb-d",
       "slot_filled": "RB",
-      "why": "rb-d is both the best available by ECR (50) and the VOLS leader, and he fills the open RB2 slot on a roster that still needs RB2, WR2 and FLEX. With 17 picks until pick 69, both rb-d and wr-c will not survive, so take the higher-value one now; wr-c is the close alternative. qb-backup is dead weight with QB already filled and te-c duplicates a filled slot."
+      "why": "rb-d is both the best available ECR and the top VOLS value, and he fills the open RB2 slot with a 17-pick wait until my next turn. wr-c is close behind and would also start, but the RB gets the edge on scarcity and starter points; te-c is redundant behind te-held and qb-backup adds nothing in a single-QB build."
     }
   ]
 }

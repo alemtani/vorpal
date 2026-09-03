@@ -20,7 +20,7 @@ from collections.abc import Callable
 
 from vorpal.contracts import BoardRow, Flag, Payload, Proposal, Slot
 from vorpal.errors import DataRefusal
-from vorpal.evals.gates import ecr_best
+from vorpal.evals.gates import DISSENT_LABEL, ecr_best
 
 
 def argmax_vols(payload: Payload) -> Proposal:
@@ -99,9 +99,15 @@ def _proposal(payload: Payload, chosen: BoardRow, why: str) -> Proposal:
     flags: list[Flag] = []
     if payload.hint_argmax_vols and chosen.player_id != payload.hint_argmax_vols:
         flags.append(Flag.VOLS_DISSENT)
+        note = _dissent_note(payload, payload.hint_argmax_vols, Flag.VOLS_DISSENT)
+        why = f"{why} ({note})"
     best = ecr_best(payload)
     if best is not None and (chosen.ecr is None or chosen.ecr != best):
         flags.append(Flag.ECR_DISAGREE)
+        ecr_row = next((row for row in payload.board if row.ecr == best), None)
+        if ecr_row is not None:
+            note = _dissent_note(payload, ecr_row.player_id, Flag.ECR_DISAGREE)
+            why = f"{why} ({note})"
     rest = tuple(
         row.player_id for row in payload.board if row.player_id != chosen.player_id
     )
@@ -113,3 +119,18 @@ def _proposal(payload: Payload, chosen: BoardRow, why: str) -> Proposal:
         why=why,
         flags=tuple(flags),
     )
+
+
+def _dissent_note(payload: Payload, player_id: str, flag: Flag) -> str:
+    """`why` text naming the dissented-from player, in SYSTEM's form.
+
+    A baseline is not reasoning about the dissent, only satisfying the
+    eval's contains-floor (`why_contains_floor`, #20) mechanically — id and
+    name plus the label that matches the flag it set, `VOLS pick` or `ECR
+    pick` — so the gate measures the model, not a dummy string on a
+    one-line rule. Same spirit as the XOR flags: never claim a dissent the
+    policy did not make.
+    """
+    row = next((row for row in payload.board if row.player_id == player_id), None)
+    named = player_id if row is None else f"{row.player_id} {row.name}"
+    return f"{named} is the {DISSENT_LABEL[flag]}"
