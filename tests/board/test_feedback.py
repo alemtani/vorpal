@@ -82,6 +82,7 @@ def test_coin_flip_outside_rec_and_alts_is_a_skip(
 
     proposal = make_proposal(player_id="p1", alternatives=("p2",), coin_flip=True)
     assert is_skip("p1", proposal) is False
+    assert is_skip("p2", proposal) is False
     assert is_skip("p9", proposal) is True
 
 

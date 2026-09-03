@@ -51,13 +51,14 @@ class SkipRecord:
 
 
 def is_skip(human_pick: str, proposal: Proposal) -> bool:
-    """True when the click is not the rec, or coin_flip and outside rec+alts."""
+    """True when the click is not the rec, unless coin_flip and the click is an alt."""
 
     rec = proposal.player_id
-    named = {rec, *proposal.alternatives}
-    if human_pick != rec:
-        return True
-    return bool(proposal.coin_flip and human_pick not in named)
+    if human_pick == rec:
+        return False
+    if human_pick in proposal.alternatives:
+        return not proposal.coin_flip
+    return True
 
 
 def skips_path_for(output_path: Path | str) -> Path:
