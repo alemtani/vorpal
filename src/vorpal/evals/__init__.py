@@ -1,6 +1,6 @@
 """Does the model earn its tokens? This package answers that and nothing else.
 
-Eleven gates, each a yes/no question about one recommendation:
+Twelve gates, each a yes/no question about one recommendation:
 
 | Gate | Asks |
 |---|---|
@@ -10,6 +10,7 @@ Eleven gates, each a yes/no question about one recommendation:
 | `vols_dissent` | If it left our VOLS pick, did it flag that it was doing so? |
 | `ecr_dissent` | Same question against the expert consensus. |
 | `ecr_sanity` | Is the pick a defensible reach, or off the map entirely? |
+| `why_contains_floor` | If it dissented, did `why` name and label the pick it left? |
 | `bye_hole` | Does the pick leave a starter slot empty on its own bye week? |
 | `stability` | Same board five times — do at least three answers agree? |
 | `vols_invariant` | Has our own VOLS arithmetic settled? (About us, not the model.) |
@@ -45,6 +46,7 @@ from vorpal.evals.gates import (
     stability,
     vols_dissent,
     vols_invariant,
+    why_contains_floor,
 )
 from vorpal.evals.report import (
     NO_DISCRIMINATING_POWER,
@@ -90,4 +92,5 @@ __all__ = [
     "stability",
     "vols_dissent",
     "vols_invariant",
+    "why_contains_floor",
 ]

@@ -1,5 +1,5 @@
 # ruff: noqa: E402, E501, I001
-"""Live eval runner. Eleven gates, four policies, one report.
+"""Live eval runner. Twelve gates, four policies, one report.
 
 Three fixture families, four policies on each board:
 

@@ -276,11 +276,13 @@ caller decides what they mean.
 **`why` naming the dissent pick is a §5 eval, not a §4 violation.** When
 `VOLS_DISSENT` or `ECR_DISAGREE` is set, `why` must name that pick: "X is the
 VOLS pick; we are not taking X because …" (same form for ECR, naming
-`ecr_best`). The floor — `why` string-contains that player's name or id (#20)
-— is checked in evals (§5), never on the pick clock: a miss must not retry or
+`ecr_best`). The floor — `why` string-contains that player's name or id *and*
+the matching label, `VOLS pick` or `ECR pick`, for each flag set (#20) — is
+checked in evals (§5), never on the pick clock: a miss must not retry or
 degrade, and draft night ships the rec to the operator whether or not `why`
-contains the name. Not a quality judge on the sentence — `why` stays human
-and not scored.
+contains the name or the label. Not a quality judge on the sentence — `why`
+stays human and not scored; an unlabeled name misses because it does not say
+which pick it was, not because of how it reads.
 
 The prompt sentences enforcing this live in `SYSTEM` (`src/vorpal/model/call.py`),
 for the implementer to append; changing `SYSTEM` reshapes every cassette
@@ -328,7 +330,7 @@ Let `T = config.teams`. `ecr_best` = min ECR among `board` players that have an 
 | VOLS dissent | Rec = `hint_argmax_vols` **xor** `VOLS_DISSENT` ∈ flags |
 | ECR dissent | No ECR → skip. Else rec is `ecr_best` **xor** `ECR_DISAGREE` ∈ flags |
 | ECR sanity | No ECR on rec → skip. Else `ecr(rec) ≤ ecr_best + margin` **or** `ecr_min(rec) ≤ ecr_best + margin`. Floor, not a target: one round off early, two late |
-| `why` contains-floor | Neither flag set → skip. Else `why` string-contains the named player's name or id — `hint_argmax_vols` for `VOLS_DISSENT`, `ecr_best` for `ECR_DISAGREE` (#20). Eval-only: a miss here never retries or degrades draft night (§4) |
+| `why` contains-floor | Neither flag set → skip. Else, for each flag set, `why` string-contains the named player's name or id **and** the matching label — `hint_argmax_vols` with `VOLS pick` for `VOLS_DISSENT`, `ecr_best` with `ECR pick` for `ECR_DISAGREE` (#20). Substrings only: an unlabeled name, or the other flag's label, is a fail. Eval-only: a miss here never retries or degrades draft night (§4) |
 | Bye hole | Adding rec does not create a new empty startable slot on `rec.bye` when an alternative with a different bye exists on the board |
 | Stability | `coin_flip` → skip. Else ≥ 3 of 5 identical payloads return the same `player_id` |
 | VOLS invariant | Hypothetical pass 2 moves no position's replacement rank by more than 2 |

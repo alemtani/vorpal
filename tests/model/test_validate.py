@@ -219,6 +219,23 @@ def test_missing_ecr_on_rec_skips_the_sanity_floor() -> None:
     assert proposal.player_id == "noecr"
 
 
+def test_why_missing_the_dissent_name_is_not_a_violation() -> None:
+    """SPEC.md #20: `why` naming the dissent pick is a §5 eval-only
+    contains-floor, never a section 4 violation. A miss must not retry or
+    degrade draft night."""
+    raw = {
+        **_recorded(),
+        "player_id": "7564",
+        "slot_filled": "WR",
+        "flags": ["VOLS_DISSENT", "ECR_DISAGREE"],
+        "why": "better long-term value",
+    }
+    proposal, violations = validate_proposal(_payload(), raw)
+    assert violations == ()
+    assert proposal is not None
+    assert proposal.why == "better long-term value"
+
+
 def test_illegal_slot_filled_keeps_the_proposal() -> None:
     raw = {**_recorded(), "slot_filled": "QB"}
     proposal, violations = validate_proposal(_payload(), raw)
