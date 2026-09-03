@@ -1,4 +1,8 @@
-"""Pure HTML render. No files, no clock, no client."""
+"""Pure HTML render. No files, no clock, no client.
+
+Night view: the pick the operator can act on is first. Informational
+banners fold into a compact notice line. Host ids never headline the rec.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,7 @@ import html
 from collections.abc import Sequence
 
 from vorpal.board.schedule import is_degraded, is_greyed_out, poll_interval
-from vorpal.contracts import Banner, BoardRow, Payload, Proposal, WeeklyCell
+from vorpal.contracts import Banner, BoardRow, Flag, Payload, Proposal, WeeklyCell
 
 _CSS = """
 :root { color-scheme: dark; }
@@ -21,18 +25,13 @@ body[data-degraded="true"] { box-shadow: inset 0 0 0 8px #fc0; }
 body[data-greyed="true"] .recommendation,
 body[data-greyed="true"] .weekly,
 body[data-greyed="true"] .board { filter: grayscale(1); opacity: 0.65; }
-.banner {
-  background: #c00;
-  color: #fff;
-  font-size: 1.5rem;
-  font-weight: 800;
-  padding: 0.8rem 1rem;
-  margin: 0.6rem 0;
-  border: 4px solid #fff;
-}
 .age.stale { color: #fc0; font-weight: 800; }
 .timer { font-size: 1.25rem; }
 .rec { font-size: 1.8rem; margin: 0.2rem 0; }
+.stale-rec { color: #fc0; font-weight: 800; }
+.notices { font-size: 0.95rem; margin: 0.4rem 0; }
+.notices summary { cursor: pointer; color: #fc0; }
+.notices .banner { padding: 0.15rem 0; }
 table { border-collapse: collapse; width: 100%; }
 th, td { border-bottom: 1px solid #444; padding: 0.3rem 0.5rem; text-align: left; }
 td.gp { font-weight: 800; color: #fc0; }
@@ -85,7 +84,7 @@ def render_unavailable(
     if not any(banner.message == message for banner in shown):
         shown.insert(0, Banner(code="unavailable", message=message))
     inner = (
-        f'<p class="unavailable-message">{html.escape(message)}</p>\n'
+        f'<p class="unavailable-message">{html.escape(_operator_text(message))}</p>\n'
         "<p>No board yet. This is not current.</p>"
     )
     return _shell(
@@ -133,29 +132,52 @@ def _all_banners(
 def _board_inner(payload: Payload, proposal: Proposal) -> str:
     by_id = {row.player_id: row for row in payload.board}
     rec = by_id.get(proposal.player_id)
-    rec_name = rec.name if rec is not None else proposal.player_id
-    rec_pos = rec.position if rec is not None else ""
-    alt_items = "\n".join(_alt_item(by_id, pid) for pid in proposal.alternatives)
+    calc = by_id.get(payload.hint_argmax_vols)
+    stale = rec is None
+    if stale:
+        heading = calc.name if calc is not None else "stale rec"
+        rec_id = calc.player_id if calc is not None else ""
+        rec_pos = calc.position if calc is not None else ""
+        if calc is not None and calc.legal_slots:
+            slot = calc.legal_slots[0].value
+        else:
+            slot = proposal.slot_filled.value
+        why = "rec is stale"
+        shown_id = rec_id
+    else:
+        heading = rec.name
+        rec_pos = rec.position
+        slot = proposal.slot_filled.value
+        why = _why_on_screen(payload, proposal, by_id)
+        shown_id = proposal.player_id
+    alt_items = "\n".join(
+        item for pid in proposal.alternatives if (item := _alt_item(by_id, pid))
+    )
     if not alt_items:
         alt_items = "<li>none</li>"
     flags_block = _flags_block(proposal)
     coin = _bool(proposal.coin_flip)
     coin_label = "yes" if proposal.coin_flip else "no"
     rows = "\n".join(_board_row(row) for row in payload.board)
-    weeks = "\n".join(_week_item(cell) for cell in payload.state.weekly)
+    weeks = "\n".join(_week_item(cell) for cell in payload.state.weekly if cell.empty)
+    if not weeks:
+        weeks = "<li>no empty startable slots</li>"
+    stale_attr = f' data-stale="{_bool(stale)}"'
+    stale_line = '<p class="stale-rec">rec is stale</p>\n' if stale else ""
     return (
         '<section class="recommendation">\n'
-        f'<h1 class="rec" data-player-id="{_attr(proposal.player_id)}">'
-        f"{html.escape(rec_name)}</h1>\n"
-        f'<p class="slot-filled">fills {html.escape(proposal.slot_filled.value)}</p>\n'
+        f'<h1 class="rec" data-player-id="{_attr(shown_id)}"{stale_attr}>'
+        f"{html.escape(heading)}</h1>\n"
+        f"{stale_line}"
         f'<p class="pos">{html.escape(rec_pos)}</p>\n'
-        f'<p class="why">{html.escape(proposal.why)}</p>\n'
+        f'<p class="slot-filled">fills {html.escape(slot)}</p>\n'
+        f'<p class="why">{html.escape(why)}</p>\n'
         f'<ul class="alternatives">\n{alt_items}\n</ul>\n'
         f'<p class="coin-flip" data-coin-flip="{coin}">coin_flip: {coin_label}</p>\n'
         f"{flags_block}\n"
         "</section>\n"
         '<section class="weekly">\n'
-        "<h2>Starter points by week</h2>\n"
+        "<h2>Empty startable slots</h2>\n"
         f"<ol>\n{weeks}\n</ol>\n"
         "</section>\n"
         '<section class="board">\n'
@@ -163,10 +185,10 @@ def _board_inner(payload: Payload, proposal: Proposal) -> str:
         "<table>\n"
         "<thead>\n"
         "<tr>"
-        "<th>name</th><th>pos</th>"
-        '<th class="vols">vols</th>'
-        '<th class="delta">delta_starter_points</th>'
-        "<th>points</th><th>adp</th><th>gp</th>"
+        "<th>Name</th><th>Pos</th>"
+        '<th class="vols">VOLS</th>'
+        '<th class="delta">delta</th>'
+        "<th>Pts</th><th>ADP</th><th>GP</th>"
         "</tr>\n"
         "</thead>\n"
         f"<tbody>\n{rows}\n</tbody>\n"
@@ -175,10 +197,44 @@ def _board_inner(payload: Payload, proposal: Proposal) -> str:
     )
 
 
+def _why_on_screen(
+    payload: Payload,
+    proposal: Proposal,
+    by_id: dict[str, BoardRow],
+) -> str:
+    """Operator-facing why. Dissent names the VOLS / ECR pick; #20 owns the prompt."""
+
+    why = proposal.why
+    if Flag.VOLS_DISSENT in proposal.flags:
+        row = by_id.get(payload.hint_argmax_vols)
+        if row is not None and row.player_id != proposal.player_id:
+            form = f"{row.name} is the VOLS pick; we are not taking {row.name} because"
+            if form not in why:
+                why = f"{form} {why}"
+    if Flag.ECR_DISAGREE in proposal.flags:
+        row = _ecr_best_row(payload.board)
+        if row is not None and row.player_id != proposal.player_id:
+            form = f"{row.name} is the ECR pick; we are not taking {row.name} because"
+            if form not in why:
+                why = f"{form} {why}"
+    return why
+
+
+def _ecr_best_row(board: Sequence[BoardRow]) -> BoardRow | None:
+    """Overall ECR leader still on the board. Same min as the eval helper."""
+
+    ranked = [row for row in board if row.ecr is not None]
+    if not ranked:
+        return None
+    best = min(row.ecr for row in ranked)
+    return next(row for row in ranked if row.ecr == best)
+
+
 def _alt_item(by_id: dict[str, BoardRow], player_id: str) -> str:
     row = by_id.get(player_id)
-    label = row.name if row is not None else player_id
-    return f'<li data-player-id="{_attr(player_id)}">{html.escape(label)}</li>'
+    if row is None:
+        return ""
+    return f'<li data-player-id="{_attr(player_id)}">{html.escape(row.name)}</li>'
 
 
 def _flags_block(proposal: Proposal) -> str:
@@ -217,11 +273,9 @@ def _week_item(cell: WeeklyCell) -> str:
     empties = "".join(
         f'<span class="empty-slot">{html.escape(slot.value)}</span>' for slot in empty
     )
-    cls = ' class="has-empty"' if empty else ""
-    empty_note = f" · empty: {empties}" if empty else ""
     return (
-        f'<li data-week="{week}"{cls}>'
-        f"W{week}: {_fmt_num(starter_points)}{empty_note}"
+        f'<li data-week="{week}" class="has-empty">'
+        f"W{week}: {_fmt_num(starter_points)} · empty: {empties}"
         "</li>"
     )
 
@@ -245,11 +299,9 @@ def _shell(
         timer_label = "Pick timer: off"
     else:
         timer_label = f"Pick timer: {pick_timer}s"
-    banner_html = "\n".join(
-        f'<div class="banner" data-code="{_attr(banner.code)}">'
-        f"{html.escape(banner.message)}</div>"
-        for banner in banners
-    )
+    age_label = f"Data age: {age_txt}s"
+    if degraded or greyed:
+        age_label += " — not current"
     return (
         "<!DOCTYPE html>\n"
         '<html lang="en">\n'
@@ -264,17 +316,48 @@ def _shell(
         f'<div class="timer" data-pick-timer="{_attr(timer_attr)}">'
         f"{timer_label}</div>\n"
         f'<div class="{age_class}" data-age-seconds="{age_txt}">'
-        f"Data age: {age_txt}s</div>\n"
+        f"{age_label}</div>\n"
         f'<div class="status" data-status="{_attr(status)}">'
         f"{html.escape(status_line)}</div>\n"
+        f"{_notices(banners)}"
         "</header>\n"
-        '<section class="banners" role="alert">\n'
-        f"{banner_html}\n"
-        "</section>\n"
         f"{inner}\n"
         "</body>\n"
         "</html>\n"
     )
+
+
+def _notices(banners: Sequence[Banner]) -> str:
+    """One compact line that banners exist. Messages live folded, not 1.5rem red."""
+
+    if not banners:
+        return ""
+    n = len(banners)
+    label = "1 notice" if n == 1 else f"{n} notices"
+    items = "\n".join(
+        f'<li class="banner" data-code="{_attr(banner.code)}">'
+        f"{html.escape(_banner_text(banner))}</li>"
+        for banner in banners
+    )
+    return (
+        f'<details class="notices" data-count="{n}">\n'
+        f"<summary>{label}</summary>\n"
+        f"<ul>\n{items}\n</ul>\n"
+        "</details>\n"
+    )
+
+
+def _banner_text(banner: Banner) -> str:
+    return _operator_text(banner.message)
+
+
+def _operator_text(message: str) -> str:
+    """Do not dump raw PlatformError JSON at the operator."""
+
+    stripped = message.lstrip()
+    if stripped.startswith("{") or stripped.startswith("["):
+        return "platform error"
+    return message
 
 
 def _fmt_age(age_seconds: float) -> str:
