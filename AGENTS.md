@@ -5,9 +5,12 @@
 Personal NFL redraft tool. A `LeagueHost` adapter reads the platform.
 v1 implements Sleeper. ESPN would be another adapter, not a rewrite.
 Forecast (stats, ADP, ECR, bye) is FantasyPros. It stays in ingest.
-It arrives as CSV exports the operator saves from the website by hand
-into `private/fp/`. No API key, no API path. Agents never download,
-scrape, or browser-drive FantasyPros to produce them.
+In v1 it arrives as CSV exports the operator saves from the website by
+hand into `private/fp/`; v1 holds no API key and makes no HTTP call to
+FantasyPros, because the public API is a 10-player toy. Agents never
+download, scrape, or browser-drive FantasyPros to produce those files.
+A later paid key would be another extractor on the same wire names and
+the same host-id join, not a new path through ingest.
 Valuation never imports a host.
 
 Ingest is host-agnostic. Parameters are `host_players`, not `sleeper_*`.

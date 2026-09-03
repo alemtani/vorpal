@@ -37,7 +37,7 @@ v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 |---|---|
 | Documented Sleeper reads | Any write / browser automation |
 | Counting stats → this league's points → VOLS | Ingesting fantasy-point columns (`points`, `pts_*`) |
-| FantasyPros stats, ADP, ECR + `rank_std` as inputs **and** a sanity eval, read from CSV exports the operator saves by hand (§3) | ECR as the pick. The FantasyPros API, free or paid. Any script, scraper, or browser drive that fetches FantasyPros |
+| FantasyPros stats, ADP, ECR + `rank_std` as inputs **and** a sanity eval, read from CSV exports the operator saves by hand (§3) | ECR as the pick. Any script, scraper, or browser drive that fetches FantasyPros |
 | Weekly starter points (bye = 0) | True weekly projections (v2) |
 | Model recommendation | Argmax(VOLS) as the pick |
 | Binary evals only | Soft scores, “lean”, calibrated probabilities |
@@ -47,7 +47,7 @@ v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 
 ## 2. Configure
 
-Inputs: **draft id**, **operator** (username or `user_id`), **scoring-source league id** iff `draft.league_id` is null, **FantasyPros drop directory** (default `private/fp/`, §3), optional override CSV. There is no FantasyPros API key.
+Inputs: **draft id**, **operator** (username or `user_id`), **scoring-source league id** iff `draft.league_id` is null, **FantasyPros drop directory** (default `private/fp/`, §3), optional override CSV. v1 takes no FantasyPros API key, because v1 *is* the drop. A paid key is a §7 item, not an input now.
 
 ```mermaid
 flowchart TD
@@ -147,13 +147,22 @@ a smaller delta instead of as arithmetic the model has to do in its head.
 
 FantasyPros numbers arrive as CSV exports the operator downloads from the
 website by hand, about 15 minutes before the draft, and saves into one
-directory. There is no API key and no HTTP. The public API returns 10 players
-per list and its paging is decorative — PR #39 probed it live: `page=2`,
-`offset=10`, and `limit=100` all return 10 rows, `public_api_limited: true`,
-`tier: free`. A 10-player board is a toy, and a toy must not ship as real. So
-there is no "API, then CSV" path and no "CSV, then API" path. Ingest never
-calls `api.fantasypros.com`, for any board: draft night, `--once`, evals,
-rehearsals.
+directory. v1 has no API key and no HTTP to FantasyPros, for any board: draft
+night, `--once`, evals, rehearsals. The reason is the free tier, not the idea
+of an API. The public API returns 10 players per list and its paging is
+decorative — PR #39 probed it live: `page=2`, `offset=10`, and `limit=100` all
+return 10 rows, `public_api_limited: true`, `tier: free`. A 10-player board is
+a toy, and a toy must not ship as real.
+
+**No hybrid.** v1 reads the drop or it refuses: there is no "API, then CSV"
+path and no "CSV, then API" path, and a missing or unreadable drop is a
+`DataRefusal`, never a fallback to the 10-player API.
+
+The drop is v1's stopgap for a toy free tier, not the forever architecture. A
+later paid key is a second extractor on the same contract (§7), not a rewrite:
+same FP wire names, same counting-stats rule, the same `HostPlayerIndex` join
+order below. New sources add an extractor, not a new matcher. It is not a v1
+input, and it does not add a draft-night fallback.
 
 **Nobody automates the download.** Vorpal, its tools, its tests, and any agent
 working in this repo must not fetch, script, scrape, or browser-drive
@@ -632,6 +641,7 @@ Same contract as draft: numbers in, binary-gated rec out, you click. v2 swaps th
 | v2 | Weekly lineup from weekly projections |
 | v3 | Waivers / FAAB. First tool phase: depth chart (backups, handcuffs) |
 | v4 | Trades |
+| — | Paid-key FantasyPros extractor: same wire names, same counting stats (never `FPTS` / `pts_*`), same ADP / ECR / bye, same `HostPlayerIndex` join (§3). A new extractor, not a new matcher, and never a draft-night fallback |
 | — | Waiver VORP; VONA once the regret set holds enough drafts to fit survival; fitted market model; playoff-week schedule strength |
 
 Not a product: executing picks, outbound trades without review, multi-sport in v1. Shared layer if/when NBA/FPL/brackets exist: ingestion + projections only. Each sport keeps its own decision prompt.
@@ -644,7 +654,7 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 - Weekly strength in v1 is season rate with bye and known-out weeks at 0, not a real week-17 forecast.
 - Every gate is a floor or a consistency check. None of them scores *riskiness*, so nothing catches a recommendation that should have chased variance and did not. This matters once the objective shifts from `max E[points]` toward `max P(beat opponent)` — a v2/v3 concern, unaddressed here.
 - The drop is manual. A missing or stale `private/fp/` is the draft-night failure now, not an API outage: save both exports about 15 minutes before the draft and read the `fp_drop_age` banner. Override only helps if it already exists.
-- The public FantasyPros API is a 10-player toy (PR #39). Nothing falls back to it. A missing drop is a refusal, never a 10-player board shipped as real.
+- The public FantasyPros API is a 10-player toy (PR #39). Nothing falls back to it. A missing drop is a refusal, never a 10-player board shipped as real. That is a verdict on the free tier, not on the API: a paid key is a later extractor (§7), still with no draft-night fallback.
 - The website export's column names are not under our control. The alias table is closed, so a renamed column is ignored, not guessed; the symptoms are `unmapped_scoring_keys`, `adp_missing`, `ecr_missing`, and the 98% gate — loud, and fixed by a better file.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
 - ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`. The `ecr_min` escape exists so the gate catches incoherence rather than contrarianism: a returning starter the consensus discounts but one expert ranks highly is a fact on the board, not a taste. It widens the floor — a player no expert likes still fails.
