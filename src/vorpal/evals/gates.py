@@ -43,6 +43,14 @@ MAX_RANK_SHIFT = 2
 STABILITY_RUNS = 5
 STABILITY_AGREE = 3
 
+# SYSTEM asks a dissenting `why` for "X is the VOLS pick; we are not taking X
+# because …" (ECR the same way). `why_contains_floor` keeps only the label
+# from that form, one per flag; the words around it are not scored.
+DISSENT_LABEL: dict[Flag, str] = {
+    Flag.VOLS_DISSENT: "VOLS pick",
+    Flag.ECR_DISAGREE: "ECR pick",
+}
+
 
 def draft_margin(payload: Payload) -> int:
     """How far past the consensus best `ecr_sanity` lets a pick sit.
@@ -253,14 +261,17 @@ def why_contains_floor(
     proposal: Proposal | None,
     fixtures: GateFixtures | None = None,
 ) -> GateResult:
-    """Did `why` name the pick it dissented from?
+    """Did `why` name the pick it dissented from, and say which pick it was?
 
-    Eval-only floor (SPEC.md #20, section 5): a plain substring check, name
-    or id, never an LLM judge. `VOLS_DISSENT` must name `hint_argmax_vols`;
-    `ECR_DISAGREE` must name the board row at `ecr_best`. Neither flag set
-    is a skip, not a pass — there is nothing to check. A flag set with no
-    row to check it against (empty hint, no ECR on the board) skips that
-    half rather than failing a check that cannot run.
+    Eval-only floor (SPEC.md #20, section 5): plain substring checks, never
+    an LLM judge. For each dissent flag set, `why` must contain the named
+    player — name or id — and the matching `DISSENT_LABEL`: `VOLS_DISSENT`
+    names `hint_argmax_vols` as the `VOLS pick`, `ECR_DISAGREE` names the
+    board row at `ecr_best` as the `ECR pick`. A name with no label, or with
+    the other flag's label, is a miss: it does not say which pick it was.
+    Neither flag set is a skip, not a pass — there is nothing to check. A
+    flag set with no row to check it against (empty hint, no ECR on the
+    board) skips that half rather than failing a check that cannot run.
 
     This never touches section 4: a miss here is scored, not retried or
     degraded on the pick clock.
@@ -277,7 +288,7 @@ def why_contains_floor(
             if payload.hint_argmax_vols
             else None
         )
-        checks.append(("VOLS", hint_row))
+        checks.append((DISSENT_LABEL[Flag.VOLS_DISSENT], hint_row))
     if Flag.ECR_DISAGREE in proposal.flags:
         best = ecr_best(payload)
         ecr_row = (
@@ -285,21 +296,23 @@ def why_contains_floor(
             if best is not None
             else None
         )
-        checks.append(("ECR", ecr_row))
+        checks.append((DISSENT_LABEL[Flag.ECR_DISAGREE], ecr_row))
     if not checks:
         return _skip(Gate.WHY_CONTAINS_FLOOR, "neither flag set")
     performed = False
+    misses: list[str] = []
     for label, row in checks:
         if row is None:
             continue
         performed = True
         if row.name not in proposal.why and row.player_id not in proposal.why:
-            return _fail(
-                Gate.WHY_CONTAINS_FLOOR,
-                f"why does not name the {label} pick ({row.name})",
-            )
+            misses.append(f"why does not name the {label} ({row.name})")
+        elif label not in proposal.why:
+            misses.append(f"why names {row.name} but not as the {label}")
     if not performed:
         return _skip(Gate.WHY_CONTAINS_FLOOR, "no row to name for the set flags")
+    if misses:
+        return _fail(Gate.WHY_CONTAINS_FLOOR, "; ".join(misses))
     return _pass(Gate.WHY_CONTAINS_FLOOR)
 
 

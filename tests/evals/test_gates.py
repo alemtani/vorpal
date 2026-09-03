@@ -298,6 +298,43 @@ class TestWhyContainsFloor:
         )
         _outcome(result, GateOutcome.FAIL)
 
+    def test_fail_unlabeled_name(self) -> None:
+        # The review case: the name is there, but nothing says it is the
+        # VOLS pick. SYSTEM asks for "X is the VOLS pick", and the floor
+        # wants that label alongside the name, still by substring only.
+        payload = self._payload()
+        result = why_contains_floor(
+            payload,
+            make_proposal(
+                "te1",
+                flags=(Flag.VOLS_DISSENT,),
+                why="Bijan Robinson has better long-term value",
+            ),
+        )
+        _outcome(result, GateOutcome.FAIL)
+        assert "VOLS pick" in result.reason
+
+    def test_fail_wrong_label(self) -> None:
+        # Named, but as the ECR pick when the flag that fired is VOLS_DISSENT.
+        payload = self._payload()
+        why = "Bijan Robinson is the ECR pick; we are not taking him because upside."
+        result = why_contains_floor(
+            payload, make_proposal("te1", flags=(Flag.VOLS_DISSENT,), why=why)
+        )
+        _outcome(result, GateOutcome.FAIL)
+        assert "VOLS pick" in result.reason
+
+    def test_fail_unlabeled_id_for_ecr_disagree(self) -> None:
+        payload = self._payload()
+        result = why_contains_floor(
+            payload,
+            make_proposal(
+                "te1", flags=(Flag.ECR_DISAGREE,), why="wr1 has a bye problem"
+            ),
+        )
+        _outcome(result, GateOutcome.FAIL)
+        assert "ECR pick" in result.reason
+
     def test_not_performed_when_neither_flag_set(self) -> None:
         payload = self._payload()
         result = why_contains_floor(payload, make_proposal("te1"))
@@ -328,6 +365,22 @@ class TestWhyContainsFloor:
         )
         _outcome(result, GateOutcome.FAIL)
         assert "ECR" in result.reason
+
+    def test_fail_both_flags_one_label_missing(self) -> None:
+        # Both players named, only one labeled. The reason names the half
+        # that missed, and only that half.
+        payload = self._payload()
+        why = (
+            "Bijan Robinson is the VOLS pick; we are not taking him because upside. "
+            "Ja'Marr Chase is a bye-week problem."
+        )
+        result = why_contains_floor(
+            payload,
+            make_proposal("te1", flags=(Flag.VOLS_DISSENT, Flag.ECR_DISAGREE), why=why),
+        )
+        _outcome(result, GateOutcome.FAIL)
+        assert "ECR pick" in result.reason
+        assert "VOLS" not in result.reason
 
     def test_not_performed_when_hint_row_is_missing(self) -> None:
         payload = make_payload(board=self._board, hint_argmax_vols="")
