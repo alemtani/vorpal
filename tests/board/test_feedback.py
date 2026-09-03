@@ -39,6 +39,8 @@ def _keys(obj: Any) -> set[str]:
 
 def _trace(*, player_id: str = "p1") -> dict[str, Any]:
     return {
+        "attempts": 1,
+        "degraded": False,
         "payload": {
             "config": {"league_id": "league_secret", "slot": 2},
             "board": [{"player_id": player_id, "name": "A Back"}],
@@ -53,6 +55,7 @@ def _trace(*, player_id: str = "p1") -> dict[str, Any]:
                 "flags": [],
             }
         ],
+        "violations": [],
     }
 
 
@@ -212,6 +215,53 @@ def test_complete_opens_issue_even_when_why_not_form_is_skipped(
     _ = title
 
 
+def test_issue_body_and_skips_file_carry_attempts_and_violations(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1", alternatives=("p2",))
+    issues: list[tuple[str, str]] = []
+    trace = _trace()
+    trace["attempts"] = 2
+    trace["degraded"] = True
+    trace["violations"] = [
+        {"code": "rec_off_board", "message": "player_id p9 is not on the board"}
+    ]
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: (
+            issues.append((title, body)) or "https://example/3"
+        ),
+    )
+    collector.remember_trace(1, trace)
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+
+    body = issues[0][1]
+    assert "attempts: 2" in body
+    assert "rec_off_board" in body
+
+    stored = json.loads(
+        (tmp_path / "board.skips.local.json").read_text(encoding="utf-8")
+    )
+    stored_trace = stored["skips"][0]["trace"]
+    assert stored_trace["attempts"] == 2
+    assert stored_trace["violations"][0]["code"] == "rec_off_board"
+
+
 def test_why_not_form_at_complete_fills_the_slot(
     tmp_path: Path,
     make_payload: Callable[..., Payload],
@@ -320,32 +370,6 @@ def test_github_create_failure_raises_and_is_swallowed_by_finish(
     snap = tmp_path / "board.snapshot.local.json"
     snap.write_text("{}\n", encoding="utf-8")
     collector.finish(snap)  # must not raise
-
-
-def test_tracing_transport_records_propose_samples_without_a_live_call() -> None:
-    from vorpal.board.feedback import TracingTransport
-
-    inner_calls: list[dict[str, Any]] = []
-
-    class Inner:
-        def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
-            inner_calls.append(payload)
-            return {
-                "player_id": "p1",
-                "alternatives": [],
-                "slot_filled": "RB",
-                "coin_flip": False,
-                "why": "x",
-                "flags": [],
-            }
-
-    wrapped = TracingTransport(Inner())
-    raw = wrapped.complete({"board": [{"player_id": "p1", "name": "A Back"}]})
-    samples = wrapped.take()
-    assert raw["player_id"] == "p1"
-    assert samples == [raw]
-    assert wrapped.take() == []
-    assert inner_calls[0]["board"][0]["name"] == "A Back"
 
 
 class _FakeIO:

@@ -66,24 +66,6 @@ def skips_path_for(output_path: Path | str) -> Path:
     return path.with_name(f"{path.stem}.skips.local.json")
 
 
-class TracingTransport:
-    """Records propose samples. Inner transport is the one that talks (or a stub)."""
-
-    def __init__(self, inner: Any) -> None:
-        self._inner = inner
-        self._samples: list[dict[str, Any]] = []
-
-    def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
-        raw = dict(self._inner.complete(payload))
-        self._samples.append(raw)
-        return raw
-
-    def take(self) -> list[dict[str, Any]]:
-        samples = self._samples
-        self._samples = []
-        return samples
-
-
 class FeedbackCollector:
     """Skip records at click; why-not form and GitHub issue at complete."""
 
@@ -183,12 +165,17 @@ def issue_text(skips: list[SkipRecord], snapshot_path: Path) -> tuple[str, str]:
     ]
     for skip in skips:
         why = skip.why_not if skip.why_not else "(empty)"
+        trace = skip.trace
+        attempts = trace.get("attempts", "?")
+        codes = [violation["code"] for violation in trace.get("violations", [])]
         lines.extend(
             [
                 f"### pick {skip.pick_no}",
                 f"- rec: `{skip.rec}`",
                 f"- human: `{skip.human_pick}`",
                 f"- alternatives: `{list(skip.alternatives)}`",
+                f"- attempts: {attempts}",
+                f"- violations: `{codes}`",
                 f"- why-not: {why}",
                 "",
                 "```json",

@@ -18,7 +18,6 @@ from pathlib import Path
 from vorpal.board import Frame, render, run_loop, write_html
 from vorpal.board.feedback import (
     FeedbackCollector,
-    TracingTransport,
     gh_issue_create,
     skips_path_for,
     tty_why_not_form,
@@ -45,7 +44,7 @@ from vorpal.errors import (
     VorpalError,
 )
 from vorpal.ingest import load_forecast
-from vorpal.model import AnthropicTransport, propose
+from vorpal.model import AnthropicTransport, SampleRecorder, propose
 from vorpal.payload import build_payload, build_rows, build_state
 from vorpal.platform import LeagueClient
 from vorpal.resolve import Resolved, resolve
@@ -223,7 +222,7 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
-    traced = TracingTransport(transport)
+    traced = SampleRecorder(transport)
     out = Path(args.out)
     feedback = FeedbackCollector(
         path=skips_path_for(out),
@@ -368,13 +367,18 @@ class _Proposals:
                 for violation in result.violations
             )
         if self._on_trace is not None:
-            samples = self._transport.take()
+            samples = [sample for sample, _latency_ms in self._transport.take()]
             self._on_trace(
                 pick_no,
                 {
+                    "attempts": result.attempts,
                     "degraded": result.degraded,
                     "payload": payload.to_dict(),
                     "samples": samples,
+                    "violations": [
+                        {"code": violation.code, "message": violation.message}
+                        for violation in result.violations
+                    ],
                 },
             )
         self._proposal = result.proposal

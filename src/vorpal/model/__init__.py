@@ -13,6 +13,7 @@ from vorpal.model.call import (
     run_stability,
 )
 from vorpal.model.cassette import CassetteStore, CassetteTransport, request_key
+from vorpal.model.tracing import SampleRecorder
 from vorpal.model.validate import validate_proposal
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "AnthropicTransport",
     "CassetteStore",
     "CassetteTransport",
+    "SampleRecorder",
     "StubTransport",
     "build_request",
     "propose",
