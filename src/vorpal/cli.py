@@ -41,6 +41,7 @@ from vorpal.ingest import load_forecast
 from vorpal.model import AnthropicTransport, propose
 from vorpal.payload import build_payload, build_rows, build_state
 from vorpal.platform import LeagueClient
+from vorpal.platform.presets import PRESETS, preset_league
 from vorpal.resolve import Resolved, resolve
 from vorpal.sleeper import SleeperClient
 from vorpal.valuation import ScoredPlayer, compute_vols, score_player
@@ -76,10 +77,19 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="your Sleeper username or user_id",
     )
-    parser.add_argument(
+    scoring = parser.add_mutually_exclusive_group()
+    scoring.add_argument(
         "--scoring-league-id",
         default=None,
         help="league to borrow scoring from; required for a standalone mock",
+    )
+    scoring.add_argument(
+        "--scoring",
+        default=None,
+        choices=PRESETS,
+        help="borrow a canonical Sleeper default scoring table for a standalone "
+        "mock, instead of a league. Slots still come from the mock; superflex "
+        "is read from the mock's slots, not from the preset",
     )
     parser.add_argument(
         "--slot",
@@ -165,11 +175,12 @@ def _run(
     picks = client.get_picks(args.draft_id)
     operator = client.get_user(args.operator)
     league = client.get_league(draft.league_id) if draft.league_id else None
-    scoring_league = (
-        client.get_league(args.scoring_league_id)
-        if args.scoring_league_id is not None
-        else None
-    )
+    if args.scoring is not None:
+        scoring_league = preset_league(args.scoring, draft.season, draft.host)
+    elif args.scoring_league_id is not None:
+        scoring_league = client.get_league(args.scoring_league_id)
+    else:
+        scoring_league = None
 
     # Resolve twice on purpose. The ADP variant decides which forecast to
     # fetch, and the fetched columns decide the unknown-key banner, which
