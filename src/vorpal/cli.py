@@ -16,6 +16,13 @@ from dataclasses import replace
 from pathlib import Path
 
 from vorpal.board import Frame, render, run_loop, write_html
+from vorpal.board.feedback import (
+    FeedbackCollector,
+    TracingTransport,
+    gh_issue_create,
+    skips_path_for,
+    tty_why_not_form,
+)
 from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
 from vorpal.contracts import (
     Banner,
@@ -120,6 +127,8 @@ def main(
     transport: object | None = None,
     sleep=time.sleep,
     now=time.monotonic,
+    open_issue=None,
+    why_not_form=None,
 ) -> int:
     """Run one draft. Returns 0, or 2 with a refusal on stderr."""
     args = build_parser().parse_args(argv)
@@ -132,6 +141,8 @@ def main(
             transport if transport is not None else AnthropicTransport(),
             sleep=sleep,
             now=now,
+            open_issue=open_issue,
+            why_not_form=why_not_form,
         )
     except VorpalError as exc:
         print(f"{_label(exc)}: {exc.message}", file=sys.stderr)
@@ -160,6 +171,8 @@ def _run(
     *,
     sleep,
     now,
+    open_issue=None,
+    why_not_form=None,
 ) -> None:
     draft = client.get_draft(args.draft_id)
     picks = client.get_picks(args.draft_id)
@@ -210,7 +223,16 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
-    frames = _Frames(_Proposals(transport, always=args.once))
+    traced = TracingTransport(transport)
+    out = Path(args.out)
+    feedback = FeedbackCollector(
+        path=skips_path_for(out),
+        why_not_form=why_not_form or tty_why_not_form,
+        open_issue=open_issue or _open_issue,
+    )
+    frames = _Frames(
+        _Proposals(traced, always=args.once, on_trace=feedback.remember_trace)
+    )
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return frames.get(
@@ -225,7 +247,6 @@ def _run(
 
     if args.once:
         frame = recompute(draft, picks)
-        out = Path(args.out)
         write_html(
             out,
             render(frame.payload, frame.proposal, 0.0, frame.banners),
@@ -233,7 +254,10 @@ def _run(
         if draft.status == "complete":
             collector = SnapshotCollector()
             collector.observe(frame)
-            collector.write(snapshot_path_for(out), picks)
+            snap = snapshot_path_for(out)
+            collector.write(snap, picks)
+            feedback.observe(frame, picks)
+            feedback.finish(snap)
         return
     run_loop(
         _BoundClient(client, args.draft_id),
@@ -241,6 +265,7 @@ def _run(
         args.out,
         now=now,
         sleep=sleep,
+        feedback=feedback,
     )
 
 
@@ -299,11 +324,19 @@ class _Proposals:
     Between turns the page shows the calculator, not a stale rec.
     """
 
-    __slots__ = ("_always", "_banners", "_pick_no", "_proposal", "_transport")
+    __slots__ = (
+        "_always",
+        "_banners",
+        "_on_trace",
+        "_pick_no",
+        "_proposal",
+        "_transport",
+    )
 
-    def __init__(self, transport, *, always: bool = False) -> None:
+    def __init__(self, transport, *, always: bool = False, on_trace=None) -> None:
         self._transport = transport
         self._always = always
+        self._on_trace = on_trace
         self._proposal: Proposal | None = None
         self._banners: tuple[Banner, ...] = ()
         self._pick_no: int | None = None
@@ -333,6 +366,16 @@ class _Proposals:
             banners = tuple(
                 Banner(code=f"violation_{violation.code}", message=violation.message)
                 for violation in result.violations
+            )
+        if self._on_trace is not None:
+            samples = self._transport.take()
+            self._on_trace(
+                pick_no,
+                {
+                    "degraded": result.degraded,
+                    "payload": payload.to_dict(),
+                    "samples": samples,
+                },
             )
         self._proposal = result.proposal
         self._banners = banners
@@ -462,6 +505,15 @@ def _frame(
     payload = build_payload(config, state, values.replacement, rows)
     proposal, proposal_banners = proposals.for_payload(payload)
     return Frame(payload=payload, proposal=proposal, banners=extra + proposal_banners)
+
+
+def _open_issue(title: str, body: str) -> str:
+    """Best-effort GitHub issue. A missing token must not fail draft night."""
+    try:
+        return gh_issue_create(title, body)
+    except Exception as exc:
+        print(f"github issue: {exc}", file=sys.stderr)
+        return ""
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -435,3 +435,16 @@ def test_a_complete_draft_writes_a_redacted_snapshot(
     assert "league_snake_redraft" not in dumped
     assert "user_operator" not in dumped
     assert "league_id" not in dumped
+
+
+def test_a_missing_github_token_does_not_fail_draft_night(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from vorpal.cli import _open_issue
+
+    def boom(title: str, body: str) -> str:
+        raise RuntimeError("no token")
+
+    monkeypatch.setattr("vorpal.cli.gh_issue_create", boom)
+    assert _open_issue("t", "b") == ""
+    assert "github issue" in capsys.readouterr().err

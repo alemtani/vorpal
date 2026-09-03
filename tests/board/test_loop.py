@@ -513,3 +513,53 @@ def test_complete_writes_redacted_snapshot_and_drafting_does_not(
     assert "league_test" not in dumped
     assert "user_operator" not in dumped
     assert "A Back" not in dumped
+
+
+def test_loop_persists_skip_then_opens_issue_on_complete(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame, run_loop
+    from vorpal.board.feedback import FeedbackCollector
+
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1", alternatives=("p2",))
+    issues: list[tuple[str, str]] = []
+    feedback = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: (
+            issues.append((title, body)) or "https://example/3"
+        ),
+    )
+    feedback.remember_trace(
+        1,
+        {
+            "payload": {"board": [{"player_id": "p1"}]},
+            "samples": [{"player_id": "p1"}],
+        },
+    )
+
+    def recompute(draft: Draft, picks: tuple[Pick, ...]) -> Frame:
+        return Frame(payload=payload, proposal=proposal, banners=())
+
+    pick = make_pick(pick_no=1, player_id="p9")
+    run_loop(
+        FakeClient(
+            [make_draft(status="drafting"), make_draft(status="complete")],
+            picks=[(), (pick,)],
+        ),
+        recompute,
+        tmp_path / "board.html",
+        now=FakeClock().now,
+        sleep=FakeClock().sleep,
+        feedback=feedback,
+    )
+    assert (tmp_path / "board.snapshot.local.json").is_file()
+    assert (tmp_path / "board.skips.local.json").is_file()
+    assert len(issues) == 1
+    assert "p9" in issues[0][1]
+    assert "board.snapshot.local.json" in issues[0][1]
