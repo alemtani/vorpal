@@ -5,12 +5,16 @@
 Personal NFL redraft tool. A `LeagueHost` adapter reads the platform.
 v1 implements Sleeper. ESPN would be another adapter, not a rewrite.
 Forecast (stats, ADP, ECR, bye) is FantasyPros. It stays in ingest.
+It arrives as CSV exports the operator saves from the website by hand
+into `private/fp/`. No API key, no API path. Agents never download,
+scrape, or browser-drive FantasyPros to produce them.
 Valuation never imports a host.
 
 Ingest is host-agnostic. Parameters are `host_players`, not `sleeper_*`.
 The host player map is a join directory (id, yahoo_id, name, pos, team).
 Player join has one implementation. New sources add an extractor, not a
-new matcher. Independent forecast fetches run in parallel and join.
+new matcher. Rankings and projections load independently and join on
+host id.
 
 ## A league is a table, not a branch
 
@@ -82,6 +86,8 @@ If the next person cannot see it from the code, put it in the PR body.
 ## Do not
 
 - Write to a host, scrape, or drive a browser.
+- Download FantasyPros exports by script, scraper, or browser. The operator
+  saves them by hand.
 - Hardcode a league's settings, scoring, or roster.
 - Commit `private/`, `*.local.json`, or anything that identifies a league
   or its managers.
@@ -103,9 +109,11 @@ If the next person cannot see it from the code, put it in the PR body.
   IDP slot codes, auction, linear, `reversal_round != 0`. `max_keepers > 0`
   on redraft is a banner, not a refusal.
 - **Unknown seat:** omit `next_user_pick`, `picks_until_next`, `between`.
-- **`/players` has no bye.** Take bye from FantasyPros `player_bye_week`.
+- **`/players` has no bye.** Take bye from the FantasyPros rankings CSV
+  (`BYE`).
 - **Forecast is FantasyPros.** Counting stats, ADP, ECR, bye. Host `/players`
-  is the join directory. Do not fetch Sleeper projections.
+  is the join directory. Do not fetch Sleeper projections. The source is the
+  operator's CSV drop, never the 10-player public API.
 - **VOLS is last starter, two passes.** Bench is not absorbed. Spec
   section 3. The pick is the model's; `hint_argmax_vols` is a calculator.
 - **ECR is not the pick** and is not a valuation input. Ingest then payload.
@@ -123,7 +131,7 @@ All are `VorpalError`. Print to stderr, exit 2. Do not collapse them.
 |---|---|
 | `UnsupportedLeague` | Permanent. Format is out of v1. |
 | `DataRefusal` | Fixable by a better file. |
-| `PlatformError` | The host or projections API. |
+| `PlatformError` | The host, or a broken transport. |
 | `UserRefusal` | Operator identity or seat. |
 
 ```
