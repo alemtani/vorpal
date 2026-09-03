@@ -408,7 +408,7 @@ def test_gate_result_is_binary_or_not_performed() -> None:
         "FAIL",
         "NOT_PERFORMED",
     }
-    assert len(list(Gate)) == 11
+    assert len(list(Gate)) == 12
     passed = GateResult(gate=Gate.SCHEMA, outcome=GateOutcome.PASS, reason=None)
     failed = GateResult(
         gate=Gate.VOLS_DISSENT, outcome=GateOutcome.FAIL, reason="silent dissent"

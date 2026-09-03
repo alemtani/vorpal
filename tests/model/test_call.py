@@ -32,6 +32,7 @@ from vorpal.model import (
     recommend,
     run_stability,
 )
+from vorpal.model.call import SYSTEM
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "recorded_proposal.json"
 
@@ -127,6 +128,16 @@ def test_stability_skips_when_coin_flip_is_true() -> None:
 
 def test_model_id_matches_the_claude_api_skill() -> None:
     assert MODEL_ID == "claude-opus-5"
+
+
+def test_system_names_the_why_forms_for_dissent_flags() -> None:
+    """SPEC.md #20: SYSTEM must spell out the contains-floor form so the
+    model has a chance to satisfy it, even though the floor itself is
+    checked only in evals, never on the pick clock."""
+    assert "hint_argmax_vols" in SYSTEM
+    assert "ecr_best" in SYSTEM
+    assert "X is the VOLS pick; we are not taking X because" in SYSTEM
+    assert "X is the ECR pick; we are not taking X because" in SYSTEM
 
 
 def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
@@ -287,6 +298,26 @@ def test_propose_degrades_on_a_semantic_violation_too() -> None:
     result = propose(_payload(), StubTransport(silent))
     assert result.degraded is True
     assert [v.code for v in result.violations] == ["silent_vols_dissent"]
+
+
+def test_propose_does_not_degrade_on_a_why_that_misses_the_contains_floor() -> None:
+    """SPEC.md #20: naming the dissent pick in `why` is a §5 eval, never a
+    §4 violation. A dissent that flags correctly but writes a `why` with
+    no name or id must validate clean and ship in one attempt."""
+    unnamed = {
+        **_recorded(),
+        "player_id": "7564",
+        "slot_filled": "WR",
+        "flags": ["VOLS_DISSENT"],
+        "why": "better long-term value",
+    }
+    transport = StubTransport(unnamed)
+    result = propose(_payload(), transport)
+    assert result.degraded is False
+    assert result.violations == ()
+    assert result.attempts == 1
+    assert result.proposal.player_id == "7564"
+    assert len(transport.calls) == 1
 
 
 # --- eval run: a violation is the score, never a retry -------------------

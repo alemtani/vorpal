@@ -99,9 +99,13 @@ def _proposal(payload: Payload, chosen: BoardRow, why: str) -> Proposal:
     flags: list[Flag] = []
     if payload.hint_argmax_vols and chosen.player_id != payload.hint_argmax_vols:
         flags.append(Flag.VOLS_DISSENT)
+        why = f"{why} ({_dissent_note(payload, payload.hint_argmax_vols)})"
     best = ecr_best(payload)
     if best is not None and (chosen.ecr is None or chosen.ecr != best):
         flags.append(Flag.ECR_DISAGREE)
+        ecr_row = next((row for row in payload.board if row.ecr == best), None)
+        if ecr_row is not None:
+            why = f"{why} ({_dissent_note(payload, ecr_row.player_id)})"
     rest = tuple(
         row.player_id for row in payload.board if row.player_id != chosen.player_id
     )
@@ -113,3 +117,16 @@ def _proposal(payload: Payload, chosen: BoardRow, why: str) -> Proposal:
         why=why,
         flags=tuple(flags),
     )
+
+
+def _dissent_note(payload: Payload, player_id: str) -> str:
+    """`why` text naming the dissented-from player by id and name.
+
+    A baseline is not reasoning about the dissent, only satisfying the
+    eval's contains-floor (`why_contains_floor`, #20) mechanically so the
+    gate measures the model, not a dummy string on a one-line rule.
+    """
+    row = next((row for row in payload.board if row.player_id == player_id), None)
+    if row is None:
+        return player_id
+    return f"{row.player_id} {row.name}"

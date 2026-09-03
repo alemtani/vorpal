@@ -16,6 +16,7 @@ from vorpal.evals import (
     ecr_follow,
     schema,
     vols_dissent,
+    why_contains_floor,
 )
 from vorpal.evals.baselines import choose_slot
 
@@ -48,6 +49,9 @@ def test_adp_follow_picks_lowest_adp() -> None:
     assert schema(payload, proposal).outcome is GateOutcome.PASS
     assert vols_dissent(payload, proposal).outcome is GateOutcome.PASS
     assert ecr_dissent(payload, proposal).outcome is GateOutcome.PASS
+    # A dissenting baseline names the hint/ecr_best player mechanically, so
+    # it clears the eval-only contains-floor (#20) without reasoning.
+    assert why_contains_floor(payload, proposal).outcome is GateOutcome.PASS
 
 
 def test_ecr_follow_picks_lowest_ecr_across_positions() -> None:
@@ -64,6 +68,7 @@ def test_ecr_follow_picks_lowest_ecr_across_positions() -> None:
     assert schema(payload, proposal).outcome is GateOutcome.PASS
     assert vols_dissent(payload, proposal).outcome is GateOutcome.PASS
     assert ecr_dissent(payload, proposal).outcome is GateOutcome.PASS
+    assert why_contains_floor(payload, proposal).outcome is GateOutcome.PASS
 
 
 def test_ecr_follow_falls_back_when_no_board_ecr() -> None:
@@ -91,6 +96,9 @@ def test_baselines_produce_valid_proposals_on_the_default_board() -> None:
         assert schema(payload, proposal).outcome is GateOutcome.PASS, name
         assert vols_dissent(payload, proposal).outcome is GateOutcome.PASS, name
         assert ecr_dissent(payload, proposal).outcome is GateOutcome.PASS, name
+        floor_outcome = why_contains_floor(payload, proposal).outcome
+        expected = GateOutcome.PASS if proposal.flags else GateOutcome.NOT_PERFORMED
+        assert floor_outcome is expected, name
         assert proposal.alternatives
         assert all(
             alt in {row.player_id for row in payload.board}

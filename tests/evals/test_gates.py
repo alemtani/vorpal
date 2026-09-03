@@ -34,6 +34,7 @@ from vorpal.evals import (
     stability,
     vols_dissent,
     vols_invariant,
+    why_contains_floor,
 )
 
 
@@ -250,6 +251,101 @@ class TestEcrSanity:
         # ecr 20 <= 1+12 is false; 20 <= 1+24 is true. ecr_min does not save early.
         _outcome(ecr_sanity(early, make_proposal("wr1")), GateOutcome.FAIL)
         _outcome(ecr_sanity(late, make_proposal("wr1")), GateOutcome.PASS)
+
+
+class TestWhyContainsFloor:
+    # hint_argmax_vols (VOLS pick) and ecr_best (ECR pick) are different
+    # players here on purpose, so a "both flags" case can check each half
+    # independently instead of accidentally checking the same row twice.
+
+    _board = (
+        board_row("rb1", name="Bijan Robinson", ecr=5, ecr_min=2, vols=80.0),
+        board_row(
+            "wr1", position="WR", name="Ja'Marr Chase", ecr=1, ecr_min=1, vols=60.0
+        ),
+        board_row(
+            "te1", position="TE", name="Sam LaPorta", ecr=10, ecr_min=8, vols=50.0
+        ),
+    )
+
+    def _payload(self) -> Payload:
+        return make_payload(board=self._board, hint_argmax_vols="rb1")
+
+    def test_pass_vols_dissent_named_by_name(self) -> None:
+        payload = self._payload()
+        why = "Bijan Robinson is the VOLS pick; we are not taking him because upside."
+        result = why_contains_floor(
+            payload, make_proposal("te1", flags=(Flag.VOLS_DISSENT,), why=why)
+        )
+        _outcome(result, GateOutcome.PASS)
+        assert result.gate is Gate.WHY_CONTAINS_FLOOR
+
+    def test_pass_ecr_disagree_named_by_id(self) -> None:
+        payload = self._payload()
+        why = "wr1 is the ECR pick; we are not taking wr1 because bye week."
+        result = why_contains_floor(
+            payload, make_proposal("te1", flags=(Flag.ECR_DISAGREE,), why=why)
+        )
+        _outcome(result, GateOutcome.PASS)
+
+    def test_fail_missing_name_or_id(self) -> None:
+        payload = self._payload()
+        result = why_contains_floor(
+            payload,
+            make_proposal(
+                "te1", flags=(Flag.VOLS_DISSENT,), why="better long-term value"
+            ),
+        )
+        _outcome(result, GateOutcome.FAIL)
+
+    def test_not_performed_when_neither_flag_set(self) -> None:
+        payload = self._payload()
+        result = why_contains_floor(payload, make_proposal("te1"))
+        _outcome(result, GateOutcome.NOT_PERFORMED)
+
+    def test_not_performed_without_proposal(self, payload: Payload) -> None:
+        result = why_contains_floor(payload, None)
+        _outcome(result, GateOutcome.NOT_PERFORMED)
+
+    def test_pass_both_flags_both_named(self) -> None:
+        payload = self._payload()
+        why = (
+            "Bijan Robinson is the VOLS pick; we are not taking him because upside. "
+            "Ja'Marr Chase is the ECR pick; we are not taking him because bye week."
+        )
+        result = why_contains_floor(
+            payload,
+            make_proposal("te1", flags=(Flag.VOLS_DISSENT, Flag.ECR_DISAGREE), why=why),
+        )
+        _outcome(result, GateOutcome.PASS)
+
+    def test_fail_both_flags_one_missing(self) -> None:
+        payload = self._payload()
+        why = "Bijan Robinson is the VOLS pick; we are not taking him because upside."
+        result = why_contains_floor(
+            payload,
+            make_proposal("te1", flags=(Flag.VOLS_DISSENT, Flag.ECR_DISAGREE), why=why),
+        )
+        _outcome(result, GateOutcome.FAIL)
+        assert "ECR" in result.reason
+
+    def test_not_performed_when_hint_row_is_missing(self) -> None:
+        payload = make_payload(board=self._board, hint_argmax_vols="")
+        result = why_contains_floor(
+            payload, make_proposal("te1", flags=(Flag.VOLS_DISSENT,), why="whatever")
+        )
+        _outcome(result, GateOutcome.NOT_PERFORMED)
+
+    def test_not_performed_when_no_ecr_on_board(self) -> None:
+        board = (
+            board_row("rb1", name="Bijan Robinson", ecr=None, ecr_min=None, vols=80.0),
+            board_row("te1", position="TE", ecr=None, ecr_min=None, vols=50.0),
+        )
+        payload = make_payload(board=board, hint_argmax_vols="rb1")
+        result = why_contains_floor(
+            payload, make_proposal("te1", flags=(Flag.ECR_DISAGREE,), why="whatever")
+        )
+        _outcome(result, GateOutcome.NOT_PERFORMED)
 
 
 class TestByeHole:
@@ -498,7 +594,7 @@ class TestReplay:
 
 
 class TestEvaluateAndHelpers:
-    def test_evaluate_runs_all_eleven_gates(self) -> None:
+    def test_evaluate_runs_all_twelve_gates(self) -> None:
         rostered = (
             RosterPlayer(player_id="qb0", name="qb", position="QB", bye=10),
             RosterPlayer(player_id="rb0", name="rb", position="RB", bye=7),
@@ -522,15 +618,21 @@ class TestEvaluateAndHelpers:
             policy_lineup=("rb1",),
         )
         results = evaluate(payload, make_proposal("rb1"), fixtures)
-        assert len(results) == 11
+        assert len(results) == 12
         assert [row.gate for row in results] == list(Gate)
-        assert all(row.outcome is GateOutcome.PASS for row in results)
+        # rb1 sets no flags, so why_contains_floor has nothing to check —
+        # NOT_PERFORMED, not a free pass. Every other gate that ran passes.
+        for row in results:
+            if row.gate is Gate.WHY_CONTAINS_FLOOR:
+                assert row.outcome is GateOutcome.NOT_PERFORMED
+            else:
+                assert row.outcome is GateOutcome.PASS
 
     def test_evaluate_skips_every_gate_without_a_proposal(
         self, payload: Payload
     ) -> None:
         results = evaluate(payload, None)
-        assert len(results) == 11
+        assert len(results) == 12
         assert all(row.outcome is GateOutcome.NOT_PERFORMED for row in results)
 
     def test_ecr_best_is_min_across_positions_not_positional(self) -> None:
