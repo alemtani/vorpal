@@ -160,7 +160,9 @@ def _capturing_client(recorded: dict, captured: dict) -> SimpleNamespace:
 def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
     recorded = _recorded()
     captured: dict = {}
-    transport = AnthropicTransport(client=_capturing_client(recorded, captured))
+    transport = AnthropicTransport(
+        client=_capturing_client(recorded, captured), fast=True
+    )
     out = transport.complete(_payload().to_dict())
     assert out == recorded
     assert captured["model"] == MODEL_ID
@@ -169,16 +171,18 @@ def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
     assert "output_config" in captured
 
 
-def test_anthropic_transport_uses_fast_mode_by_default() -> None:
+def test_anthropic_transport_uses_fast_mode_when_requested() -> None:
     recorded = _recorded()
     captured: dict = {}
-    transport = AnthropicTransport(client=_capturing_client(recorded, captured))
+    transport = AnthropicTransport(
+        client=_capturing_client(recorded, captured), fast=True
+    )
     transport.complete(_payload().to_dict())
     assert captured["speed"] == "fast"
     assert captured["betas"] == [FAST_MODE_BETA]
 
 
-def test_anthropic_transport_standard_speed_skips_the_beta_endpoint() -> None:
+def test_anthropic_transport_is_standard_speed_by_default() -> None:
     recorded = _recorded()
     captured: dict = {}
 
@@ -191,7 +195,7 @@ def test_anthropic_transport_standard_speed_skips_the_beta_endpoint() -> None:
             )
 
     client = SimpleNamespace(messages=_Messages())
-    transport = AnthropicTransport(client=client, fast=False)
+    transport = AnthropicTransport(client=client)  # default: standard speed
     assert transport.complete(_payload().to_dict()) == recorded
     assert "speed" not in captured
     assert "betas" not in captured
@@ -283,7 +287,7 @@ def test_default_anthropic_client_is_constructed_when_none_is_passed(
                 stop_reason="end_turn",
             )
 
-    fake = SimpleNamespace(beta=SimpleNamespace(messages=_Messages()))
+    fake = SimpleNamespace(messages=_Messages())
     monkeypatch.setattr("vorpal.model.call.Anthropic", lambda: fake)
     transport = AnthropicTransport()
     assert transport.complete(_payload().to_dict()) == recorded

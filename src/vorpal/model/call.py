@@ -140,12 +140,12 @@ class StubTransport:
 class AnthropicTransport:
     """Claude Messages API. Do not pass temperature or tools.
 
-    ``fast`` runs the pick call in fast mode (the default). Set it False for a
-    standard-speed call — the eval path, where latency does not matter and the
-    premium rate does.
+    ``fast`` opts into fast mode: quicker rec, premium rate. It is off by
+    default so no path bills the premium unasked. The CLI turns it on with
+    ``--fast`` for a short mock clock.
     """
 
-    def __init__(self, client: Anthropic | None = None, *, fast: bool = True) -> None:
+    def __init__(self, client: Anthropic | None = None, *, fast: bool = False) -> None:
         self._client = client if client is not None else Anthropic()
         self._fast = fast
 
