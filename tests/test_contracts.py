@@ -8,6 +8,7 @@ from typing import get_args
 import pytest
 
 from vorpal.contracts import (
+    IDENTITY_KEYS,
     IDP_SLOTS,
     PAYLOAD_CONFIG_KEYS,
     PAYLOAD_KEYS,
@@ -323,6 +324,22 @@ def test_recorded_boundary_types_expose_host_agnostic_field_names() -> None:
     assert "player_yahoo_id" not in _fields(EcrRow)
     assert {"player_id", "stats", "adp"} <= _fields(OverrideRow)
     assert {"user_id", "slot", "roster_id"} <= _fields(Seat)
+
+
+def test_identity_keys_are_generic_contract_fields() -> None:
+    fields = (
+        _fields(User)
+        | _fields(Pick)
+        | _fields(Player)
+        | _fields(LeagueConfig)
+        | _fields(Draft)
+        | _fields(League)
+        | _fields(BoardRow)
+        | _fields(RosterPlayer)
+        | _fields(Seat)
+    )
+    assert IDENTITY_KEYS <= fields
+    assert "player_id" not in IDENTITY_KEYS
 
 
 def test_stat_row_can_hold_counting_keys_and_mark_market_only() -> None:

@@ -2,28 +2,18 @@
 
 from __future__ import annotations
 
+import ast
 import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from vorpal.contracts import Payload, Pick, Proposal
+import pytest
 
-IDENTITY_KEYS = frozenset(
-    {
-        "league_id",
-        "scoring_league_id",
-        "draft_id",
-        "picked_by",
-        "display_name",
-        "username",
-        "user_id",
-        "first_name",
-        "last_name",
-        "name",
-    }
-)
+from vorpal.contracts import IDENTITY_KEYS, Payload, Pick, Proposal
+
 TURN_KEYS = {"pick_no", "payload", "proposal", "human_pick"}
+SRC_VORPAL = Path(__file__).resolve().parents[2] / "src" / "vorpal"
 
 
 def _keys(obj: Any) -> set[str]:
@@ -171,3 +161,71 @@ def test_off_clock_frame_still_records_the_click_without_a_rec(
     assert turn["pick_no"] == 1
     assert turn["payload"] is None
     assert turn["proposal"] is None
+
+
+def _literal_strings(node: ast.AST) -> set[str]:
+    found: set[str] = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.Constant) and isinstance(child.value, str):
+            found.add(child.value)
+    return found
+
+
+def test_board_and_valuation_do_not_own_a_host_identity_table() -> None:
+    """Sleeper wire identity names are not a second table in board/valuation.
+
+    Adapters map host JSON onto contract fields. IDENTITY_KEYS lives on those
+    generic types. A frozenset/set/dict literal that names both picked_by and
+    display_name is a host denylist — allowed only in platform/ and ingest.
+    """
+
+    hits: list[str] = []
+    for package in ("board", "valuation"):
+        root = SRC_VORPAL / package
+        for path in sorted(root.rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in ast.walk(tree):
+                if not isinstance(
+                    node, (ast.Set, ast.List, ast.Tuple, ast.Dict, ast.Call)
+                ):
+                    continue
+                strings = _literal_strings(node)
+                if "picked_by" in strings and "display_name" in strings:
+                    rel = path.relative_to(SRC_VORPAL)
+                    hits.append(f"{rel}:{node.lineno}")
+    assert hits == []
+
+
+def test_snapshot_identity_keys_are_the_contract_set() -> None:
+    from vorpal.board import snapshot
+
+    assert snapshot.IDENTITY_KEYS is IDENTITY_KEYS
+    assert "player_id" not in IDENTITY_KEYS
+
+
+def test_redact_follows_the_contract_identity_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vorpal.board.snapshot import redact
+
+    leaked = {
+        "display_name": "Alex T",
+        "picked_by": "user_real",
+        "player_id": "p1",
+        "espn_owner_guid": "espn-secret",
+    }
+    out = redact(leaked)
+    assert "display_name" not in out
+    assert "picked_by" not in out
+    assert out["player_id"] == "p1"
+    # Not a contract field. Adapters map host wire onto the generic names;
+    # board does not own an ESPN denylist.
+    assert out["espn_owner_guid"] == "espn-secret"
+
+    monkeypatch.setattr(
+        "vorpal.board.snapshot.IDENTITY_KEYS",
+        IDENTITY_KEYS | frozenset({"espn_owner_guid"}),
+    )
+    dropped = redact(leaked)
+    assert "espn_owner_guid" not in dropped
+    assert dropped["player_id"] == "p1"

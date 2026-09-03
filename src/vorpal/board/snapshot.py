@@ -1,7 +1,8 @@
 """Redacted JSON snapshot of a completed draft. The save half of an eval case.
 
-Payload + proposal + human pick + pick numbers. Player ids only. No league
-id, no manager names, no player names. GitHub-issue filing waits on #29.
+Payload + proposal + human pick + pick numbers. Player ids only. Drops
+contract ``IDENTITY_KEYS`` (league/manager identity and player names).
+GitHub-issue filing waits on #29.
 """
 
 from __future__ import annotations
@@ -10,22 +11,7 @@ import json
 from pathlib import Path
 from typing import Any, Protocol
 
-from vorpal.contracts import Payload, Pick, Proposal
-
-IDENTITY_KEYS = frozenset(
-    {
-        "league_id",
-        "scoring_league_id",
-        "draft_id",
-        "picked_by",
-        "display_name",
-        "username",
-        "user_id",
-        "first_name",
-        "last_name",
-        "name",
-    }
-)
+from vorpal.contracts import IDENTITY_KEYS, Payload, Pick, Proposal
 
 
 class _Observed(Protocol):
@@ -41,7 +27,7 @@ def snapshot_path_for(output_path: Path | str) -> Path:
 
 
 def redact(value: object) -> object:
-    """Drop league/manager identity and player names. Keep player ids."""
+    """Drop contract ``IDENTITY_KEYS``. Keep player ids."""
 
     if isinstance(value, dict):
         return {

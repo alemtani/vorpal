@@ -110,6 +110,24 @@ PROPOSAL_KEYS = {
     "flags",
 }
 
+# Names that identify a league, manager, or player. Snapshot redaction drops
+# these. They are fields on the generic types; adapters map host wire onto
+# them. Not a per-host table — board/ does not own a host denylist.
+IDENTITY_KEYS = frozenset(
+    {
+        "league_id",
+        "scoring_league_id",
+        "draft_id",
+        "picked_by",
+        "display_name",
+        "username",
+        "user_id",
+        "first_name",
+        "last_name",
+        "name",
+    }
+)
+
 
 @dataclass(frozen=True, slots=True)
 class Banner:
