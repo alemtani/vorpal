@@ -227,6 +227,31 @@ def test_a_standalone_mock_borrows_scoring_from_the_named_league(
     assert {"slots_from_mock", "scoring_borrowed"} <= codes
 
 
+def test_a_standalone_mock_uses_a_scoring_preset(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    draft = load("sleeper", "draft_mock_standalone.json")
+    draft["draft_id"] = "draft_snake_redraft"
+    draft["season"] = SEASON
+    draft["draft_order"] = {"user_operator": 2}
+    api["draft"].mock(return_value=httpx.Response(200, json=draft))
+    code, transport = _run(tmp_path, "--scoring", "ppr")
+    assert code == 0
+    codes = {banner["code"] for banner in transport.calls[0]["config"]["banners"]}
+    assert {"slots_from_mock", "scoring_borrowed"} <= codes
+    # No league route is needed: the preset is the scoring source.
+    assert not api["league"].called
+
+
+def test_a_preset_and_a_scoring_league_cannot_both_be_given(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    with pytest.raises(SystemExit):
+        _run(
+            tmp_path, "--scoring", "ppr", "--scoring-league-id", "league_snake_redraft"
+        )
+
+
 def test_an_override_csv_replaces_the_projection_host(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
