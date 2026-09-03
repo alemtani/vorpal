@@ -585,6 +585,7 @@ Local display, documented draft API only.
 - Error backoff: 5s, 15s, 45s, hold. Reset on success.
 - Always show data age. Past 15s, degrade. Grey-out at `pick_timer` (skip grey-out if timer is 0/null).
 - `status` from `draft.status`, not `start_time`. Observed: `pre_draft`, `drafting`, `complete`.
+- `--once` writes one board and exits. It does not poll, and it does not skip the seat gate. The model runs only when `picks_until_next == 0` (this seat is on the clock) or when `picks_until_next` is omitted (unknown seat, or past the last pick). Off the clock, the page shows the calculator (`hint_argmax_vols`) and "Not your pick." `--once` is one write, not "always call the model."
 
 ### Feedback capture (#29)
 

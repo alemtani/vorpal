@@ -221,7 +221,7 @@ def _run(
     adp = {row.player_id: row.adp for row in stat_rows if row.adp is not None}
     ecr = {row.player_id: row for row in ecr_rows}
 
-    frames = _Frames(_Proposals(transport, always=args.once))
+    frames = _Frames(_Proposals(transport))
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return frames.get(
@@ -310,11 +310,10 @@ class _Proposals:
     Between turns the page shows the calculator, not a stale rec.
     """
 
-    __slots__ = ("_always", "_banners", "_pick_no", "_proposal", "_transport")
+    __slots__ = ("_banners", "_pick_no", "_proposal", "_transport")
 
-    def __init__(self, transport, *, always: bool = False) -> None:
+    def __init__(self, transport) -> None:
         self._transport = transport
-        self._always = always
         self._proposal: Proposal | None = None
         self._banners: tuple[Banner, ...] = ()
         self._pick_no: int | None = None
@@ -329,10 +328,9 @@ class _Proposals:
         return self._call(payload, pick_no)
 
     def _on_clock(self, state: DraftState) -> bool:
-        # --once is "give me a rec for this board." The loop is draft night.
-        if self._always:
-            return True
+        # --once writes one board and exits. It does not skip this gate.
         # No seat means no clock. Answer every new pick so the page is not empty.
+        # Past the last pick, picks_until_next is None, so snapshots still call.
         return state.picks_until_next is None or state.picks_until_next == 0
 
     def _call(
