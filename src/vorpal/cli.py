@@ -16,6 +16,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from vorpal.board import Frame, render, run_loop, write_html
+from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
 from vorpal.contracts import (
     Banner,
     Draft,
@@ -224,10 +225,15 @@ def _run(
 
     if args.once:
         frame = recompute(draft, picks)
+        out = Path(args.out)
         write_html(
-            Path(args.out),
+            out,
             render(frame.payload, frame.proposal, 0.0, frame.banners),
         )
+        if draft.status == "complete":
+            collector = SnapshotCollector()
+            collector.observe(frame)
+            collector.write(snapshot_path_for(out), picks)
         return
     run_loop(
         _BoundClient(client, args.draft_id),

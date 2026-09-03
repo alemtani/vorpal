@@ -9,6 +9,7 @@ from typing import Protocol
 
 from vorpal.board.render import render, render_unavailable
 from vorpal.board.schedule import next_backoff, poll_interval
+from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
 from vorpal.contracts import Banner, Draft, Payload, Pick, Proposal
 from vorpal.errors import PlatformError, VorpalError
 
@@ -58,12 +59,14 @@ def run_loop(
     ``now`` and ``sleep`` are injected. Tests pass a fake clock; S8 passes
     wall-clock callables. Permanent ``VorpalError`` subclasses write a loud
     page and re-raise. ``PlatformError`` backs off 5s, 15s, 45s, then holds,
-    and resets the schedule on the next success.
+    and resets the schedule on the next success. A completed draft also
+    writes a redacted JSON snapshot next to the board (#22).
     """
 
     path = Path(output_path)
     last: tuple[Frame, float] | None = None
     failures = 0
+    collector = SnapshotCollector()
     while True:
         if should_stop is not None and should_stop():
             return
@@ -87,7 +90,9 @@ def run_loop(
             path,
             render(frame.payload, frame.proposal, age, frame.banners),
         )
+        collector.observe(frame)
         if draft.status == "complete":
+            collector.write(snapshot_path_for(path), picks)
             return
         sleep(poll_interval(draft.status))
 

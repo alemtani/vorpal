@@ -55,14 +55,14 @@ def _make_draft(
     )
 
 
-def _make_pick(*, pick_no: int = 1, player_id: str = "p1") -> Pick:
+def _make_pick(*, pick_no: int = 1, player_id: str = "p1", draft_slot: int = 2) -> Pick:
     return Pick(
         draft_id="draft_test",
         player_id=player_id,
         picked_by="user_operator",
         roster_id=1,
         round=1,
-        draft_slot=2,
+        draft_slot=draft_slot,
         pick_no=pick_no,
         is_keeper=None,
         position="RB",
