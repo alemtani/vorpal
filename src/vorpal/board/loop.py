@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from vorpal.board.feedback import FeedbackCollector
 from vorpal.board.render import render, render_unavailable
 from vorpal.board.schedule import next_backoff, poll_interval
 from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
@@ -53,6 +54,7 @@ def run_loop(
     now: Callable[[], float],
     sleep: Callable[[float], None],
     should_stop: Callable[[], bool] | None = None,
+    feedback: FeedbackCollector | None = None,
 ) -> None:
     """Poll draft and picks, recompute, write ``board.html``, until complete.
 
@@ -60,7 +62,8 @@ def run_loop(
     wall-clock callables. Permanent ``VorpalError`` subclasses write a loud
     page and re-raise. ``PlatformError`` backs off 5s, 15s, 45s, then holds,
     and resets the schedule on the next success. A completed draft also
-    writes a redacted JSON snapshot next to the board (#22).
+    writes a redacted JSON snapshot next to the board (#22). Skip
+    records (#29) persist at click when ``feedback`` is passed.
     """
 
     path = Path(output_path)
@@ -91,8 +94,13 @@ def run_loop(
             render(frame.payload, frame.proposal, age, frame.banners),
         )
         collector.observe(frame)
+        if feedback is not None:
+            feedback.observe(frame, picks)
         if draft.status == "complete":
-            collector.write(snapshot_path_for(path), picks)
+            snap = snapshot_path_for(path)
+            collector.write(snap, picks)
+            if feedback is not None:
+                feedback.finish(snap)
             return
         sleep(poll_interval(draft.status))
 
