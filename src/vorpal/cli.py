@@ -114,6 +114,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="where to cache GET /players (default is under your home directory)",
     )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="fast mode: ~2.5x quicker rec at premium price. Worth it on a "
+        "short mock clock; a real draft with a longer timer does not need it",
+    )
     return parser
 
 
@@ -133,7 +139,7 @@ def main(
         _run(
             args,
             host_client,
-            transport if transport is not None else AnthropicTransport(),
+            transport if transport is not None else AnthropicTransport(fast=args.fast),
             sleep=sleep,
             now=now,
         )
