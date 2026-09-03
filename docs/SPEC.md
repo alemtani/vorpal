@@ -148,7 +148,7 @@ a smaller delta instead of as arithmetic the model has to do in its head.
 FantasyPros numbers arrive as CSV exports the operator downloads from the
 website by hand, about 15 minutes before the draft, and saves into one
 directory. v1 has no API key and no HTTP to FantasyPros, for any board: draft
-night, `--once`, evals, rehearsals. The reason is the free tier, not the idea
+night, evals, rehearsals. The reason is the free tier, not the idea
 of an API. The public API returns 10 players per list and its paging is
 decorative — PR #39 probed it live: `page=2`, `offset=10`, and `limit=100` all
 return 10 rows, `public_api_limited: true`, `tier: free`. A 10-player board is
@@ -585,6 +585,7 @@ Local display, documented draft API only.
 - Error backoff: 5s, 15s, 45s, hold. Reset on success.
 - Always show data age. Past 15s, degrade. Grey-out at `pick_timer` (skip grey-out if timer is 0/null).
 - `status` from `draft.status`, not `start_time`. Observed: `pre_draft`, `drafting`, `complete`.
+- The model runs only when `picks_until_next == 0` (this seat is on the clock) or when `picks_until_next` is omitted (unknown seat, or past the last pick). Off the clock, the page shows the calculator (`hint_argmax_vols`) and "Not your pick." There is no one-shot flag: a complete draft writes one board and returns.
 
 ### Feedback capture (#29)
 

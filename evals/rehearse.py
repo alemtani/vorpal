@@ -118,7 +118,6 @@ def main_argv(argv: list[str] | None = None) -> int:
     parser.add_argument("--operator", required=True)
     parser.add_argument("--scoring-league-id", default=None)
     parser.add_argument("--slot", type=int, default=None)
-    parser.add_argument("--once", action="store_true")
     parser.add_argument(
         "--max-seconds",
         type=float,
@@ -151,8 +150,6 @@ def main_argv(argv: list[str] | None = None) -> int:
         cli_argv.extend(["--scoring-league-id", args.scoring_league_id])
     if args.slot is not None:
         cli_argv.extend(["--slot", str(args.slot)])
-    if args.once:
-        cli_argv.append("--once")
 
     def sleep(seconds: float) -> None:
         events.append({"t": time.monotonic() - t0, "kind": "sleep", "seconds": seconds})
@@ -164,7 +161,7 @@ def main_argv(argv: list[str] | None = None) -> int:
         if time.monotonic() >= deadline:
             raise KeyboardInterrupt
 
-    print(f"[rehearse] start once={args.once} max={args.max_seconds}s", flush=True)
+    print(f"[rehearse] start max={args.max_seconds}s", flush=True)
     code = 0
     try:
         code = main(
