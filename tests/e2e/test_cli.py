@@ -437,6 +437,65 @@ def test_a_complete_draft_writes_a_redacted_snapshot(
     assert "league_id" not in dumped
 
 
+def test_skipping_the_rec_writes_a_trace_and_opens_a_stubbed_issue(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    """Poll loop: on-clock rec, then a different click. No live GitHub."""
+    drafting = load("sleeper", "draft_snake_redraft.json")
+    drafting["status"] = "drafting"
+    complete = load("sleeper", "draft_snake_redraft.json")
+    polls = {"draft": 0}
+
+    def draft_response(request: httpx.Request) -> httpx.Response:
+        polls["draft"] += 1
+        return httpx.Response(200, json=drafting if polls["draft"] <= 3 else complete)
+
+    other = {**_pick("qb1"), "draft_slot": 1, "pick_no": 1}
+    skip = {
+        **_pick("k1"),
+        "draft_slot": 2,
+        "picked_by": "user_operator",
+        "pick_no": 2,
+    }
+    scripted = [[], [], [other], [other, skip]]
+
+    def picks_response(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=scripted.pop(0) if scripted else [other, skip])
+
+    api["draft"].mock(side_effect=draft_response)
+    api["picks"].mock(side_effect=picks_response)
+
+    issues: list[tuple[str, str]] = []
+    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
+    code = main(
+        argv,
+        transport=HintTransport(),
+        sleep=lambda _s: None,
+        now=lambda: 0.0,
+        open_issue=lambda title, body: (
+            issues.append((title, body)) or "https://example/29"
+        ),
+        why_not_form=lambda skips: None,
+    )
+    assert code == 0
+    skips_path = tmp_path / "board.skips.local.json"
+    assert skips_path.is_file()
+    stored = json.loads(skips_path.read_text(encoding="utf-8"))
+    assert stored["skips"][0]["human_pick"] == "k1"
+    assert stored["skips"][0]["why_not"] is None
+    assert stored["skips"][0]["trace"]["samples"]
+    assert stored["skips"][0]["rec"] != "k1"
+    assert stored["skips"][0]["trace"]["samples"][0]["player_id"] != "k1"
+    assert len(issues) == 1
+    dumped = json.dumps(stored) + issues[0][0] + issues[0][1]
+    assert "league_snake_redraft" not in dumped
+    assert "user_operator" not in dumped
+    assert "K Number1" not in dumped
+    assert "k1" in issues[0][1]
+    assert "board.snapshot.local.json" in issues[0][1]
+    assert (tmp_path / "board.snapshot.local.json").is_file()
+
+
 def test_a_missing_github_token_does_not_fail_draft_night(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

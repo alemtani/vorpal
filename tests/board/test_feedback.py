@@ -271,6 +271,8 @@ def test_github_opener_is_injected_and_never_called_live() -> None:
     url = gh_issue_create("draft feedback", "player ids only", run=ok)
     assert url.endswith("/issues/99")
     assert calls[0][:3] == ["gh", "issue", "create"]
+    assert "--repo" in calls[0]
+    assert "alemtani/vorpal" in calls[0]
     assert "--title" in calls[0]
     assert "--body" in calls[0]
     assert "player ids only" in " ".join(calls[0])
@@ -426,6 +428,76 @@ def test_tty_why_not_form_fills_or_bails_on_blank() -> None:
     )
     tty_why_not_form([eof], stdin=_FakeIO([], tty=True), stdout=stdout)
     assert eof.why_not is None
+
+
+def test_blank_row_does_not_drop_later_skips() -> None:
+    from vorpal.board.feedback import SkipRecord, tty_why_not_form
+
+    first = SkipRecord(
+        pick_no=1,
+        human_pick="p9",
+        rec="p1",
+        alternatives=(),
+        coin_flip=False,
+        why_not=None,
+        trace={},
+    )
+    second = SkipRecord(
+        pick_no=2,
+        human_pick="p8",
+        rec="p1",
+        alternatives=(),
+        coin_flip=False,
+        why_not=None,
+        trace={},
+    )
+    third = SkipRecord(
+        pick_no=3,
+        human_pick="p7",
+        rec="p1",
+        alternatives=(),
+        coin_flip=False,
+        why_not=None,
+        trace={},
+    )
+    tty_why_not_form(
+        [first, second, third],
+        stdin=_FakeIO(["took the other back\n", "\n", "bye stack\n"], tty=True),
+        stdout=_FakeIO([], tty=True),
+    )
+    assert first.why_not == "took the other back"
+    assert second.why_not is None
+    assert third.why_not == "bye stack"
+
+
+def test_finish_does_not_open_an_issue_before_the_snapshot_exists(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    issues: list[tuple[str, str]] = []
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: issues.append((title, body)) or "https://x",
+    )
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    collector.remember_trace(1, {"samples": [{"player_id": "p1"}]})
+    collector.observe(
+        Frame(payload=payload, proposal=make_proposal(player_id="p1"), banners=()),
+        (),
+    )
+    collector.observe(
+        Frame(payload=payload, proposal=make_proposal(player_id="p1"), banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    collector.finish(tmp_path / "missing.snapshot.local.json")
+    assert issues == []
+    assert (tmp_path / "board.skips.local.json").is_file()
 
 
 def test_tty_why_not_form_swallows_read_errors() -> None:

@@ -146,14 +146,15 @@ class FeedbackCollector:
             self._persist()
 
     def finish(self, snapshot_path: Path | str) -> None:
-        if not self._skips:
+        snap = Path(snapshot_path)
+        if not self._skips or not snap.is_file():
             return
         try:
             self._why_not_form(self._skips)
         except Exception:
             pass
         self._persist()
-        title, body = issue_text(self._skips, Path(snapshot_path))
+        title, body = issue_text(self._skips, snap)
         try:
             self._open_issue(title, body)
         except Exception:
@@ -204,7 +205,7 @@ def tty_why_not_form(
     stdin: TextIO | None = None,
     stdout: TextIO | None = None,
 ) -> None:
-    """One aggregate form. Blank or non-TTY leaves slots empty and returns."""
+    """One aggregate form. Blank row or non-TTY leaves that slot empty."""
 
     if not skips:
         return
@@ -213,7 +214,7 @@ def tty_why_not_form(
     if not in_stream.isatty():
         return
     print(
-        "why-not for each skip (blank line skips the form):",
+        "why-not for each skip (blank line leaves that row empty):",
         file=out_stream,
     )
     for skip in skips:
@@ -228,9 +229,8 @@ def tty_why_not_form(
         if line == "":
             return
         text = line.strip()
-        if text == "":
-            return
-        skip.why_not = text
+        if text:
+            skip.why_not = text
 
 
 def gh_issue_create(
@@ -242,7 +242,17 @@ def gh_issue_create(
     """Open an issue with ``gh``. Tests pass a stub ``run``; never live in CI."""
 
     result = run(
-        ["gh", "issue", "create", "--title", title, "--body", body],
+        [
+            "gh",
+            "issue",
+            "create",
+            "--repo",
+            "alemtani/vorpal",
+            "--title",
+            title,
+            "--body",
+            body,
+        ],
         capture_output=True,
         text=True,
         check=False,
