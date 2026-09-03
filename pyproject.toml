@@ -9,6 +9,9 @@ dependencies = [
     "httpx",
 ]
 
+[project.scripts]
+vorpal = "vorpal.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest",
