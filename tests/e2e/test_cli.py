@@ -57,7 +57,6 @@ def _argv(tmp_path: Path, *extra: str) -> list[str]:
         str(tmp_path / "board.html"),
         "--players-cache",
         str(tmp_path / "players.json"),
-        "--once",
         *extra,
     ]
 
@@ -83,12 +82,12 @@ def _pick(player_id: str) -> dict[str, Any]:
 
 
 def _operator_on_the_clock(api: respx.MockRouter) -> None:
-    """Slot 1 has picked. Seat 2 is on the clock, so --once still asks."""
+    """Slot 1 has picked. Seat 2 is on the clock, so the model runs."""
     api["picks"].mock(return_value=httpx.Response(200, json=[_pick("slot1")]))
 
 
 def _payloads(monkeypatch: pytest.MonkeyPatch) -> list[Any]:
-    """Capture each built payload. Off-clock --once never reaches the transport."""
+    """Capture each built payload. Off the clock, the model is not called."""
     captured: list[Any] = []
     real = cli.build_payload
 
@@ -112,13 +111,16 @@ def test_one_command_writes_a_board(api: respx.MockRouter, tmp_path: Path) -> No
     assert rec in page or _name_of(transport.calls[0], rec) in page
 
 
-def test_once_off_the_clock_does_not_ask_the_model(
+def test_once_is_not_a_flag(api: respx.MockRouter, tmp_path: Path) -> None:
+    """The poll loop is the only path. A complete draft writes and returns."""
+    with pytest.raises(SystemExit):
+        main([*_argv(tmp_path), "--once"], transport=HintTransport())
+
+
+def test_off_the_clock_does_not_ask_the_model(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
-    """--once writes one board and exits. It does not skip the seat gate.
-
-    The default fixture is seat 2 with no picks, so picks_until_next is 1.
-    """
+    """The default fixture is seat 2 with no picks, so picks_until_next is 1."""
     code, transport = _run(tmp_path)
     assert code == 0
     assert transport.calls == []
@@ -204,8 +206,9 @@ def test_the_poll_loop_stops_on_a_complete_draft(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
     slept: list[float] = []
-    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
-    code = main(argv, transport=HintTransport(), sleep=slept.append, now=lambda: 0.0)
+    code = main(
+        _argv(tmp_path), transport=HintTransport(), sleep=slept.append, now=lambda: 0.0
+    )
     assert code == 0
     assert slept == []
     assert (tmp_path / "board.html").exists()
@@ -468,8 +471,12 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     monkeypatch.setattr(cli, "propose", counting_propose)
     monkeypatch.setattr(cli, "build_payload", counting_build_payload)
 
-    argv = [arg for arg in _argv(tmp_path) if arg != "--once"]
-    code = main(argv, transport=HintTransport(), sleep=lambda _s: None, now=lambda: 0.0)
+    code = main(
+        _argv(tmp_path),
+        transport=HintTransport(),
+        sleep=lambda _s: None,
+        now=lambda: 0.0,
+    )
     assert code == 0
     # Seat 2 is never on the clock in this script (pick 1 is one away, pick 3
     # is twenty away). The model must not run for other people's picks.
@@ -484,7 +491,7 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
 def test_a_complete_draft_writes_a_redacted_snapshot(
     api: respx.MockRouter, tmp_path: Path
 ) -> None:
-    """--once on a completed mock still writes the file. Player ids only."""
+    """A completed mock writes the snapshot. Player ids only."""
     operator_pick = _pick("rb1")
     operator_pick["draft_slot"] = 2
     operator_pick["picked_by"] = "user_operator"

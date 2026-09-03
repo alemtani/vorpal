@@ -15,8 +15,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 
-from vorpal.board import Frame, render, run_loop, write_html
-from vorpal.board.snapshot import SnapshotCollector, snapshot_path_for
+from vorpal.board import Frame, run_loop
 from vorpal.contracts import (
     Banner,
     Draft,
@@ -114,11 +113,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="where to cache GET /players (default is under your home directory)",
-    )
-    parser.add_argument(
-        "--once",
-        action="store_true",
-        help="write one board and exit; do not poll",
     )
     return parser
 
@@ -234,18 +228,6 @@ def _run(
             extra=forecast_banners,
         )
 
-    if args.once:
-        frame = recompute(draft, picks)
-        out = Path(args.out)
-        write_html(
-            out,
-            render(frame.payload, frame.proposal, 0.0, frame.banners),
-        )
-        if draft.status == "complete":
-            collector = SnapshotCollector()
-            collector.observe(frame)
-            collector.write(snapshot_path_for(out), picks)
-        return
     run_loop(
         _BoundClient(client, args.draft_id),
         recompute,
@@ -328,7 +310,6 @@ class _Proposals:
         return self._call(payload, pick_no)
 
     def _on_clock(self, state: DraftState) -> bool:
-        # --once writes one board and exits. It does not skip this gate.
         # No seat means no clock. Answer every new pick so the page is not empty.
         # Past the last pick, picks_until_next is None, so snapshots still call.
         return state.picks_until_next is None or state.picks_until_next == 0
