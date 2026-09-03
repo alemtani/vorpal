@@ -43,7 +43,7 @@ from vorpal.errors import (
     VorpalError,
 )
 from vorpal.ingest import load_forecast
-from vorpal.model import AnthropicTransport, SampleRecorder, propose
+from vorpal.model import AnthropicTransport, SampleRecorder, TraceSink, propose
 from vorpal.payload import build_payload, build_rows, build_state
 from vorpal.platform import LeagueClient
 from vorpal.platform.presets import PRESETS, preset_league
@@ -239,8 +239,9 @@ def _run(
         path=skips_path_for(out),
         why_not_form=why_not_form or tty_why_not_form,
         open_issue=open_issue or _open_issue,
+        trace_sink=TraceSink(),
     )
-    frames = _Frames(_Proposals(traced, on_trace=feedback.remember_trace))
+    frames = _Frames(_Proposals(traced, collector=feedback))
 
     def recompute(live: Draft, live_picks: tuple[Pick, ...]) -> Frame:
         return frames.get(
@@ -320,15 +321,15 @@ class _Proposals:
 
     __slots__ = (
         "_banners",
-        "_on_trace",
+        "_collector",
         "_pick_no",
         "_proposal",
         "_transport",
     )
 
-    def __init__(self, transport, *, on_trace=None) -> None:
+    def __init__(self, transport, *, collector=None) -> None:
         self._transport = transport
-        self._on_trace = on_trace
+        self._collector = collector
         self._proposal: Proposal | None = None
         self._banners: tuple[Banner, ...] = ()
         self._pick_no: int | None = None
@@ -350,28 +351,18 @@ class _Proposals:
     def _call(
         self, payload: Payload, pick_no: int
     ) -> tuple[Proposal, tuple[Banner, ...]]:
+        start = time.perf_counter()
         result = propose(payload, self._transport)
+        latency_ms = (time.perf_counter() - start) * 1000.0
         banners: tuple[Banner, ...] = ()
         if result.degraded:
             banners = tuple(
                 Banner(code=f"violation_{violation.code}", message=violation.message)
                 for violation in result.violations
             )
-        if self._on_trace is not None:
-            samples = [sample for sample, _latency_ms in self._transport.take()]
-            self._on_trace(
-                pick_no,
-                {
-                    "attempts": result.attempts,
-                    "degraded": result.degraded,
-                    "payload": payload.to_dict(),
-                    "samples": samples,
-                    "violations": [
-                        {"code": violation.code, "message": violation.message}
-                        for violation in result.violations
-                    ],
-                },
-            )
+        if self._collector is not None:
+            samples = self._transport.take()
+            self._collector.record_call(pick_no, payload, result, samples, latency_ms)
         self._proposal = result.proposal
         self._banners = banners
         self._pick_no = pick_no

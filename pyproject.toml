@@ -12,6 +12,11 @@ dependencies = [
 [project.scripts]
 vorpal = "vorpal.cli:main"
 
+[project.optional-dependencies]
+tracing = [
+    "langsmith",
+]
+
 [dependency-groups]
 dev = [
     "pytest",

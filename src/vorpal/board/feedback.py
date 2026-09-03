@@ -76,6 +76,7 @@ class FeedbackCollector:
         "_seen",
         "_skips",
         "_slot",
+        "_trace_sink",
         "_traces",
         "_why_not_form",
     )
@@ -86,10 +87,12 @@ class FeedbackCollector:
         path: Path | str,
         why_not_form: WhyNotForm,
         open_issue: OpenIssue,
+        trace_sink: Any | None = None,
     ) -> None:
         self._path = Path(path)
         self._why_not_form = why_not_form
         self._open_issue = open_issue
+        self._trace_sink = trace_sink
         self._skips: list[SkipRecord] = []
         self._seen: set[int] = set()
         self._on_clock: dict[int, Proposal] = {}
@@ -98,6 +101,37 @@ class FeedbackCollector:
 
     def remember_trace(self, pick_no: int, trace: dict[str, Any]) -> None:
         self._traces[pick_no] = redact(trace)  # type: ignore[assignment]
+
+    def record_call(
+        self,
+        pick_no: int,
+        payload: Any,
+        recommendation: Any,
+        samples: list[tuple[dict[str, Any], float]],
+        latency_ms: float,
+    ) -> None:
+        """Keep the durable trace and emit the LangSmith run tree.
+
+        ``latency_ms`` is wall-clock of ``propose``. It rides on the sink,
+        not the skips file.
+        """
+
+        payload_dict = payload.to_dict() if hasattr(payload, "to_dict") else payload
+        self.remember_trace(
+            pick_no,
+            {
+                "attempts": recommendation.attempts,
+                "degraded": recommendation.degraded,
+                "payload": payload_dict,
+                "samples": [sample for sample, _latency in samples],
+                "violations": [
+                    {"code": item.code, "message": item.message}
+                    for item in recommendation.violations
+                ],
+            },
+        )
+        if self._trace_sink is not None:
+            self._trace_sink.log(pick_no, payload, recommendation, samples, latency_ms)
 
     def observe(self, frame: _Observed, picks: tuple[Pick, ...]) -> None:
         payload = frame.payload
@@ -137,6 +171,12 @@ class FeedbackCollector:
         except Exception:
             pass
         self._persist()
+        if self._trace_sink is not None:
+            for skip in self._skips:
+                try:
+                    self._trace_sink.patch_human_pick(skip.pick_no, skip.human_pick)
+                except Exception:
+                    pass
         title, body = issue_text(self._skips, snap)
         try:
             self._open_issue(title, body)
