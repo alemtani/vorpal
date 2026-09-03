@@ -1,5 +1,5 @@
 {
-  "key": "57b93cde9677ac887b4e504316e85b541589e0f3369dca0643f1cbe66c4b13c9",
+  "key": "58afd8e753652c381f26fd95b8b14bd98f11bf1ae97fe11e8719a8b610d95d65",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
     "thinking": {
       "type": "adaptive"
     }
@@ -95,20 +95,7 @@
       "flags": [],
       "player_id": "rb-b",
       "slot_filled": "RB",
-      "why": "rb-b is the best available by ECR (26) and the VOLS leader (48 over replacement), and it fills the open RB2 next to rb-held. wr-b is close in value but slightly behind on both counts, and te-b's edge (26 VOLS) doesn't justify passing on the top back. With five picks until 33, this tier won't hold."
-    },
-    {
-      "alternatives": [
-        "wr-b",
-        "te-b"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER"
-      ],
-      "player_id": "rb-b",
-      "slot_filled": "RB",
-      "why": "rb-b is both the best available by ECR (26) and the VOLS leader (48.0), filling the open RB2 slot next to rb-held with no bye overlap (9 vs 8/5). wr-b is close in value but the RB edge plus the empty starting slot makes this straightforward; with five picks until 33, the top tier here won't survive."
+      "why": "rb-b is both the ECR best available (26) and the VOLS argmax (48.0), and it fills our open RB2 slot with a bye (9) that doesn't collide with rb-held (8) or wr-held (5). wr-b is close on value but RB is the thinner fill here; te-b is a tier below and TE can wait to pick 33."
     },
     {
       "alternatives": [
@@ -119,7 +106,7 @@
       "flags": [],
       "player_id": "rb-b",
       "slot_filled": "RB",
-      "why": "rb-b is the best available by ECR (26) and the VOLS leader (48 over replacement), and it fills the open RB2 next to rb-held. wr-b is a near-equal value and would be the pick if I were RB-heavy, but the 3-point starter-points edge plus the harder-to-replace RB slot breaks it. te-b and def-early are both reachable later — def-early especially is a huge ADP reach at pick 28 with only 4 VOLS. No bye conflict (Week 9 vs. 8/5)."
+      "why": "rb-b is both the ECR best available (26) and the VOLS leader (48.0), and he fills the open RB2 slot next to rb-held. wr-b is close in value but only 3 points behind and RB depth thins faster; with five picks until 33 the wr/te tier is likelier to survive than this RB. Bye 9 does not stack with existing byes 8 and 5."
     },
     {
       "alternatives": [
@@ -130,7 +117,7 @@
       "flags": [],
       "player_id": "rb-b",
       "slot_filled": "RB",
-      "why": "rb-b is both the top ECR (26) and the VOLS leader (48.0), filling the open RB2 next to rb-held. wr-b is essentially tied in value and would also start, so this is close on merit, but the RB edge plus the bigger starter-points delta (24.0 vs 22.5) breaks it. te-b remains a plausible target in five picks; the DEF is far off-board value this early."
+      "why": "rb-b is both the ECR best (26) and the VOLS max (48.0), and it fills the open RB2 next to rb-held. With five picks until 33, rb-b and wr-b are unlikely to both survive, and the RB gets the larger starter-points bump; no bye conflict with rb-held (8) or wr-held (5)."
     },
     {
       "alternatives": [
@@ -141,7 +128,18 @@
       "flags": [],
       "player_id": "rb-b",
       "slot_filled": "RB",
-      "why": "rb-b is both the best available by ECR (26) and the VOLS leader (48.0), filling the open RB2 slot with a full-season 17-game profile. wr-b is essentially a coin-flip behind on value (45.0) but RB depth erodes faster over the five picks until 33, and te-b's 26.0 VOLS is a clear tier below. No bye conflict with rb-held (8) or wr-held (5)."
+      "why": "rb-b is both the ECR best available (26) and the VOLS leader (48.0), and it fills our open RB2 slot alongside rb-held with no bye overlap. wr-b is close in value but rb-b's edge in starter points plus positional need makes this straightforward; te-b and def-early can wait until pick 33 or later."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "te-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-b",
+      "slot_filled": "RB",
+      "why": "rb-b is both the ECR best available and the VOLS argmax, and it fills the open RB2 slot at a 48-point edge over replacement. wr-b is close behind and would be the pick if RB were already set, but with five picks until 33 the RB tier thins faster than the WR pool."
     }
   ]
 }

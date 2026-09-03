@@ -1,5 +1,5 @@
 {
-  "key": "8f64b543560659d441e21c9a8d7d93903ac7e4650e2effe567f3800f5ef75a68",
+  "key": "e867dbc288e293c54d53288ba5fdae203252a3d424359c696826fc53ba0b8678",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
     "thinking": {
       "type": "adaptive"
     }
@@ -93,12 +93,40 @@
       ],
       "coin_flip": false,
       "flags": [
+        "VOLS_DISSENT",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "te-third is the VOLS pick; we are not taking te-third because TE is already filled and we roster two TEs, so his raw VOLS converts to zero starter value. wr-a is also the ECR best on this board (63), leads in delta_starter_points (+22), and fills one of two completely empty WR starting slots with seven picks until our next turn."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "VOLS_DISSENT",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-a",
+      "slot_filled": "WR",
+      "why": "te-third is the VOLS pick; we are not taking te-third because TE is already filled and we roster two tight ends, so his raw VOLS edge is dead weight while both WR starting slots sit empty. wr-a is the top ECR player on the board, fills a required starter, and with seven picks until 76 the WR options will thin before we're back."
+    },
+    {
+      "alternatives": [
+        "wr-b",
+        "rb-c"
+      ],
+      "coin_flip": false,
+      "flags": [
         "EMPTY_STARTER",
         "VOLS_DISSENT"
       ],
       "player_id": "wr-a",
       "slot_filled": "WR",
-      "why": "Both WR starting spots are still empty while TE is already filled twice over, so te-third's raw VOLS edge is illusory \ninstead wr-a delivers the largest actual starter gain (+22) and is also the best ECR on the board at 63. With seven picks until 76, the WR tier here (wr-a/wr-b) is thin enough that waiting risks both going; take the better one now and hope wr-b or a comparable falls back."
+      "why": "te-third is the VOLS pick; we are not taking te-third because we already start te-held-1 and carry te-held-2, so a third tight end's raw value never reaches our lineup, while both WR starter slots sit empty. wr-a is also the best available ECR (63) and the strongest of the two receivers on the board, and with seven picks until 76 we cannot count on this tier holding."
     },
     {
       "alternatives": [
@@ -112,7 +140,7 @@
       ],
       "player_id": "wr-a",
       "slot_filled": "WR",
-      "why": "Both WR starter slots are empty and I already roster two TEs, so te-third's raw VOLS edge is illusory \ndash it would ride the bench or take a FLEX spot I can fill later. wr-a is the best ECR on the board (63), leads in delta_starter_points (+22), and fills a required starting slot immediately. With seven picks until 76, the WR tier here won't hold."
+      "why": "te-third is the VOLS pick; we are not taking te-third because TE is already filled and we roster two TEs, so his raw VOLS is unrealizable value while both WR starter slots sit empty. wr-a is also the best ECR on the board (63), leads in delta_starter_points (+22), and immediately fills an empty starter with no bye overlap."
     },
     {
       "alternatives": [
@@ -126,35 +154,7 @@
       ],
       "player_id": "wr-a",
       "slot_filled": "WR",
-      "why": "Both WR starting spots are empty and I already roster two TEs, so te-third's raw VOLS is phantom value \\u2014 it adds 0 to my starting lineup. wr-a is also the best ECR on the board (63) and delivers the largest starter gain (+22). With seven picks until 76, waiting on WR risks both wr-a and wr-b going."
-    },
-    {
-      "alternatives": [
-        "wr-b",
-        "rb-c"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
-      ],
-      "player_id": "wr-a",
-      "slot_filled": "WR",
-      "why": "Both WR starting spots are still empty while TE is already filled twice over, so te-third's raw VOLS is phantom value \ta third tight end can't crack the lineup. wr-a is the best ECR on the board (63), leads in delta_starter_points (+22), and fills a required slot immediately. With seven picks until 76, waiting on WR risks losing both wr-a and wr-b."
-    },
-    {
-      "alternatives": [
-        "wr-b",
-        "rb-c"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
-      ],
-      "player_id": "wr-a",
-      "slot_filled": "WR",
-      "why": "Both WR starting spots are empty and I already roster two TEs, so te-third's raw VOLS is fake value \\u2014 it would sit on my bench. wr-a is the best ECR on the board (63), leads in actual starter delta (+22), and fills a required slot with seven picks until my next turn. wr-b is the fallback if wr-a is gone."
+      "why": "te-third is the VOLS pick; we are not taking te-third because we already roster two tight ends and only start one, so its raw VOLS edge is unusable — wr-a fills one of two completely empty WR starter slots, is the best available by ECR, and its delta_starter_points (22) is the real gain here. With seven picks until 76, both WR spots cannot wait."
     }
   ]
 }

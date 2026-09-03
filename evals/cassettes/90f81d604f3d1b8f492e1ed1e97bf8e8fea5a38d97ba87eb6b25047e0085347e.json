@@ -1,5 +1,5 @@
 {
-  "key": "da60d4a139b4dfdfe5382cdac45b1a50a32be0af4a5de8247432de910f8c516e",
+  "key": "90f81d604f3d1b8f492e1ed1e97bf8e8fea5a38d97ba87eb6b25047e0085347e",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
     "thinking": {
       "type": "adaptive"
     }
@@ -95,7 +95,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is the best available by ECR (24) and leads VOLS at 44, filling the open RB2 slot alongside rb-held. wr-i is essentially a coin-flip-adjacent alternative one ECR spot back, but the RB edge and slot fit break the tie; te-i is a clear step down in value."
+      "why": "rb-i is both the ECR best (24) and the VOLS argmax (44.0), filling the open RB2 slot with the largest starter-points delta on the board. wr-i is a near-equal alternative but slightly behind in both ECR and value over last starter, and te-i is a clear tier down."
     },
     {
       "alternatives": [
@@ -106,7 +106,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the top ECR on the board and the VOLS leader (44 over replacement), and he fills the open RB2 next to rb-held. wr-i is essentially the same value one tick lower and stays a live option if the board turns, while te-i's 27 VOLS doesn't justify reaching past two better starters at pick 24. No bye conflict with the current roster (9 vs 8 and 5)."
+      "why": "rb-i is both the ECR best (24) and the VOLS argmax (44.0), filling the open RB2 with the top value on a capped board; wr-i is a near-tie fallback."
     },
     {
       "alternatives": [
@@ -117,7 +117,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the best available by ECR (24) and the VOLS leader (44), filling the open RB2 slot. wr-i is essentially tied one spot back, but the RB edge plus a bye (9) that doesn't collide with the held RB (8) or WR (5) makes this clean. te-i is a real value at 27 VOLS but can wait a turn."
+      "why": "rb-i is both the ECR best (24) and the VOLS argmax, and he fills the open RB2 slot with the largest starter-points delta on the board. wr-i is essentially even on value but rb-i's edge at a thinner position makes this an easy alignment pick."
     },
     {
       "alternatives": [
@@ -128,7 +128,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is the best available by ECR (24) and the VOLS leader (44), filling the open RB2 with a 17-game workhorse. wr-i is essentially a coin-flip-adjacent alternative at 42 VOLS but ranks a slot behind and I already have a WR started; te-i's premium (27 VOLS) is real but can wait a turn. No bye conflict with rb-held (8) or wr-held (5)."
+      "why": "rb-i is both the ECR best (24) and the VOLS argmax, filling the open RB2 with the largest starter-points gain (22) on the board; wr-i is a near-equal fallback but adds less value."
     },
     {
       "alternatives": [
@@ -139,7 +139,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is the best ECR on the board (24), leads in VOLS (44) and starter delta, and fills the open RB2 next to rb-held. wr-i is essentially a coin-flip in value but one spot behind in ECR; te-i is a real tier below. No bye conflicts (week 9 vs 8/5)."
+      "why": "rb-i is both the ECR best available and the VOLS argmax, and he fills the open RB2 slot with a 22-point edge over replacement. wr-i is essentially the same value one tick later, but taking the top-ranked player who also plugs a starting hole is the cleanest outcome; te-i and the defense are well behind at this pick."
     }
   ]
 }

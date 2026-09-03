@@ -1,5 +1,5 @@
 {
-  "key": "3741349e6695053a4ba7627715f05e5e3366cb522cc73af6c5ac5e945619539e",
+  "key": "6f17d1531fffe0ad03b8463647845162e5d24dcd0e3d46ee9588836cbe54eca9",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,12 +80,44 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
     "thinking": {
       "type": "adaptive"
     }
   },
   "samples": [
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "VOLS_DISSENT",
+        "BYE_STACK",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "wr-bye-clash is the VOLS pick and also the ECR pick (78 vs 80); we are not taking wr-bye-clash because its week 9 bye piles onto qb-held, rb-held-1 and wr-held, a week already showing only 36 starter points, while wr-bye-clear's bye 5 lands on a clean week and more than doubles the starter-points gain (29.0 vs 12.0) for a two-slot ECR cost."
+    },
+    {
+      "alternatives": [
+        "wr-bye-clash",
+        "rb-e"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "VOLS_DISSENT",
+        "BYE_STACK",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "wr-bye-clear",
+      "slot_filled": "WR",
+      "why": "wr-bye-clash is the VOLS pick and also the ECR pick; we are not taking wr-bye-clash because its week 9 bye stacks onto qb-held, rb-held-1 and wr-held, a week already showing only 36 starter points with five empty slots. wr-bye-clear is two ECR spots later with essentially identical season points (149 vs 150) but more than double the starter-point gain (29.0 vs 12.0) because its week 5 bye lands where the roster is healthy. It fills the open WR2 now with 17 picks until our next turn."
+    },
     {
       "alternatives": [
         "wr-bye-clash",
@@ -100,7 +132,7 @@
       ],
       "player_id": "wr-bye-clear",
       "slot_filled": "WR",
-      "why": "WR2 is the open starter slot and both wideouts are essentially the same player by projection (150 vs 149) and ECR (78 vs 80). The tiebreaker is the calendar: my QB, RB1 and WR1 all sit in Week 9, and wr-bye-clash shares that bye, which is why its true starter contribution is only 12 points versus 29 for wr-bye-clear. The raw VOLS hint ignores schedule overlap. Taking the Week 5 bye keeps Week 9 from collapsing and fills WR plus feeds FLEX later; rb-e is redundant with two RBs already rostered and 17 picks until my next turn means I want the sturdier starter now."
+      "why": "wr-bye-clash is the ECR pick and also the VOLS pick; we are not taking wr-bye-clash because our QB, RB1 and WR are all on bye in week 9, and adding a fourth week-9 player leaves that week with only 36 starter points. wr-bye-clear is essentially the same player (149 vs 150 points, ECR 80 vs 78) on a week-5 bye, and its delta_starter_points of 29 more than doubles the clash's 12 because it actually fills the open WR/FLEX hole in the weeks we can start it."
     },
     {
       "alternatives": [
@@ -110,13 +142,13 @@
       "coin_flip": false,
       "flags": [
         "ECR_DISAGREE",
+        "VOLS_DISSENT",
         "BYE_STACK",
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
+        "EMPTY_STARTER"
       ],
       "player_id": "wr-bye-clear",
       "slot_filled": "WR",
-      "why": "Week 9 already guts this roster (QB, RB, WR all out), so adding another bye-9 body in wr-bye-clash stacks the damage for almost no gain. wr-bye-clear is a virtual tie on projection (149 vs 150) but more than doubles actual starter value (+29 vs +12) because it fills the empty WR slot in the weeks that matter. Two ECR spots of cost is nothing at pick 76 with 17 picks until my next turn."
+      "why": "wr-bye-clash is the ECR pick and also the VOLS pick; we are not taking wr-bye-clash because its week 9 bye stacks onto qb-held, rb-held-1 and wr-held, a week that already collapses to 36 starter points. wr-bye-clear is 2 ECR spots and 1 projected point behind but nearly doubles the starter-points delta (29 vs 12) by filling the open WR2 in every week that matters, including week 9."
     },
     {
       "alternatives": [
@@ -126,45 +158,13 @@
       "coin_flip": false,
       "flags": [
         "ECR_DISAGREE",
+        "VOLS_DISSENT",
         "BYE_STACK",
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
+        "EMPTY_STARTER"
       ],
       "player_id": "wr-bye-clear",
       "slot_filled": "WR",
-      "why": "Week 9 is already a disaster: QB, RB, and WR all sit, leaving 36 starter points. wr-bye-clash shares that bye and adds nothing to the hole, which is why its delta_starter_points is only 12 despite a near-identical points total. wr-bye-clear (bye 5) fills the open WR every week that matters and nearly triples the starter gain at 29. One ECR slot of cost is trivial for that. With 17 picks until my next turn, I take the WR that actually plays on my broken weeks."
-    },
-    {
-      "alternatives": [
-        "wr-bye-clash",
-        "rb-e"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "ECR_DISAGREE",
-        "BYE_STACK",
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
-      ],
-      "player_id": "wr-bye-clear",
-      "slot_filled": "WR",
-      "why": "Week 9 is already a disaster: QB, RB, and WR starters all sit that week, leaving 36 starter points. wr-bye-clash adds a fourth bye-9 body and only nets 12 delta starter points, while wr-bye-clear (bye 5) fills the open WR every week that matters and nets 29. Nearly identical ECR/ADP and season points, so the schedule fit is the whole margin. 17 picks until my next turn means I cannot count on another startable WR here."
-    },
-    {
-      "alternatives": [
-        "wr-bye-clash",
-        "rb-e"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "ECR_DISAGREE",
-        "BYE_STACK",
-        "EMPTY_STARTER",
-        "VOLS_DISSENT"
-      ],
-      "player_id": "wr-bye-clear",
-      "slot_filled": "WR",
-      "why": "Week 9 is already a disaster \\u2014 QB, RB, and WR all on bye, starter points crater to 36. wr-bye-clash adds a fourth bye-9 body and only lifts season starter points by 12; wr-bye-clear is essentially the same player by points (149 vs 150) on a bye-5 week where the lineup is otherwise healthy, worth 29 starter points. With 17 picks until my next turn I can't wait on the WR2 slot that's empty every week. The one-slot ECR gap is noise (std 2)."
+      "why": "wr-bye-clash is the VOLS pick and also the ECR pick; we are not taking wr-bye-clash because its week 9 bye lands on top of qb-held, rb-held-1 and wr-held, a week where our starter points already collapse to 36 — wr-bye-clear (bye 5) nearly doubles the actual starter gain (29 vs 12) for a two-slot ECR concession."
     }
   ]
 }

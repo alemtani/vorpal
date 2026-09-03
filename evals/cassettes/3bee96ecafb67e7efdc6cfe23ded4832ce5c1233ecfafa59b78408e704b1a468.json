@@ -1,5 +1,5 @@
 {
-  "key": "7871d50416dbfba7655cf81ab78bcff528c06a9ef4e9114793dd70240ac57208",
+  "key": "3bee96ecafb67e7efdc6cfe23ded4832ce5c1233ecfafa59b78408e704b1a468",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT.",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
     "thinking": {
       "type": "adaptive"
     }
@@ -91,52 +91,52 @@
         "rb-depth"
       ],
       "coin_flip": false,
-      "flags": [],
-      "player_id": "wr-depth",
-      "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is the best available by ECR (168), leads the board in VOLS (12.0), and offers the largest points cushion over replacement. rb-depth is a close second and a fine consolation if the pick were to flip, but there is no reason to reach past the top of a capped board with kicker already rostered."
-    },
-    {
-      "alternatives": [
-        "rb-depth"
-      ],
-      "coin_flip": false,
-      "flags": [],
-      "player_id": "wr-depth",
-      "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is both the best available by ECR (168) and the top VOLS on the board (12.0 over replacement), so there's no tension between the calculator and the ranks. rb-depth is a near-equivalent fallback and could well survive the seven picks until 172; k-b is a wasted pick with a kicker already rostered. Take the highest-value depth piece and revisit RB next turn."
-    },
-    {
-      "alternatives": [
-        "rb-depth"
-      ],
-      "coin_flip": false,
-      "flags": [],
-      "player_id": "wr-depth",
-      "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so this is a pure best-available bench pick. wr-depth is the top ECR (168) on the board and also the VOLS leader (+12 over replacement, 132 pts vs 100), giving the largest single-player edge available. rb-depth is a close second and a fine consolation if wr-depth is gone by pick 172, but there's no reason to wait — nothing here appreciates over seven picks. k-b is a duplicate kicker with zero starter value and can be ignored entirely. The bye-8 overlap with rb-held-1 is irrelevant for a bench body."
-    },
-    {
-      "alternatives": [
-        "rb-depth"
-      ],
-      "coin_flip": false,
-      "flags": [],
-      "player_id": "wr-depth",
-      "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is both the best ECR on the board (168) and the VOLS leader (12.0 over replacement), so there's no tension to resolve. rb-depth is a close second and a fine consolation if this one is gone by 172, but taking the higher-scoring, higher-surplus player now is the straightforward call. k-b is a non-starter here since the kicker slot is already filled."
-    },
-    {
-      "alternatives": [
-        "rb-depth"
-      ],
-      "coin_flip": false,
       "flags": [
         "UPSIDE"
       ],
       "player_id": "wr-depth",
       "slot_filled": "BN",
-      "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is the best available by ECR (168), leads the board in VOLS (12.0), and offers the largest edge over replacement (132 vs 100 WR baseline). rb-depth is a close second and a fine consolation if wr-depth is gone, but there is no reason to reach for k-b with a kicker already rostered. Bye week 8 overlaps rb-held-1 but that is irrelevant for a bench flier this deep."
+      "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is both the ECR best (168) and the VOLS leader (12.0 over replacement), and it doubles as insurance/upside behind the WR corps and FLEX. rb-depth is a close second but lower on both boards; k-b is a redundant kicker with a filled K slot."
+    },
+    {
+      "alternatives": [
+        "rb-depth"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "wr-depth",
+      "slot_filled": "BN",
+      "why": "Every starting slot is already filled, so this is a pure best-player-available bench pick. wr-depth is both the ECR best (168) and the VOLS argmax (12.0), with the highest projected points on the board and a bye (8) that only overlaps rb-held-1 in a bench role. rb-depth is a close second and would be the pick if we wanted RB insurance, but the WR gives more points and better flex flexibility."
+    },
+    {
+      "alternatives": [
+        "rb-depth"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "wr-depth",
+      "slot_filled": "BN",
+      "why": "All starting slots are filled, so this is a pure best-available bench pick. wr-depth is both the ECR best (168) and the VOLS argmax (12.0 over replacement), giving the highest points and upside of the board; rb-depth is a close second and k-b is a wasted pick with a kicker already rostered."
+    },
+    {
+      "alternatives": [
+        "rb-depth"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "wr-depth",
+      "slot_filled": "BN",
+      "why": "All nine starting slots are already filled, so this is pure bench value. wr-depth is both the best available by ECR (168) and the VOLS leader (12.0 over replacement), and PPR receiver depth is the more useful bench asset than a marginal K. rb-depth is the close alternative if a backfield injury looms."
+    },
+    {
+      "alternatives": [
+        "rb-depth"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "wr-depth",
+      "slot_filled": "BN",
+      "why": "Every starting slot is already filled, so this is a pure best-player-available bench pick. wr-depth is both the top ECR (168) and the VOLS leader (12.0), with the largest projected edge over replacement, so there is no reason to reach past him. rb-depth is the close fallback if the board turns before pick 172; k-b is a redundant kicker with zero starter value."
     }
   ]
 }
