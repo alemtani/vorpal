@@ -37,7 +37,7 @@ v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 |---|---|
 | Documented Sleeper reads | Any write / browser automation |
 | Counting stats → this league's points → VOLS | Ingesting fantasy-point columns (`points`, `pts_*`) |
-| [FantasyPros](https://www.fantasypros.com/api-data/) stats, ADP, ECR + `rank_std` as inputs **and** a sanity eval | ECR as the pick |
+| FantasyPros stats, ADP, ECR + `rank_std` as inputs **and** a sanity eval, read from CSV exports the operator saves by hand (§3) | ECR as the pick. Any script, scraper, or browser drive that fetches FantasyPros |
 | Weekly starter points (bye = 0) | True weekly projections (v2) |
 | Model recommendation | Argmax(VOLS) as the pick |
 | Binary evals only | Soft scores, “lean”, calibrated probabilities |
@@ -47,7 +47,7 @@ v1 is the draft loop. Waivers and lineups reuse this shape; diagram in §7.
 
 ## 2. Configure
 
-Inputs: **draft id**, **operator** (username or `user_id`), **scoring-source league id** iff `draft.league_id` is null, optional override CSV, FantasyPros API key.
+Inputs: **draft id**, **operator** (username or `user_id`), **scoring-source league id** iff `draft.league_id` is null, **FantasyPros drop directory** (default `private/fp/`, §3), optional override CSV. v1 takes no FantasyPros API key, because v1 *is* the drop. A paid key is a §7 item, not an input now.
 
 ```mermaid
 flowchart TD
@@ -59,6 +59,8 @@ flowchart TD
   Lg -->|roster_positions| Slots
   Draft -->|else slots_*| Slots
   Op[operator] --> User["GET /user"] --> Seat[draft_order → slot]
+  Drop["FantasyPros CSV drop"] --> Join["join on host player_id"]
+  Players["GET /players"] --> Join
 ```
 
 [Draft](https://docs.sleeper.com/#get-a-specific-draft) has no `scoring_settings`. `metadata.scoring_type` is a label, not a table. Standalone mocks are readable and have `league_id: null`. Slots come from the mock; scoring is borrowed. Banner both. They may disagree.
@@ -100,13 +102,17 @@ Worked intuition: [What is value-based drafting?](https://www.fantasypros.com/20
 
 ```mermaid
 flowchart LR
-  ST[StatTable] --> PTS[points in this scoring]
+  RK["rankings.csv"] --> ADP[adp_*]
+  RK --> ECR[ecr + rank_std]
+  RK --> BYE[bye → weekly starters]
+  PJ["projections*.csv"] --> ST[StatTable]
+  ST --> PTS[points in this scoring]
   CFG[slots + teams] --> VOLS
   PTS --> VOLS[vols vs last starter]
-  ADP[adp_*] --> PAY
-  ECR[ecr + rank_std] --> PAY
+  ADP --> PAY
+  ECR --> PAY
   STATE[live draft] --> PAY
-  BYE[bye → weekly starters] --> PAY
+  BYE --> PAY
   VOLS --> PAY[Payload]
 ```
 
@@ -115,19 +121,19 @@ flowchart LR
 | Feature | Source | Notes |
 |---|---|---|
 | League / draft / picks / players / user | Host. v1: documented [`api.sleeper.app`](https://docs.sleeper.com/) | Stay under 1000 calls/min. `/players` is the join directory (host id, `yahoo_id`, name, pos, team). |
-| Counting stats + ADP + bye | [FantasyPros](https://api.fantasypros.com/public/v2/docs) projections and ADP | Host-neutral forecast. Fetch **once per process**. Never poll. Join to host `player_id`. |
-| ECR + spread | FantasyPros consensus-rankings | Required input. One overall list: `position=ALL` (1QB) or `OP` (superflex). Join on `yahoo_id`, then name. `rank_ecr` is overall draft order, not positional. |
-| Override | CSV keyed by host `player_id` | Replaces stats + ADP if FantasyPros projections are down. No name match. |
+| Counting stats | FantasyPros **projections** CSV export(s) in the drop: one per position, or combined | Host-neutral forecast. Loaded **once per process** from disk, never fetched. Joined to host `player_id` (Mapping, below). |
+| ADP + ECR + spread + bye | FantasyPros **consensus rankings** CSV export in the drop | Required file. One overall list: the Overall (ALL) cheat sheet in 1QB, Superflex (OP) in superflex. Joined to host `player_id` (Mapping, below). `RK` is overall draft order, not positional. |
+| Override | CSV keyed by host `player_id` | Replaces stats + ADP when the projections drop is missing or unreadable. No name match. No ECR. |
 
 Do not filter `/players` by `active=true`. `search_rank` is not ADP.
 
-**Stats contract (FantasyPros):** season totals (`week=0`). Counting keys only — never ingest `points` / `points_ppr` / `points_half` / `pts_ppr` / `pts_std` / `pts_half_ppr`. Map FP stat names onto this **host's** scoring keys (`pass_yds` → Sleeper `pass_yd`). ESPN has no rows yet. Do not invent kicker distance buckets or `pts_allow_*` from coarse FP fields (`fg`, `pa`). Unmatched nonzero scoring keys banner; they must not silent-zero. Rows with ADP and no stats are market-only: excluded from VOLS, and so excluded from the section 4 board, which ranks on VOLS. Keep them in the pool — they still count against the mapping gate.
+**Stats contract (FantasyPros):** season totals — the draft projections export, never a weekly page. Counting keys only — never ingest `FPTS`, `FPTS PPR`, `points` / `points_ppr` / `points_half` / `pts_ppr` / `pts_std` / `pts_half_ppr`, or any other `pts_*` column. Flatten the export's headers onto the FP wire names (Drop, below), then map those onto this **host's** scoring keys through `FP_TO_HOST` in `ingest/keys.py`, unchanged (`pass_yds` → Sleeper `pass_yd`). ESPN has no rows yet. Do not invent kicker distance buckets or `pts_allow_*` from coarse FP fields (`FG`, `PA`, `YDS AGN`). Unmatched nonzero scoring keys banner; they must not silent-zero. Rows with ADP and no stats are market-only: excluded from VOLS, and so excluded from the section 4 board, which ranks on VOLS. Keep them in the pool — they still count against the mapping gate.
 
-**ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `2qb`; else `rec ≥ 0.75` → `ppr`; `0.25–0.75` → `half_ppr`; else `std`. Banner when `rec` is not exactly `1/0.5/0`. Ingest maps that onto FantasyPros ADP (`2qb` → `position=OP`; else `ALL` with STD/PPR/HALF). If OP ADP is empty, use 1QB ADP and banner `adp_1qb_market`. There is no `adp_2qb_ppr`.
+**ADP variant**, from resolved slots + `rec` weight: SUPER_FLEX / OP / 2+ QB slots → `2qb`; else `rec ≥ 0.75` → `ppr`; `0.25–0.75` → `half_ppr`; else `std`. Banner when `rec` is not exactly `1/0.5/0`. The variant names the cheat sheet the operator saves (Drop, below): `2qb` → the Superflex (OP) list; else the Overall (ALL) list in STD / HALF / PPR. ADP is the rankings export's `ADP` column. Ingest does not select scoring over HTTP, and there is no `adp_1qb_market` second fetch: the ADP on the board is the list that was dropped. `fp_drop_age` names the list the variant calls for, so the operator can check the file against it. There is no `adp_2qb_ppr`.
 
-**ECR:** `rank_ecr`, `rank_min`, `rank_max`, `rank_std` (expert spread — this is the upside/uncertainty input). One overall consensus list: `ALL` in 1QB, `OP` in superflex. Scoring param STD/PPR/HALF follows the same `rec` rule. Do not stitch positional lists — those ranks all start at 1 and are not `ecr_best`. Join miss → omit ECR on that row, banner the count. FP down → banner `ecr_missing`, still call the model. Do not block a draft on ECR. Missing ECR skips the ECR eval, it does not fail it.
+**ECR:** `ecr` (`RK`), `ecr_min` (`BEST`), `ecr_max` (`WORST`), `ecr_std` (`STD.DEV` — expert spread, the upside/uncertainty input), all from the rankings export; the API names `rank_ecr` / `rank_min` / `rank_max` / `rank_std` are aliases. One overall consensus list: ALL in 1QB, OP in superflex, scoring STD / HALF / PPR by the same `rec` rule. Do not stitch positional lists — those ranks all start at 1 and are not `ecr_best`. `AVG` is `rank_ave`, the mean expert rank; it is neither `ecr` nor ADP. Join miss → omit ECR, ADP, and bye from that row, banner `ecr_join_miss` with the count. Blank ECR cells on a joined row → omit ECR on that row. No ECR column at all → banner `ecr_missing`, still call the model. Spread columns absent → banner `ecr_spread_missing`; `ecr` ships, `ecr_min` / `ecr_max` / `ecr_std` are omitted. Do not block a draft on ECR joins or ECR columns. Missing ECR skips the ECR eval, it does not fail it. A missing rankings *file* is different: that is a DataRefusal (Drop, below), because the file also carries ADP and bye.
 
-**Weekly / byes / absence.** Host `/players` has no bye. Take bye from FantasyPros (`player_bye_week`). v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
+**Weekly / byes / absence.** Host `/players` has no bye. Take bye from the FantasyPros rankings export (`BYE`; API name `player_bye_week`). v1 does not fetch weekly projections. For weeks `1..18`, rate = `points / 17` (or `/ gp` when present); **0 on that player's bye**, and **0 on weeks the player is known out** — a served suspension is weeks `1..n`. Dividing by `gp` and then filling every non-bye week rebuilds a full season for a player who does not play one. Where `gp < 17` and the missed weeks are not knowable, do not guess which: ship `gp` on the board row and let the model read the gap between season `points` and per-game rate. That gap is the whole case for a discounted returning starter, and season totals hide it. Fill the user's starting slots by those rates. Ship the 18-week vector: starter points and any empty startable slot. That is week-by-week strength. v2 replaces the rate with real weekly stats.
 
 **Marginal value.** Recompute that vector with a candidate added and ship the
 difference as `delta_starter_points` on each board row. `vols` is global — the
@@ -135,7 +141,201 @@ same number whether you hold zero RBs or four. This is the same player against
 *your* roster. Byes are already zeros in the vector, so a bye stack shows up as
 a smaller delta instead of as arithmetic the model has to do in its head.
 
-**Override columns:** `player_id` (required), counting stats the scoring keys need, `adp`. Optional: `adp_stdev`, name/team/pos. Endpoint down and no override → data refuse.
+**Override columns:** `player_id` (required, a host id), counting stats the scoring keys need, `adp`. Optional: `adp_stdev`, name/team/pos. No name match, no ECR columns: it is the `player_id`-keyed backup for stats + ADP only, orthogonal to the drop. Projections missing from the drop and no override → data refuse. With an override, `rankings.csv` is still required: it supplies ECR and bye and still orders the mapping gate; the board's ADP is the override's. The rankings file has no override equivalent.
+
+### Drop
+
+FantasyPros numbers arrive as CSV exports the operator downloads from the
+website by hand, about 15 minutes before the draft, and saves into one
+directory. v1 has no API key and no HTTP to FantasyPros, for any board: draft
+night, `--once`, evals, rehearsals. The reason is the free tier, not the idea
+of an API. The public API returns 10 players per list and its paging is
+decorative — PR #39 probed it live: `page=2`, `offset=10`, and `limit=100` all
+return 10 rows, `public_api_limited: true`, `tier: free`. A 10-player board is
+a toy, and a toy must not ship as real.
+
+**No hybrid.** v1 reads the drop or it refuses: there is no "API, then CSV"
+path and no "CSV, then API" path, and a missing or unreadable drop is a
+`DataRefusal`, never a fallback to the 10-player API.
+
+The drop is v1's stopgap for a toy free tier, not the forever architecture. A
+later paid key is a second extractor on the same contract (§7), not a rewrite:
+same FP wire names, same counting-stats rule, the same `HostPlayerIndex` join
+order below. New sources add an extractor, not a new matcher. It is not a v1
+input, and it does not add a draft-night fallback.
+
+**Nobody automates the download.** Vorpal, its tools, its tests, and any agent
+working in this repo must not fetch, script, scrape, or browser-drive
+FantasyPros to produce these files. The operator clicks Export. That is the
+whole acquisition step.
+
+**Which pages to save.** Two exports. Both match the league through the ADP
+variant above.
+
+| File | FantasyPros page | Choose |
+|---|---|---|
+| `rankings.csv` | Draft **consensus rankings**, the overall cheat sheet | `2qb` → Superflex (OP). Else Overall (ALL). Scoring STD / Half / PPR from the `rec` rule. Never a positional list. |
+| `projections.csv`, `projections-*.csv`, or `projections/*.csv` | Draft **projections**, one page per position: QB, RB, WR, TE, K, DST | Season (draft) totals, not a week. Scoring only changes `FPTS`, which is never read. |
+
+**Layout.** The drop is a directory. The §2 input overrides the directory, not
+the filenames.
+
+```
+private/fp/rankings.csv          # exactly one overall consensus list (required)
+private/fp/projections.csv       # optional combined projections
+private/fp/projections/*.csv     # positional projection exports (qb/rb/wr/te/k/dst)
+private/fp/projections-*.csv     # same, flat
+```
+
+`private/fp/` and `data/fp/` are gitignored. These files are paid or personal
+FantasyPros data and never enter the repo.
+
+**Load.** Once per process, before the first board. Rankings and projections
+are read independently, each joined to host `player_id` (Mapping, below), then
+attached to each other on host id. Do not require the two files to join to
+each other first. After load, the draft-night loop (§6) never re-reads them
+and never touches FantasyPros. The same drop is the season snapshot: no live
+refresh for waivers in v1.
+
+| Condition | Result |
+|---|---|
+| `rankings.csv` missing, empty, or unreadable | DataRefusal naming the path. Fixable by dropping the file. |
+| More than one `rankings*.csv` in the directory | DataRefusal listing them. Ambiguous which list is the board's. |
+| `rankings.csv` has no `POS` column, or every row is one position | DataRefusal: a positional list, not the overall cheat sheet. Positional ranks all start at 1. |
+| No projections file in any of the three forms, or all empty / unreadable | DataRefusal — unless the override CSV is supplied. Then the override replaces stats + ADP and banners `projections_override`. `rankings.csv` is still required. |
+| A file is not CSV / TSV text: Excel binary, an HTML table dump, JSON | DataRefusal naming the file and the format it looks like. |
+| A projections header row repeats a name (`ATT`, `YDS`, `TDS` twice, no grouper row) | DataRefusal naming the file. `csv.DictReader` keeps the last and would silently drop passing yards. Do not keep last. |
+| A projections file's position cannot be told (below) | DataRefusal naming the file. |
+| Rankings row with a blank `ADP` cell | Allowed. That row is outside the top-300-by-ADP window. |
+| Rankings file with no `ADP` column, or every cell blank | Banner `adp_missing`. The mapping gate runs on the full list. |
+| Rankings file with no ECR column, or every cell blank | Banner `ecr_missing`. Board has no ECR. Proceed. |
+| Any age | Banner `fp_drop_age`: each loaded file, its mtime, and the list the ADP variant calls for. Never a refusal on age alone. §6 data age still applies. |
+
+Text is UTF-8 with an optional BOM. The delimiter is a comma or a tab, read
+from the header line.
+
+**Header aliases.** A closed set: the website export names plus the API-shaped
+names `ingest/fp.py` already reads. Normalize a header the way names are
+normalized below (lowercase, non-alphanumeric runs → one space), then compare
+to the normalized alias: `AVG.` is `AVG`, `STD.DEV` is `STD DEV` is `rank_std`,
+`PLAYER NAME` is `player_name`. A header not in the table is ignored, never
+guessed. `player_id` and `fpid` on a FantasyPros file are FantasyPros' own
+numeric id: never a host id, never a join key
+(`test_fp_numeric_id_does_not_collide_with_host_id`).
+
+Rankings:
+
+| Field | Aliases | Rule |
+|---|---|---|
+| name | `PLAYER NAME`, `Player`, `player_name`, `Name` | Required. |
+| team | `TEAM`, `Team`, `player_team_id` | Optional; see Cells. |
+| pos | `POS`, `Position`, `player_position_id`, `player_positions` | Required. |
+| ecr | `RK`, `rank_ecr`, `ECR` | Integer overall draft order. **Not `AVG`.** |
+| ecr_min | `BEST`, `rank_min` | |
+| ecr_max | `WORST`, `rank_max` | |
+| ecr_std | `STD.DEV`, `STD DEV`, `rank_std` | |
+| adp | `ADP`, `adp` | Only these. `rank_ave` is a mean rank, not ADP. |
+| bye | `BYE`, `BYE WEEK`, `Bye`, `player_bye_week` | Blank → no bye. |
+| host id | `sleeper_id`, `player_sleeper_id`, `sleeper_player_id` | Optional (`host_id_from_fp`). Used only when the value is a key in the host player map. |
+| yahoo id | `player_yahoo_id`, `yahooid`, `yahoo_id` | Optional. The website export lacks it; do not require it. |
+| ignored | `TIERS`, `VS. ADP`, `ECR VS ADP`, `SOS SEASON`, `AVG`, `player_id`, `fpid`, anything else | |
+
+Projections. The website export has a two-row header: a grouper row
+(`PASSING`, `RUSHING`, `RECEIVING`, `MISC`) over the stat names (`ATT`, `CMP`,
+`YDS`, `TDS`, `INTS`, `REC`, `FL`, `FPTS`). Detect it as: the first line has
+no name alias and the second does. A blank grouper cell inherits the nearest
+non-blank grouper to its left; a stat under no grouper is ungrouped. Flatten to
+`<GROUP> <NAME>`, then map through this table onto the FP wire names
+`FP_TO_HOST` already knows. Single-row headers use the same table with no
+group. Identity columns use the rankings aliases; `team` is optional here too.
+
+| Flattened header | FP wire name | Sleeper key via `FP_TO_HOST` |
+|---|---|---|
+| `PASSING ATT` / `CMP` / `YDS` / `TDS` / `INTS` | `pass_att` / `pass_cmp` / `pass_yds` / `pass_tds` / `pass_ints` | `pass_att` / `pass_cmp` / `pass_yd` / `pass_td` / `pass_int` |
+| `RUSHING ATT` / `YDS` / `TDS` | `rush_att` / `rush_yds` / `rush_tds` | `rush_att` / `rush_yd` / `rush_td` |
+| `RECEIVING REC` / `YDS` / `TDS` | `rec_rec` / `rec_yds` / `rec_tds` | `rec` / `rec_yd` / `rec_td` |
+| `MISC FL`, `FL` | `fl` | `fum_lost` |
+| `FG`, `FGA` | `fg`, `fga` | dropped — no distance buckets |
+| `XPT`, `XP` | `xpt` | `xpm` |
+| `SACK`, `INT`, `FR`, `FF`, `TD`, `SAFETY` on DEF rows | `def_sack`, `def_int`, `def_fr`, `def_ff`, `def_td`, `def_safety` | `sack`, `int`, `fum_rec`, `ff`, `def_td`, `safe` |
+| `PA`, `YDS AGN` | `pa`, `yds_agn` | dropped — no `pts_allow_*` buckets |
+| `GP`, `GAMES` | `gp` | lifted onto the row as `gp`, not a stat |
+| `FPTS`, `FPTS PPR`, `points*`, `pts_*` | — | never ingested |
+
+**Position of a projections file.** Rows need a position for the join and for
+the DEF-only keys. A `POS` column wins when present (rank suffix stripped, as
+below). Otherwise the file stem must end in a position token — `qb`, `rb`,
+`wr`, `te`, `k`, `dst`, any case, as the whole stem or after the last `-` or
+`_` — so `projections/qb.csv`, `projections-dst.csv`, and FantasyPros' own
+`..._Projections_QB.csv` saved under `projections/` all work. Neither → the
+DataRefusal above. The combined `projections.csv` therefore needs a `POS`
+column.
+
+**Cells.**
+
+| Cell | Rule |
+|---|---|
+| `POS` | Strip trailing digits after the letters (`WR1` → `WR`, `RB12` → `RB`, `DST1` → `DST`), then `normalize_pos`: `DST` / `D/ST` / `DEF` → `DEF`. |
+| name | May carry the team: `Ja'Marr Chase CIN`. If the last whitespace token is 2–3 letters and equals the row's team after `normalize_team`, strip it. If the row has no team column and that token, upper-cased, is the team of some host player, strip it and take it as the row's team. Then `normalize_name`. |
+| team | `normalize_team`: strip, upper. |
+| numbers | Blank is missing, not zero. Thousands separators are stripped (`4,250` → 4250). A cell that still is not a number is skipped, as `as_float` does today. |
+
+### Mapping
+
+One join implementation: `HostPlayerIndex` in `ingest/mapping.py`, extended
+with step 5 — not a second matcher. Rankings rows and projection rows each go
+through it separately. The host player map (`/players`: id, `yahoo_id`, name,
+pos, team) is the join directory.
+
+**Join key order.** The first step that hits wins. Stop there.
+
+1. Host id column (`sleeper_id`, `player_sleeper_id`, `sleeper_player_id`),
+   only when that value is a key in the host player map. FantasyPros
+   `player_id` / `fpid` is never tried.
+2. Yahoo id column, when present and the host tagged that player with
+   `ExternalId.YAHOO`. Not required; the website export lacks it.
+3. name + pos + team, exactly one host player → hit, `team_mismatch` false.
+   A row with no team skips this step.
+4. name + pos, exactly one host player → hit, `team_mismatch` true. Banner the
+   count: `ecr_team_mismatch` for rankings, `projection_team_mismatch` for
+   projections.
+5. DEF only: pos normalizes to `DEF` and the row's team is the team of exactly
+   one host DEF player → hit on that team, even when the names differ
+   (`HOU DST` vs `Houston Texans`). Never DEF on name without pos. Never an
+   arbitrary DEF when two host DEF rows share the team.
+6. Otherwise a miss. Two or more host players on the name + pos key that team
+   did not separate is a miss, not a first-wins guess. Never prefix-match a
+   name.
+
+**Normalization** — `normalize_name`, `normalize_pos`, `normalize_team` as
+they are today:
+
+| Field | Rule |
+|---|---|
+| name | lowercase; every non-alphanumeric run → one space (`Ja'Marr` → `ja marr`, `Amon-Ra` → `amon ra`, `St. Brown` → `st brown`); drop whole-word suffixes `jr`, `sr`, `ii`, `iii`, `iv`, `v`; collapse whitespace |
+| pos | strip, upper; `DST` / `D/ST` / `DEF` → `DEF` |
+| team | strip, upper |
+
+**Collisions.** Two source rows joining to the same host id: first in file
+order wins, as `parse_ecr` does today. Across projection files, file order is
+sorted path order. Banner `duplicate_join` with the count. The loser's stats
+are dropped, not merged.
+
+**Misses.** Bound here because this is the part people wing.
+
+| Case | Result |
+|---|---|
+| Rankings row misses | Omit ECR, rankings ADP, and bye for that row. Banner `ecr_join_miss` with the count. The host player stays in the pool. Individual misses never refuse; only the gate below does. |
+| Projections row misses | Its counting stats attach to nobody. Banner `projection_join_miss` with the count. No second gate. |
+| Rankings hit, no projection stats | Market-only row: ADP, ECR, bye, no counting stats. Excluded from VOLS and so from the §4 board. Stays in the pool; counts against the mapping gate. |
+| Projections hit, no rankings hit | `StatRow` with stats, `adp` None, no ECR, `bye` None. VOLS-eligible: it has points. Bye stays optional on the board row. |
+
+**Gate.** 98% of the top 300 by ADP on the rankings file must join to a host
+player, name match allowed. Same `DataRefusal` and report shape as today
+(`map_rows`, `check_mapping`): the message lists the misses. Override rows
+join with `allow_name_match=False`, as today. Projection misses banner only:
+market-only already keeps unprojected players off the VOLS board, and
+systematic mapping failure is the rankings gate's job.
 
 ### Scoring
 
@@ -381,7 +581,7 @@ paying for its tokens.
 
 Local display, documented draft API only.
 
-- `drafting`: poll 3s. Else until `complete`: 15s. Never poll projections or FantasyPros on this loop.
+- `drafting`: poll 3s. Else until `complete`: 15s. Never poll projections or FantasyPros on this loop, and never re-read the drop: the forecast loads once, before the first board (§3).
 - Error backoff: 5s, 15s, 45s, hold. Reset on success.
 - Always show data age. Past 15s, degrade. Grey-out at `pick_timer` (skip grey-out if timer is 0/null).
 - `status` from `draft.status`, not `start_time`. Observed: `pre_draft`, `drafting`, `complete`.
@@ -443,6 +643,7 @@ Same contract as draft: numbers in, binary-gated rec out, you click. v2 swaps th
 | v2 | Weekly lineup from weekly projections |
 | v3 | Waivers / FAAB. First tool phase: depth chart (backups, handcuffs) |
 | v4 | Trades |
+| — | Paid-key FantasyPros extractor: same wire names, same counting stats (never `FPTS` / `pts_*`), same ADP / ECR / bye, same `HostPlayerIndex` join (§3). A new extractor, not a new matcher, and never a draft-night fallback |
 | — | Waiver VORP; VONA once the regret set holds enough drafts to fit survival; fitted market model; playoff-week schedule strength |
 
 Not a product: executing picks, outbound trades without review, multi-sport in v1. Shared layer if/when NBA/FPL/brackets exist: ingestion + projections only. Each sport keeps its own decision prompt.
@@ -454,7 +655,9 @@ Not a product: executing picks, outbound trades without review, multi-sport in v
 - The model is the policy. Golden set is small and human. That is the main eval limit. Baselines and the regret set bound it; neither replaces it.
 - Weekly strength in v1 is season rate with bye and known-out weeks at 0, not a real week-17 forecast.
 - Every gate is a floor or a consistency check. None of them scores *riskiness*, so nothing catches a recommendation that should have chased variance and did not. This matters once the objective shifts from `max E[points]` toward `max P(beat opponent)` — a v2/v3 concern, unaddressed here.
-- FantasyPros can be down. Override only helps if it already exists. Draft night is the worst time to learn this.
+- The drop is manual. A missing or stale `private/fp/` is the draft-night failure now, not an API outage: save both exports about 15 minutes before the draft and read the `fp_drop_age` banner. Override only helps if it already exists.
+- The public FantasyPros API is a 10-player toy (PR #39). Nothing falls back to it. A missing drop is a refusal, never a 10-player board shipped as real. That is a verdict on the free tier, not on the API: a paid key is a later extractor (§7), still with no draft-night fallback.
+- The website export's column names are not under our control. The alias table is closed, so a renamed column is ignored, not guessed; the symptoms are `unmapped_scoring_keys`, `adp_missing`, `ecr_missing`, and the 98% gate — loud, and fixed by a better file.
 - `ecr_std` is expert-rank spread, not pick-number σ. Good enough as an upside feature; do not present it as calibrated survival.
 - ECR sanity is a floor, not a target. Superflex / TE-premium boards will trip `ECR_DISAGREE` on purpose; they still must stay inside `margin`. The `ecr_min` escape exists so the gate catches incoherence rather than contrarianism: a returning starter the consensus discounts but one expert ranks highly is a fact on the board, not a taste. It widens the floor — a player no expert likes still fails.
 - Superflex is where two-pass VOLS is most likely to move. The rank-2 invariant is an eval, not a solver.
