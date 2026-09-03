@@ -33,6 +33,14 @@ EFFORT = "medium"
 # as running out of room.
 MAX_TOKENS = 16000
 
+# Fast mode: same model, same effort, ~2.5x output tokens/second at premium
+# pricing. The pick clock is 30s and adaptive thinking eats most of it, so the
+# operator needs the rec sooner, not cheaper. It is a delivery setting, not part
+# of the answer, so it stays out of `build_request` and out of the cassette key
+# (toggling it never invalidates a recording). Fast mode needs the beta
+# endpoint and a top-level `speed`, and is Claude API only.
+FAST_MODE_BETA = "fast-mode-2026-02-01"
+
 DEGRADED = Banner(
     code="model_degraded",
     message="model proposal did not validate; showing the calculator pick",
@@ -48,10 +56,11 @@ SYSTEM = (
     "Wait versus take is yours. Set coin_flip when a rerun of this same board "
     "could reasonably name a different player. flags is a closed set: "
     + ", ".join(flag.value for flag in Flag)
-    + ". When you set VOLS_DISSENT, why must name hint_argmax_vols's player "
-    'by id or name, in the form: "X is the VOLS pick; we are not taking X '
-    "because …\". When you set ECR_DISAGREE, why must name ecr_best's player "
-    'the same way: "X is the ECR pick; we are not taking X because …".'
+    + ". When you set VOLS_DISSENT, name hint_argmax_vols's player once in why "
+    'as "<player> is the VOLS pick", then say why you pass. When you set '
+    'ECR_DISAGREE, name ecr_best\'s player once as "<player> is the ECR pick", '
+    "then say why you pass. Write each label one time. Do not repeat the "
+    "phrase or restate the pick you passed on."
 )
 
 PROPOSAL_JSON_SCHEMA: dict[str, Any] = {
@@ -129,14 +138,26 @@ class StubTransport:
 
 
 class AnthropicTransport:
-    """Claude Messages API. Do not pass temperature or tools."""
+    """Claude Messages API. Do not pass temperature or tools.
 
-    def __init__(self, client: Anthropic | None = None) -> None:
+    ``fast`` runs the pick call in fast mode (the default). Set it False for a
+    standard-speed call — the eval path, where latency does not matter and the
+    premium rate does.
+    """
+
+    def __init__(self, client: Anthropic | None = None, *, fast: bool = True) -> None:
         self._client = client if client is not None else Anthropic()
+        self._fast = fast
 
     def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
+        request = build_request(payload)
         try:
-            response = self._client.messages.create(**build_request(payload))
+            if self._fast:
+                response = self._client.beta.messages.create(
+                    **request, betas=[FAST_MODE_BETA], speed="fast"
+                )
+            else:
+                response = self._client.messages.create(**request)
         except Exception as exc:
             raise PlatformError(f"model call failed: {exc}") from exc
         stop_reason = getattr(response, "stop_reason", None)
