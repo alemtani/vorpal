@@ -1,5 +1,5 @@
 {
-  "key": "d2bedb21bcdd5165f57ceda4e58c1a7cc8d2184d9106eed7758dd0141f4ca9b7",
+  "key": "e7e034c400a56030b0e6c5a76721527cea2434b3d28ca5a5dd85b122e6dc4725",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -88,20 +88,16 @@
   "samples": [
     {
       "alternatives": [
-        "flat-a",
-        "wide-d",
-        "flat-c"
+        "wide-b",
+        "wide-d"
       ],
       "coin_flip": true,
       "flags": [
-        "ECR_DISAGREE",
-        "UPSIDE",
-        "VOLS_DISSENT",
-        "BYE_STACK"
+        "UPSIDE"
       ],
-      "player_id": "wide-b",
+      "player_id": "flat-a",
       "slot_filled": "BN",
-      "why": "flat-a is the VOLS pick; we are not taking flat-a because every starter slot is already filled and a 0.3-point VOLS edge is noise on a pure bench stash. flat-a is also the ECR pick; we are not taking flat-a because at 4 ECR slots of difference wide-b carries a far wider range (min 96, std 32.0), meaning some evaluators see a startable WR rather than a capped 121-point flat projection. With starters set, the bench should buy variance, and wide-b's bye 6 stacks only with my QB, an acceptable cost for the upside."
+      "why": "Every starting slot is already filled, so pick 177 is pure bench value and the four remaining options are separated by under a point of projection. flat-a is the top board ECR at 170 and the highest VOLS, and its tight consensus range (170-170) means the market is not hiding anything either way. wide-b's ecr_min of 96 is the tempting dart, but with 11 picks until my next turn I would rather bank the cleanest RB depth behind two held starters than chase a 32-point std guess. Coin flip acknowledged: a rerun could reasonably prefer wide-b's spread."
     }
   ]
 }

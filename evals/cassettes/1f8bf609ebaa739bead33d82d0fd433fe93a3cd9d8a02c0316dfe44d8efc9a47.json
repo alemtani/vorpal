@@ -1,5 +1,5 @@
 {
-  "key": "e704ca4f460ecfce860256a8ba1b029f96fc7499ece6f2a52a07dae2e68eb485",
+  "key": "1f8bf609ebaa739bead33d82d0fd433fe93a3cd9d8a02c0316dfe44d8efc9a47",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -95,7 +95,7 @@
       "flags": [],
       "player_id": "rb-a",
       "slot_filled": "RB",
-      "why": "rb-a is both the ECR best available and the VOLS argmax, leading the board by 4 points and 4 VOLS over wr-a while filling the open RB2 slot next to rb-held. With 7 picks until our next turn at 28, the WRs will not both survive but neither closes the value gap, so we take the top overall player now and address WR on the turn."
+      "why": "rb-a is the top board value by both consensus rank and starter-points gain, and he fills my second RB slot behind rb-held with no bye overlap. With seven picks until my next turn, the WRs here are the more replaceable tier, so I take the back now and address receiver at 28."
     },
     {
       "alternatives": [
@@ -106,20 +106,7 @@
       "flags": [],
       "player_id": "rb-a",
       "slot_filled": "RB",
-      "why": "rb-a is both the VOLS leader and the best available ECR (16), fills the open RB2 next to rb-held, and carries the largest starter-points edge (31) on the board. With 7 picks until our next turn, waiting risks losing all three of the top-25 ECR options; no bye conflict with rb-held's week 8."
-    },
-    {
-      "alternatives": [
-        "wr-a",
-        "wr-b"
-      ],
-      "coin_flip": false,
-      "flags": [
-        "EMPTY_STARTER"
-      ],
-      "player_id": "rb-a",
-      "slot_filled": "RB",
-      "why": "rb-a is both the ECR best available and the VOLS argmax, and fills the open second RB slot with a 31-point starter upgrade. With seven picks until pick 28, the top tier will be gone, so take the highest-value player now; wr-a and wr-b are close but offer less positional edge given RB2 is empty."
+      "why": "rb-a is both the top ECR and the VOLS leader here, so there is no tension to resolve: he is the best player on the board and he fills the second RB slot next to rb-held with no bye overlap. Seven picks until my next turn means the top tier will be gone, so taking the highest-value starter now is right; wr-a and wr-b are close and one should still be reachable at 28."
     },
     {
       "alternatives": [
@@ -130,7 +117,7 @@
       "flags": [],
       "player_id": "rb-a",
       "slot_filled": "RB",
-      "why": "rb-a is both the ECR best available (16) and the VOLS argmax (62), and he fills the open RB2 next to rb-held with no bye conflict. wr-a is close on value but RB1-tier production is the scarcer asset here, and with seven picks until 28 there should still be a starting WR available on the way back."
+      "why": "rb-a leads the board in both ECR and starter value, and with seven picks until my next turn the top tier will be gone. It fills my second RB slot outright while wr-a and wr-b remain plausible at pick 28 given the receiver depth here."
     },
     {
       "alternatives": [
@@ -141,7 +128,18 @@
       "flags": [],
       "player_id": "rb-a",
       "slot_filled": "RB",
-      "why": "rb-a is both the best available ECR (16) and the VOLS leader at 62.0, and he fills our open RB2 slot alongside rb-held with no bye overlap (10 vs 8). With seven picks until 28, the WR tier (wr-a, wr-b) is deeper than this RB, so taking the scarcer asset now and addressing WR on the turn maximizes starter points."
+      "why": "rb-a is both the top VOLS and the best ECR on the board, so there's no tension to resolve. He fills the second RB slot next to rb-held, carries the largest starter-points edge here (+31 over replacement-level RB), and no bye conflict at week 10. With seven picks until pick 28, waiting risks losing all three of the top tier; take the highest-value piece now and address WR with the next turn."
+    },
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a is the top board value by both ECR and starter-points delta, and pairing him with rb-held locks the RB2 slot at a premium tier. With seven picks until pick 28, the WRs here are likelier to have comparable replacements available than a back of this caliber, and no bye conflict with the existing RB."
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "key": "90f81d604f3d1b8f492e1ed1e97bf8e8fea5a38d97ba87eb6b25047e0085347e",
+  "key": "f78c697423ea3aed8bddb97ea3f4c2615acc0c24b434a4548940812cb759f66b",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -95,7 +95,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the ECR best (24) and the VOLS argmax (44.0), filling the open RB2 slot with the largest starter-points delta on the board. wr-i is a near-equal alternative but slightly behind in both ECR and value over last starter, and te-i is a clear tier down."
+      "why": "rb-i is the top ECR and VOLS player on the board and fills the open RB2 next to rb-held, with the largest starter-points gain available. wr-i is essentially even in value but RB depth erodes faster and the WR spot can be covered by the FLEX later; te-i is a clear tier below."
     },
     {
       "alternatives": [
@@ -106,7 +106,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the ECR best (24) and the VOLS argmax (44.0), filling the open RB2 with the top value on a capped board; wr-i is a near-tie fallback."
+      "why": "rb-i is both the top ECR name and the VOLS leader here, and he fills the open RB2 slot next to rb-held with a clean bye 9 that doesn't stack with anything on the roster. The gap to wr-i is small (44 vs 42 VOLS, one ECR slot), so this is close to a straight best-player-available call, but taking the back first is the right side of it: RB replacement level is the same 100 as WR yet the position thins faster after this tier, and wr-i's profile is easier to approximate later. te-i's 27 VOLS is a real edge at a weak position but not worth passing 17 points of production at pick 24."
     },
     {
       "alternatives": [
@@ -117,7 +117,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the ECR best (24) and the VOLS argmax, and he fills the open RB2 slot with the largest starter-points delta on the board. wr-i is essentially even on value but rb-i's edge at a thinner position makes this an easy alignment pick."
+      "why": "rb-i is the best available by ECR and VOLS, fills the open RB2 with a 22-point edge over replacement, and carries a bye that doesn't collide with the held RB or WR. wr-i is a near-equal option but the RB slot is the scarcer need here."
     },
     {
       "alternatives": [
@@ -128,7 +128,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the ECR best (24) and the VOLS argmax, filling the open RB2 with the largest starter-points gain (22) on the board; wr-i is a near-equal fallback but adds less value."
+      "why": "rb-i is the top ECR and top VOLS on the board, fills the open RB2 with a 44-point edge over replacement, and the bye (9) doesn't clash with the held RB or WR. wr-i is nearly identical in value and remains the fallback if the board shifts, but RB depth is thinner behind this tier."
     },
     {
       "alternatives": [
@@ -139,7 +139,7 @@
       "flags": [],
       "player_id": "rb-i",
       "slot_filled": "RB",
-      "why": "rb-i is both the ECR best available and the VOLS argmax, and he fills the open RB2 slot with a 22-point edge over replacement. wr-i is essentially the same value one tick later, but taking the top-ranked player who also plugs a starting hole is the cleanest outcome; te-i and the defense are well behind at this pick."
+      "why": "rb-i is both the top ECR player and the VOLS leader here, and he fills the open RB2 next to rb-held with a 44-point edge over replacement. wr-i is essentially a coin's width behind on value but RB replacement falls off harder in a 12-team PPR, and byes 9 and 8 don't stack painfully. te-i is a real value at the position but 17 points of VOLS behind, and the TE slot can be addressed later."
     }
   ]
 }

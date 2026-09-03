@@ -1,5 +1,5 @@
 {
-  "key": "105f08af3fd9a2673ad39e469c2e23fc23d371c19fc957076cf80be0707f2cf9",
+  "key": "3b6bb7a20e4c829743527f3f48fb7677b36d1c94946b9c4825a474cbe097cfa4",
   "model": "claude-opus-5",
   "request": {
     "max_tokens": 16000,
@@ -80,7 +80,7 @@
         "type": "json_schema"
       }
     },
-    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, why must name hint_argmax_vols's player by id or name, in the form: \"X is the VOLS pick; we are not taking X because …\". When you set ECR_DISAGREE, why must name ecr_best's player the same way: \"X is the ECR pick; we are not taking X because …\".",
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on.",
     "thinking": {
       "type": "adaptive"
     }
@@ -98,7 +98,7 @@
       ],
       "player_id": "te-elite",
       "slot_filled": "TE",
-      "why": "rb-g is the ECR pick; we are not taking rb-g because te-elite is one ECR slot away and carries a far larger starter edge (55 delta vs 30) at a position where the board's only other option, te-next, will not survive 17 picks until 45. Our TE slot is empty and rb-g/wr-g types are replaceable later with the RB2/WR2 and FLEX holes."
+      "why": "rb-g is the ECR pick, one slot ahead and a fine value, but the gap is a single rank while the positional edge is not close: te-elite carries a 55-point starter delta at a position where the next name on the board is 37 points worse. With 17 picks until my next turn, the elite tight end tier does not survive and I would be choosing between replacement-level TEs at pick 45, whereas RB and WR depth of this caliber keeps flowing. Filling TE now leaves RB2, WR2 and FLEX all servicable from the middle rounds."
     },
     {
       "alternatives": [
@@ -112,7 +112,7 @@
       ],
       "player_id": "te-elite",
       "slot_filled": "TE",
-      "why": "rb-g is the ECR pick; we are not taking rb-g because the gap is one slot of ECR while te-elite carries a 55-point starter edge at an empty TE spot, and with 17 picks until 45 the only other real TE (te-next, 18 points of edge) will not survive. rb-g would be a third RB-ish luxury when RB2 can be filled later from a deeper pool; te-elite is the scarcest starter on this board."
+      "why": "rb-g is the ECR pick, and only one slot ahead — a gap small enough to ignore when the positional edge runs the other way. te-elite carries a 55-point starter delta over replacement, the largest on the board, and fills an empty TE slot. With 17 picks until pick 45, the drop to te-next (18 delta) is severe and that tier will almost certainly be gone; RB and WR depth is replaceable later, elite TE is not. Byes are clean against rb-held (8) and wr-held (5)."
     },
     {
       "alternatives": [
@@ -126,7 +126,7 @@
       ],
       "player_id": "te-elite",
       "slot_filled": "TE",
-      "why": "rb-g is the ECR pick; we are not taking rb-g because te-elite is one ECR slot behind at 26 and carries the largest starter-points edge on the board (55 over replacement vs 50), and with 17 picks until 45 the TE cliff behind him is steep — te-next is 37 points worse and won't survive. TE is an empty starter while RB already has rb-held, so the elite TE both fills the hole and banks the biggest weekly edge."
+      "why": "rb-g is the ECR pick, and the one-slot ECR gap is noise; I pass because the tight end tier breaks hard right here. te-elite is 37 points clear of te-next and my TE slot is empty with 17 picks before I'm on the clock again, so waiting almost certainly means settling for a replacement-level starter there. RB2/WR2 can still be addressed at pick 45 from a much flatter pool."
     },
     {
       "alternatives": [
@@ -140,7 +140,7 @@
       ],
       "player_id": "te-elite",
       "slot_filled": "TE",
-      "why": "rb-g is the ECR pick; we are not taking rb-g because the one-pick ECR gap is noise while the TE gap is real: te-elite carries 55 VOLS versus 18 for the next tight end on the board, and with 17 picks until 45 that tier will be gone. TE is an empty starter and te-elite also unlocks FLEX flexibility; rb-g/wr-g types are far more replaceable at our next turn."
+      "why": "rb-g is the ECR pick, but one slot of separation isn't worth passing the biggest positional edge on the board: te-elite is 37 points clear of te-next at a position where the drop after him is a cliff, and with 17 picks until 45 both tight ends will be gone. Filling the empty TE slot with the elite option lets RB2/WR2 be sourced from a much deeper pool later."
     },
     {
       "alternatives": [
@@ -154,7 +154,7 @@
       ],
       "player_id": "te-elite",
       "slot_filled": "TE",
-      "why": "rb-g is the ECR pick; we are not taking rb-g because the one-rank gap is noise while te-elite is the clear VOLS leader (55 vs 50) and fills a completely empty TE slot. With 17 picks until 45, the only other startable TE on the board (te-next, 18 VOLS) will not survive, and the drop from te-elite to replacement TE is the largest positional cliff here. RB is already partially addressed with rb-held, so we can take RB/WR value at the turn."
+      "why": "rb-g is the ECR pick, one slot ahead and a fine value, but the gap is a single rank inside the noise band while te-elite carries a 55-point edge over the TE replacement line versus 50 for the back. With 17 picks until my next turn, the elite tight end is the asset least likely to survive; a starting RB2 or WR2 of comparable quality should still be reachable at 45, and te-next at ecr 42 shows the falloff at the position is 37 points. Locking the scarcest starter now and filling RB/WR/FLEX from a deeper pool later is the cleaner path."
     }
   ]
 }

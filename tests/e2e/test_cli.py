@@ -128,6 +128,28 @@ def test_off_the_clock_does_not_ask_the_model(
     assert "Not your pick" in page
 
 
+@pytest.mark.parametrize("flag,expected", [((), False), (("--fast",), True)])
+def test_fast_flag_gates_fast_mode(
+    api: respx.MockRouter,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    flag: tuple[str, ...],
+    expected: bool,
+) -> None:
+    """--fast opts the default transport into fast mode; it is off otherwise."""
+    captured: dict[str, Any] = {}
+
+    class _Fake(HintTransport):
+        def __init__(self, client: Any = None, *, fast: bool = False) -> None:
+            super().__init__()
+            captured["fast"] = fast
+
+    monkeypatch.setattr(cli, "AnthropicTransport", _Fake)
+    code = main(_argv(tmp_path, *flag))  # transport=None -> constructs _Fake
+    assert code == 0
+    assert captured["fast"] is expected
+
+
 def _name_of(payload: dict[str, Any], player_id: str) -> str:
     return next(
         row["name"] for row in payload["board"] if row["player_id"] == player_id

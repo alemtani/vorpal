@@ -9,7 +9,7 @@
       "wr-b"
     ],
     "flags": [],
-    "why": "rb-a is both the ECR best available and the VOLS argmax, leading the board by 4 points and 4 VOLS over wr-a while filling the open RB2 slot next to rb-held. With 7 picks until our next turn at 28, the WRs will not both survive but neither closes the value gap, so we take the top overall player now and address WR on the turn.",
+    "why": "rb-a is the top board value by both consensus rank and starter-points gain, and he fills my second RB slot behind rb-held with no bye overlap. With seven picks until my next turn, the WRs here are the more replaceable tier, so I take the back now and address receiver at 28.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-a",
@@ -322,10 +322,10 @@
       "rb-c"
     ],
     "flags": [
-      "VOLS_DISSENT",
-      "EMPTY_STARTER"
+      "EMPTY_STARTER",
+      "VOLS_DISSENT"
     ],
-    "why": "te-third is the VOLS pick; we are not taking te-third because TE is already filled and we roster two TEs, so his raw VOLS converts to zero starter value. wr-a is also the ECR best on this board (63), leads in delta_starter_points (+22), and fills one of two completely empty WR starting slots with seven picks until our next turn.",
+    "why": "Both WR starting spots are still empty and te-third is the VOLS pick, but I already roster two tight ends, so a third only adds bench points that never enter the lineup. wr-a is also the top ECR name here and carries the largest actual starter gain on this roster, filling a required slot seven picks before my next turn.",
     "coin_flip": false,
     "error": null,
     "hint": "te-third",
@@ -644,7 +644,7 @@
       "te-b"
     ],
     "flags": [],
-    "why": "rb-b is both the ECR best available (26) and the VOLS argmax (48.0), and it fills our open RB2 slot with a bye (9) that doesn't collide with rb-held (8) or wr-held (5). wr-b is close on value but RB is the thinner fill here; te-b is a tier below and TE can wait to pick 33.",
+    "why": "rb-b is the best available by ECR and the top VOLS value, and he fills the open second RB spot alongside rb-held. The 48-point edge over replacement is the largest on the board, and with five picks until pick 33 both rb-b and wr-b will not survive, so take the higher-value piece now.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-b",
@@ -956,8 +956,10 @@
       "wr-c",
       "te-c"
     ],
-    "flags": [],
-    "why": "rb-d is both the ECR best (50) and the VOLS argmax (38.0), and it fills the open RB2 slot with a 19-point starter upgrade. With 17 picks until pick 69, waiting on RB2 risks losing this tier entirely; wr-c is close in value but WR2 can be patched from the later pool more easily than a starting RB.",
+    "flags": [
+      "EMPTY_STARTER"
+    ],
+    "why": "rb-d fills the open RB2 with the board's top ECR and the largest starter-points gain, and with 17 picks until pick 69 there's no reason to wait on the best back available. Bye week 7 doesn't collide with anything on the roster, and wr-c stays the fallback if the WR2 hole matters more later.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-d",
@@ -1275,7 +1277,7 @@
       "BYE_STACK",
       "EMPTY_STARTER"
     ],
-    "why": "wr-bye-clash is the VOLS pick and also the ECR pick (78 vs 80); we are not taking wr-bye-clash because its week 9 bye piles onto qb-held, rb-held-1 and wr-held, a week already showing only 36 starter points, while wr-bye-clear's bye 5 lands on a clean week and more than doubles the starter-points gain (29.0 vs 12.0) for a two-slot ECR cost.",
+    "why": "Week 9 already guts this roster: QB, RB1 and WR1 all sit, leaving 36 starter points. wr-bye-clash is the VOLS pick and wr-bye-clash is the ECR pick, but its bye piles onto that same dead week, which is why the starter-points gain is only 12 against 29 for the week-5 alternative. Nearly identical raw production (149 vs 150) and two ECR spots apart, so the tiebreak is entirely schedule fit; taking the clean bye fills the open WR and improves the worst week on the board.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-bye-clash",
@@ -1588,10 +1590,9 @@
       "rb-f"
     ],
     "flags": [
-      "EMPTY_STARTER",
-      "POSITION_RUN"
+      "EMPTY_STARTER"
     ],
-    "why": "qb-sf-a is both the ECR best (44) and the VOLS argmax, and it fills the empty SUPER_FLEX with a 35.5-point starter upgrade over replacement. With 11 picks until 66 and nearly every team between here still needing a second QB, the two SF-capable arms are unlikely to both survive; qb-sf-b is the fallback if forced to wait, and rb-f is the value-neutral alternative but leaves the SUPER_FLEX hole open.",
+    "why": "SUPER_FLEX is still empty and eleven picks separate me from my next turn, with most of the teams in between showing the same unfilled superflex need. qb-sf-a is the top ECR name here and the largest starter-points gain on the board, so there is no reason to get clever: take the QB now and fill RB2/TE/FLEX from the deeper pool later.",
     "coin_flip": false,
     "error": null,
     "hint": "qb-sf-a",
@@ -1898,17 +1899,17 @@
     "name": "empty_starter_late",
     "kind": "golden",
     "policy": "model",
-    "rec": "def-a",
+    "rec": "k-a",
     "alts": [
-      "k-a",
-      "wr-depth"
+      "def-a",
+      "k-b"
     ],
     "flags": [
       "ECR_DISAGREE",
       "VOLS_DISSENT",
       "EMPTY_STARTER"
     ],
-    "why": "wr-depth is the ECR pick and wr-depth is the VOLS pick; we are not taking wr-depth because our WR/FLEX slots are already filled and bench depth adds nothing to the starting lineup, while DEF and K are both empty starters. Of the two, DEF is the thinner pool here (one DEF vs two kickers), so def-a goes now and a kicker can still be had at 172. def-a also clears replacement by 24 points with no bye conflict.",
+    "why": "Two starting slots are still blank (K and DEF) with only this pick and one more before the draft ends, so a bench body cannot help the lineup. wr-depth is the VOLS pick, but it lands on an already-full flex/bench and adds zero starter points, and wr-depth is the ECR pick by the same board ranking, so the small ranking gap is worth trading for an actual filled slot. k-a carries the largest starter gain (118 over replacement) of anything here, and def-a or k-b should survive the seven picks until pick 172 to close the last hole.",
     "coin_flip": true,
     "error": null,
     "hint": "wr-depth",
@@ -2222,10 +2223,8 @@
     "alts": [
       "rb-depth"
     ],
-    "flags": [
-      "UPSIDE"
-    ],
-    "why": "Every starting slot is already filled, so this is pure bench value. wr-depth is both the ECR best (168) and the VOLS leader (12.0 over replacement), and it doubles as insurance/upside behind the WR corps and FLEX. rb-depth is a close second but lower on both boards; k-b is a redundant kicker with a filled K slot.",
+    "flags": [],
+    "why": "Every starting slot is already filled, so this is pure bench value and the cheapest way to add it is the best remaining player. wr-depth leads this board in both ECR and points-over-replacement (132 vs a 100-point WR baseline), and receiver is the spot where an injury or a bust in the WR2/FLEX group is most likely to force a lineup change. rb-depth is a near-equal fallback if the run comes back around at 172, and a kicker is worthless with k-held rostered.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-depth",
@@ -2541,7 +2540,7 @@
       "ECR_DISAGREE",
       "EMPTY_STARTER"
     ],
-    "why": "rb-g is the ECR pick; we are not taking rb-g because te-elite is one ECR slot away and carries a far larger starter edge (55 delta vs 30) at a position where the board's only other option, te-next, will not survive 17 picks until 45. Our TE slot is empty and rb-g/wr-g types are replaceable later with the RB2/WR2 and FLEX holes.",
+    "why": "rb-g is the ECR pick, one slot ahead and a fine value, but the gap is a single rank while the positional edge is not close: te-elite carries a 55-point starter delta at a position where the next name on the board is 37 points worse. With 17 picks until my next turn, the elite tight end tier does not survive and I would be choosing between replacement-level TEs at pick 45, whereas RB and WR depth of this caliber keeps flowing. Filling TE now leaves RB2, WR2 and FLEX all servicable from the middle rounds.",
     "coin_flip": false,
     "error": null,
     "hint": "te-elite",
@@ -2861,9 +2860,10 @@
     ],
     "flags": [
       "POSITION_RUN",
-      "EMPTY_STARTER"
+      "EMPTY_STARTER",
+      "BYE_STACK"
     ],
-    "why": "wr-run-a is both the ECR best (44) and the VOLS argmax (+41 over replacement), and we have two empty WR starters with five straight WRs off the board in picks 40-44. The next tier drops hard after wr-run-b (159 pts) to wr-after-cliff (134), and with seven picks until 52 we cannot count on either runner surviving. rb-h and te-h fill needs but at materially lower value.",
+    "why": "Five straight WRs came off the board and I have zero of two WR starters filled, so the top receiver here is both the value and the need. wr-run-a leads the board in ECR and in starter-points gained (+41 over replacement), and the next tier after wr-run-b drops off a cliff to wr-after-cliff at +14 with seven picks before I'm back up. rb-h and te-h can wait; a second RB or the TE is far likelier to survive to pick 52 than a mid-40s receiver in the middle of a run. Only nit is the week 6 overlap with qb-held, which is easy to paper over off the bench.",
     "coin_flip": false,
     "error": null,
     "hint": "wr-run-a",
@@ -3170,19 +3170,15 @@
     "name": "vols_compressed",
     "kind": "golden",
     "policy": "model",
-    "rec": "wide-b",
+    "rec": "flat-a",
     "alts": [
-      "flat-a",
-      "wide-d",
-      "flat-c"
+      "wide-b",
+      "wide-d"
     ],
     "flags": [
-      "ECR_DISAGREE",
-      "UPSIDE",
-      "VOLS_DISSENT",
-      "BYE_STACK"
+      "UPSIDE"
     ],
-    "why": "flat-a is the VOLS pick; we are not taking flat-a because every starter slot is already filled and a 0.3-point VOLS edge is noise on a pure bench stash. flat-a is also the ECR pick; we are not taking flat-a because at 4 ECR slots of difference wide-b carries a far wider range (min 96, std 32.0), meaning some evaluators see a startable WR rather than a capped 121-point flat projection. With starters set, the bench should buy variance, and wide-b's bye 6 stacks only with my QB, an acceptable cost for the upside.",
+    "why": "Every starting slot is already filled, so pick 177 is pure bench value and the four remaining options are separated by under a point of projection. flat-a is the top board ECR at 170 and the highest VOLS, and its tight consensus range (170-170) means the market is not hiding anything either way. wide-b's ecr_min of 96 is the tempting dart, but with 11 picks until my next turn I would rather bank the cleanest RB depth behind two held starters than chase a 32-point std guess. Coin flip acknowledged: a rerun could reasonably prefer wide-b's spread.",
     "coin_flip": true,
     "error": null,
     "hint": "flat-a",
@@ -3221,13 +3217,13 @@
       },
       {
         "gate": "why_contains_floor",
-        "outcome": "PASS",
-        "reason": null
+        "outcome": "NOT_PERFORMED",
+        "reason": "neither flag set"
       },
       {
         "gate": "bye_hole",
-        "outcome": "PASS",
-        "reason": null
+        "outcome": "FAIL",
+        "reason": "rec opens an empty startable slot an alt would fill"
       },
       {
         "gate": "stability",
@@ -3495,7 +3491,7 @@
       "te-i"
     ],
     "flags": [],
-    "why": "rb-i is both the ECR best (24) and the VOLS argmax (44.0), filling the open RB2 slot with the largest starter-points delta on the board. wr-i is a near-equal alternative but slightly behind in both ECR and value over last starter, and te-i is a clear tier down.",
+    "why": "rb-i is the top ECR and VOLS player on the board and fills the open RB2 next to rb-held, with the largest starter-points gain available. wr-i is essentially even in value but RB depth erodes faster and the WR spot can be covered by the FLEX later; te-i is a clear tier below.",
     "coin_flip": false,
     "error": null,
     "hint": "rb-i",
