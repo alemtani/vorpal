@@ -28,6 +28,10 @@ per host. `resolve` reads it to decide which slot a key belongs to.
 `valuation` reads it to decide which formula scores a key. Neither owns a
 copy.
 
+Identity redaction is not a host table. `IDENTITY_KEYS` on the generic
+contract names the fields adapters already map onto. `board/` and
+`valuation/` do not keep a host denylist.
+
 Rules that follow:
 
 - **Never infer a key's meaning from its prefix.** `pass_int` is a QB key

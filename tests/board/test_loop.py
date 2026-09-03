@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from pathlib import Path
 
@@ -456,3 +457,59 @@ def test_board_tests_do_not_sleep() -> None:
     needle = "time" + ".sleep"
     for path in root.rglob("*.py"):
         assert needle not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_complete_writes_redacted_snapshot_and_drafting_does_not(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame, run_loop
+
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1")
+
+    def recompute(draft: Draft, picks: tuple[Pick, ...]) -> Frame:
+        return Frame(payload=payload, proposal=proposal, banners=())
+
+    drafting_dir = tmp_path / "live"
+    drafting_dir.mkdir()
+    clock = FakeClock()
+    live = FakeClient(make_draft(status="drafting"))
+    run_loop(
+        live,
+        recompute,
+        drafting_dir / "board.html",
+        now=clock.now,
+        sleep=clock.sleep,
+        should_stop=_stop_after_polls(live, 2),
+    )
+    assert (drafting_dir / "board.html").is_file()
+    assert not (drafting_dir / "board.snapshot.local.json").exists()
+
+    done_dir = tmp_path / "done"
+    done_dir.mkdir()
+    pick = make_pick(pick_no=1, player_id="p9")
+    run_loop(
+        FakeClient(
+            [make_draft(status="drafting"), make_draft(status="complete")],
+            picks=[(), (pick,)],
+        ),
+        recompute,
+        done_dir / "board.html",
+        now=FakeClock().now,
+        sleep=FakeClock().sleep,
+    )
+    snap = done_dir / "board.snapshot.local.json"
+    assert snap.is_file()
+    body = json.loads(snap.read_text(encoding="utf-8"))
+    turn = body["picks"][0]
+    assert turn["human_pick"] == "p9"
+    assert turn["proposal"]["player_id"] == "p1"
+    assert turn["pick_no"] == 1
+    dumped = json.dumps(body)
+    assert "league_test" not in dumped
+    assert "user_operator" not in dumped
+    assert "A Back" not in dumped

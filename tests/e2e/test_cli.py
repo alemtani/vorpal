@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -412,3 +413,25 @@ def test_the_poll_loop_does_not_ask_the_model_on_every_poll(
     assert built == [(1, "drafting"), (3, "drafting"), (3, "complete")]
     page = (tmp_path / "board.html").read_text(encoding="utf-8")
     assert "proposal_not_current" not in page
+
+
+def test_a_complete_draft_writes_a_redacted_snapshot(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    """--once on a completed mock still writes the file. Player ids only."""
+    operator_pick = _pick("rb1")
+    operator_pick["draft_slot"] = 2
+    operator_pick["picked_by"] = "user_operator"
+    operator_pick["pick_no"] = 2
+    api["picks"].mock(return_value=httpx.Response(200, json=[operator_pick]))
+    code, _ = _run(tmp_path)
+    assert code == 0
+    snap = tmp_path / "board.snapshot.local.json"
+    assert snap.is_file()
+    body = json.loads(snap.read_text(encoding="utf-8"))
+    assert [turn["human_pick"] for turn in body["picks"]] == ["rb1"]
+    assert body["picks"][0]["pick_no"] == 2
+    dumped = json.dumps(body)
+    assert "league_snake_redraft" not in dumped
+    assert "user_operator" not in dumped
+    assert "league_id" not in dumped
