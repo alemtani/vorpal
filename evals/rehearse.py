@@ -2,7 +2,12 @@
 """Dress rehearsal: live CLI against a real mock, timed against pick_timer.
 
 Does not write league ids to the report files. Pass scoring-league-id on the
-command line; it is required when the mock has league_id null.
+command line; it is required when the mock has league_id null, unless you
+borrow a preset table with --scoring instead.
+
+The flags here mirror `vorpal.cli.build_parser`. A flag the operator types on
+draft night must be one the rehearsal can run, so --fast, --scoring, and
+--trace pass straight through. Keep the two parsers in step.
 """
 
 from __future__ import annotations
@@ -19,6 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from vorpal.cli import main  # noqa: E402
 from vorpal.model import AnthropicTransport  # noqa: E402
+from vorpal.platform.presets import PRESETS  # noqa: E402
 from vorpal.sleeper import SleeperClient  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -116,8 +122,21 @@ def main_argv(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--draft-id", required=True)
     parser.add_argument("--operator", required=True)
-    parser.add_argument("--scoring-league-id", default=None)
+    # Same pair as the CLI: a league to borrow from, or a preset table. Never both.
+    scoring = parser.add_mutually_exclusive_group()
+    scoring.add_argument("--scoring-league-id", default=None)
+    scoring.add_argument("--scoring", default=None, choices=PRESETS)
     parser.add_argument("--slot", type=int, default=None)
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="rehearse fast mode, including its fallback to standard speed",
+    )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="send propose traces to LangSmith. Needs LANGSMITH_API_KEY",
+    )
     parser.add_argument(
         "--max-seconds",
         type=float,
@@ -134,7 +153,7 @@ def main_argv(argv: list[str] | None = None) -> int:
 
     inner = SleeperClient(players_cache_path=HERE / "_cache" / "sleeper_players.json")
     client = TimedClient(inner, events)
-    transport = TimedTransport(AnthropicTransport(), events)
+    transport = TimedTransport(AnthropicTransport(fast=args.fast), events)
 
     cli_argv = [
         "--draft-id",
@@ -148,8 +167,14 @@ def main_argv(argv: list[str] | None = None) -> int:
     ]
     if args.scoring_league_id:
         cli_argv.extend(["--scoring-league-id", args.scoring_league_id])
+    if args.scoring:
+        cli_argv.extend(["--scoring", args.scoring])
     if args.slot is not None:
         cli_argv.extend(["--slot", str(args.slot)])
+    if args.fast:
+        cli_argv.append("--fast")
+    if args.trace:
+        cli_argv.append("--trace")
 
     def sleep(seconds: float) -> None:
         events.append({"t": time.monotonic() - t0, "kind": "sleep", "seconds": seconds})
