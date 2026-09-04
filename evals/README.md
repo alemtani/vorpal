@@ -41,6 +41,10 @@ cases; only three can show the model is doing anything.
 `pytest -m "not live"` includes `pytest -m golden`. Those tests check
 that the cases are well-formed, that the gates agree with the
 hand-written verdicts on synthetic proposals, and that the recorded
-model answers pass `golden_forbid` and `golden_require`. They do not
-call the model. `bye_hole` is not a CI fail until #31 is settled. The
+model answers fail none of the seven gates in `ENFORCED`
+(`tests/golden/test_cassettes.py`). They do not call the model.
+`bye_hole` is not a CI fail until #31 is settled. The
 four-column table is this runner. Do not put it on the CI job.
+
+CI blocks on the golden boards only. `regret` and `replay` are scored in
+this runner and by nothing in the build.

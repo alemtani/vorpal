@@ -10,8 +10,9 @@ v1 is implemented. Sleeper redraft, FantasyPros forecast, VOLS board, one
 model rec per pick. You click. Contract: [docs/SPEC.md](docs/SPEC.md).
 
 Twelve binary eval gates. CI replays recorded golden answers and fails the
-build if a rec hits a forbid or misses a require. It does not call the
-model. The four-column runner (`evals/run.py`) is local, not CI.
+build on seven of them; the other five need a fixture the golden boards do
+not carry, or wait on a gate bug (#31). CI does not call the model. The
+four-column runner (`evals/run.py`) is local, not CI.
 
 Configured by draft ID and operator identity. Scoring from a league (the
 draft's own, or a borrowed one for mocks). Stats and ADP from the platform.
