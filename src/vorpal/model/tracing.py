@@ -25,13 +25,8 @@ from vorpal.model.call import EFFORT, MODEL_ID
 
 # Drafter and league identity. Player-name keys stay: a trace is human-read.
 TRACE_DROP = IDENTITY_KEYS - {"name", "first_name", "last_name"}
-_TRUTHY = frozenset({"1", "true", "yes", "on"})
 _DEFAULT_PROJECT = "vorpal-draft"
 _JOIN_TIMEOUT_S = 2.0
-
-
-def _gate_on(value: str | None) -> bool:
-    return (value or "").strip().lower() in _TRUTHY
 
 
 def _load_langsmith_client() -> Any:
@@ -88,14 +83,15 @@ class SampleRecorder:
 class TraceSink:
     """LangSmith emitter for one draft-night process.
 
-    ``enabled()`` is true only when ``VORPAL_TRACING`` is on, a key is set,
-    and ``langsmith`` imports — unless a client is injected (tests).
+    ``enabled()`` is true only when ``--trace`` is on, a key is set, and
+    ``langsmith`` imports — unless a client is injected (tests).
     """
 
     def __init__(
         self,
         client: Any | None = None,
         *,
+        trace: bool = False,
         environ: Mapping[str, str] | None = None,
         draft_session: str | None = None,
     ) -> None:
@@ -103,7 +99,6 @@ class TraceSink:
         self.draft_session = draft_session or uuid.uuid4().hex
         project = env.get("LANGSMITH_PROJECT")
         self._project = project or _DEFAULT_PROJECT
-        self._lock = threading.Lock()
         self._threads: list[threading.Thread] = []
         self._run_ids: dict[int, uuid.UUID] = {}
         self._outputs: dict[int, dict[str, Any]] = {}
@@ -113,10 +108,11 @@ class TraceSink:
             self._client = client
             self._enabled = True
             return
-        if not _gate_on(env.get("VORPAL_TRACING")):
+        if not trace:
             return
         key = env.get("LANGSMITH_API_KEY")
         if not (key or "").strip():
+            print("langsmith: LANGSMITH_API_KEY is not set", file=sys.stderr)
             return
         try:
             self._client = _load_langsmith_client()
@@ -148,9 +144,8 @@ class TraceSink:
                 for item in recommendation.violations
             ],
         }
-        with self._lock:
-            self._run_ids[pick_no] = parent_id
-            self._outputs[pick_no] = outputs
+        self._run_ids[pick_no] = parent_id
+        self._outputs[pick_no] = outputs
         payload_blob = dict(_payload_dict(payload))
         sample_pairs = list(samples)
         thread = threading.Thread(
@@ -158,8 +153,7 @@ class TraceSink:
             args=(pick_no, parent_id, payload_blob, outputs, sample_pairs),
             daemon=True,
         )
-        with self._lock:
-            self._threads.append(thread)
+        self._threads.append(thread)
         thread.start()
 
     def _submit(
@@ -210,14 +204,10 @@ class TraceSink:
         if not self._enabled:
             return
         try:
-            with self._lock:
-                threads = list(self._threads)
+            threads = list(self._threads)
             for thread in threads:
                 thread.join(timeout=_JOIN_TIMEOUT_S)
-            with self._lock:
-                self._threads = [
-                    thread for thread in self._threads if thread.is_alive()
-                ]
+            self._threads = [thread for thread in self._threads if thread.is_alive()]
             flush = getattr(self._client, "flush", None)
             if flush is not None:
                 flush()
@@ -229,9 +219,8 @@ class TraceSink:
             return
         try:
             self.flush()
-            with self._lock:
-                run_id = self._run_ids.get(pick_no)
-                outputs = dict(self._outputs.get(pick_no, {}))
+            run_id = self._run_ids.get(pick_no)
+            outputs = dict(self._outputs.get(pick_no, {}))
             if run_id is None:
                 return
             outputs["human_pick"] = human_pick

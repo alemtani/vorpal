@@ -11,5 +11,4 @@ __all__ = ["_vorpal"]
 def _no_live_tracing(monkeypatch: pytest.MonkeyPatch) -> None:
     """A stray key in the shell must not fire a live sink during tests."""
 
-    monkeypatch.delenv("VORPAL_TRACING", raising=False)
     monkeypatch.delenv("LANGSMITH_API_KEY", raising=False)

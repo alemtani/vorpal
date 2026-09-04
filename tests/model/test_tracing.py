@@ -218,26 +218,25 @@ def _children(client: _RecordingClient) -> list[dict[str, Any]]:
     return [run for run in client.created if run.get("parent_run_id")]
 
 
-def test_tracing_off_without_key_is_a_noop() -> None:
+def test_tracing_off_without_key_is_a_noop(capsys: Any) -> None:
     from vorpal.model.tracing import TraceSink
 
-    sink = TraceSink(environ={"VORPAL_TRACING": "on"})
+    sink = TraceSink(trace=True)
     assert sink.enabled() is False
     sink.log(1, _identity_payload(), _rec(), [({"player_id": "p1"}, 1.0)], 2.0)
     sink.patch_human_pick(1, "p9")
     sink.flush()
+    assert "LANGSMITH_API_KEY" in capsys.readouterr().err
 
 
-def test_tracing_off_when_gate_is_off_is_a_noop() -> None:
+def test_tracing_off_when_flag_is_off_is_a_noop() -> None:
     from vorpal.model.tracing import TraceSink
 
-    sink = TraceSink(
-        environ={"VORPAL_TRACING": "off", "LANGSMITH_API_KEY": "ls-secret"}
-    )
+    sink = TraceSink(trace=False, environ={"LANGSMITH_API_KEY": "ls-secret"})
     assert sink.enabled() is False
 
 
-def test_tracing_off_when_gate_unset_is_a_noop() -> None:
+def test_tracing_off_when_flag_unset_is_a_noop() -> None:
     from vorpal.model.tracing import TraceSink
 
     sink = TraceSink(environ={"LANGSMITH_API_KEY": "ls-secret"})
@@ -248,7 +247,7 @@ def test_tracing_off_when_langsmith_is_absent(monkeypatch: Any) -> None:
     from vorpal.model.tracing import TraceSink
 
     monkeypatch.setitem(sys.modules, "langsmith", None)
-    sink = TraceSink(environ={"VORPAL_TRACING": "on", "LANGSMITH_API_KEY": "ls-secret"})
+    sink = TraceSink(trace=True, environ={"LANGSMITH_API_KEY": "ls-secret"})
     assert sink.enabled() is False
 
 
@@ -278,12 +277,12 @@ def test_connect_error_disables_the_sink_and_prints_to_stderr(
             raise RuntimeError("connect refused")
 
     monkeypatch.setitem(sys.modules, "langsmith", SimpleNamespace(Client=Boom))
-    sink = TraceSink(environ={"VORPAL_TRACING": "on", "LANGSMITH_API_KEY": "ls-secret"})
+    sink = TraceSink(trace=True, environ={"LANGSMITH_API_KEY": "ls-secret"})
     assert sink.enabled() is False
     assert "connect refused" in capsys.readouterr().err
 
 
-def test_gate_on_and_key_and_import_enables_the_sink(monkeypatch: Any) -> None:
+def test_flag_and_key_and_import_enables_the_sink(monkeypatch: Any) -> None:
     from vorpal.model.tracing import TraceSink
 
     created: list[int] = []
@@ -300,11 +299,11 @@ def test_gate_on_and_key_and_import_enables_the_sink(monkeypatch: Any) -> None:
 
     monkeypatch.setitem(sys.modules, "langsmith", SimpleNamespace(Client=FakeClient))
     sink = TraceSink(
+        trace=True,
         environ={
-            "VORPAL_TRACING": "true",
             "LANGSMITH_API_KEY": "ls-secret",
             "LANGSMITH_PROJECT": "vorpal-test",
-        }
+        },
     )
     assert sink.enabled() is True
     assert created == [1]

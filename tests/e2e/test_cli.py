@@ -128,6 +128,36 @@ def test_off_the_clock_does_not_ask_the_model(
     assert "Not your pick" in page
 
 
+@pytest.mark.parametrize("flag,expected", [((), False), (("--trace",), True)])
+def test_trace_flag_is_passed_to_the_sink(
+    api: respx.MockRouter,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    flag: tuple[str, ...],
+    expected: bool,
+) -> None:
+    """--trace is the on/off gate. A key in the shell is not enough."""
+    captured: dict[str, Any] = {}
+
+    class _Fake:
+        def __init__(self, *args: Any, trace: bool = False, **kwargs: Any) -> None:
+            captured["trace"] = trace
+
+        def log(self, *args: Any, **kwargs: Any) -> None:
+            return None
+
+        def patch_human_pick(self, *args: Any, **kwargs: Any) -> None:
+            return None
+
+        def flush(self) -> None:
+            return None
+
+    monkeypatch.setattr(cli, "TraceSink", _Fake)
+    code = main(_argv(tmp_path, *flag), transport=HintTransport())
+    assert code == 0
+    assert captured["trace"] is expected
+
+
 @pytest.mark.parametrize("flag,expected", [((), False), (("--fast",), True)])
 def test_fast_flag_gates_fast_mode(
     api: respx.MockRouter,

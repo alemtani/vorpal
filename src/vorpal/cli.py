@@ -126,6 +126,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="fast mode: ~2.5x quicker rec at premium price. Worth it on a "
         "short mock clock; a real draft with a longer timer does not need it",
     )
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="send propose traces to LangSmith. Needs LANGSMITH_API_KEY. "
+        "Off by default so a key in the shell does not trace a test run",
+    )
     return parser
 
 
@@ -239,7 +245,7 @@ def _run(
         path=skips_path_for(out),
         why_not_form=why_not_form or tty_why_not_form,
         open_issue=open_issue or _open_issue,
-        trace_sink=TraceSink(),
+        trace_sink=TraceSink(trace=args.trace),
     )
     frames = _Frames(_Proposals(traced, collector=feedback))
 
