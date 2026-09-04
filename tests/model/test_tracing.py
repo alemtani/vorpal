@@ -629,3 +629,16 @@ def test_proposals_seam_times_propose_and_hands_the_call_to_the_collector() -> N
     assert len(call["samples"]) == 1
     assert call["samples"][0][0]["player_id"] == "4866"
     assert call["latency_ms"] >= 0.0
+
+
+def test_project_property_is_readable_for_the_draft_issue() -> None:
+    """The draft issue names the project instead of embedding trace blobs."""
+    from vorpal.model.tracing import TraceSink
+
+    sink = TraceSink(
+        client=_RecordingClient(),
+        environ={"LANGSMITH_PROJECT": "custom-draft"},
+        draft_session="sess",
+    )
+    assert sink.project == "custom-draft"
+    assert sink.draft_session == "sess"

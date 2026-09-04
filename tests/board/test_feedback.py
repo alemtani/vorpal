@@ -749,9 +749,9 @@ def test_finish_swallows_a_raising_patch(
     assert len(issues) == 1
 
 
-def test_issue_body_drops_traces_when_it_would_exceed_the_github_limit() -> None:
-    """A real draft's traces carry the whole board and blew past 65536, so the
-    issue never got filed. Summary lines survive; the trace moves to the file."""
+def test_issue_body_never_embeds_traces() -> None:
+    """A trace carries the whole board. Embedding four cleared GitHub's 65536
+    limit and the issue was lost after the snapshot was already written."""
     from vorpal.board.feedback import GITHUB_BODY_LIMIT, SkipRecord, issue_text
 
     fat = {"attempts": 1, "violations": [], "payload": {"board": ["x" * 40000]}}
@@ -767,20 +767,21 @@ def test_issue_body_drops_traces_when_it_would_exceed_the_github_limit() -> None
         )
         for n in range(4)
     ]
-    snap = Path("/tmp/board.snapshot.local.json")
-    title, body = issue_text(skips, snap)
+    title, body = issue_text(skips, Path("/tmp/board.snapshot.local.json"))
 
     assert len(body) <= GITHUB_BODY_LIMIT
     assert title == "draft feedback: 4 skip(s)"
-    assert "board.skips.local.json" in body
     assert "```json" not in body
+    assert "x" * 100 not in body
+    # The summary survives; the trace is on disk.
+    assert "board.skips.local.json" in body
     for n in range(4):
         assert f"### pick {n}" in body
         assert f"- rec: `r{n}`" in body
 
 
-def test_issue_body_keeps_traces_when_it_fits() -> None:
-    from vorpal.board.feedback import GITHUB_BODY_LIMIT, SkipRecord, issue_text
+def test_issue_body_omits_langsmith_line_when_tracing_is_off() -> None:
+    from vorpal.board.feedback import SkipRecord, issue_text
 
     skips = [
         SkipRecord(
@@ -794,6 +795,109 @@ def test_issue_body_keeps_traces_when_it_fits() -> None:
         )
     ]
     _, body = issue_text(skips, Path("/tmp/board.snapshot.local.json"))
-    assert len(body) <= GITHUB_BODY_LIMIT
-    assert "```json" in body
-    assert "Traces omitted" not in body
+    assert "LangSmith" not in body
+    assert "attempts: 2" in body
+
+
+def test_issue_body_names_the_langsmith_run_when_tracing_is_on() -> None:
+    from vorpal.board.feedback import SkipRecord, issue_text
+
+    skips = [
+        SkipRecord(
+            pick_no=1,
+            human_pick="h1",
+            rec="r1",
+            alternatives=(),
+            coin_flip=False,
+            why_not=None,
+            trace={"attempts": 1, "violations": []},
+        )
+    ]
+    _, body = issue_text(
+        skips,
+        Path("/tmp/board.snapshot.local.json"),
+        trace_ref="project `vorpal`, draft session `abc123`",
+    )
+    assert "LangSmith: project `vorpal`, draft session `abc123`" in body
+
+
+def test_finish_names_langsmith_when_the_sink_is_enabled(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    class _Sink:
+        draft_session = "abc123"
+        project = "vorpal-draft"
+
+        def enabled(self) -> bool:
+            return True
+
+        def patch_human_pick(self, pick_no: int, human_pick: str) -> None:
+            return None
+
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1", alternatives=("p2",))
+    issues: list[tuple[str, str]] = []
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: issues.append((title, body)) or "",
+        trace_sink=_Sink(),
+    )
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+
+    assert "LangSmith: project `vorpal-draft`, draft session `abc123`" in issues[0][1]
+
+
+def test_finish_omits_langsmith_when_the_sink_has_no_session(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    """An enabled sink that never opened a run names nothing rather than a
+    half-formed pointer the operator cannot follow."""
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    class _Sink:
+        draft_session = ""
+        project = ""
+
+        def enabled(self) -> bool:
+            return True
+
+        def patch_human_pick(self, pick_no: int, human_pick: str) -> None:
+            return None
+
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1", alternatives=("p2",))
+    issues: list[tuple[str, str]] = []
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: issues.append((title, body)) or "",
+        trace_sink=_Sink(),
+    )
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+
+    assert "LangSmith" not in issues[0][1]
