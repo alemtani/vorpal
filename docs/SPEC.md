@@ -514,6 +514,19 @@ A malformed HTTP response, a transport failure, or a body that is not JSON is a
 `PlatformError`, not a violation. That is the host being broken, not the model
 being wrong.
 
+**Speed is delivery, not the answer.** Fast mode runs the same model on the same
+request at a premium rate. It changes when the rec arrives, never what it says.
+It stays out of the request body the cassette key hashes, so toggling it never
+invalidates a recording. That makes it the one transport setting allowed to
+degrade instead of raise.
+
+A fast-mode rate limit falls back to standard speed and the pick proceeds. The
+fallback latches for the rest of the run. An org with no fast-mode allocation is
+the ordinary case here, not an outage: the limit is `0`, and no wait clears it,
+so retrying per pick only spends the clock. Every other transport failure is
+still a `PlatformError`. A slower rec beats no rec, the same way a degraded pick
+beats no pick.
+
 ---
 
 ## 5. Evals
