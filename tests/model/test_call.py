@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import anthropic
+import httpx2
 import pytest
 
 from vorpal.contracts import (
@@ -154,7 +156,9 @@ def _capturing_client(recorded: dict, captured: dict) -> SimpleNamespace:
                 stop_reason="end_turn",
             )
 
-    return SimpleNamespace(beta=SimpleNamespace(messages=_Messages()))
+    client = SimpleNamespace(beta=SimpleNamespace(messages=_Messages()))
+    client.with_options = lambda **kwargs: client
+    return client
 
 
 def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
@@ -429,4 +433,111 @@ def test_a_truncated_response_says_so_instead_of_bad_json() -> None:
         client=SimpleNamespace(messages=_Messages()), fast=False
     )
     with pytest.raises(PlatformError, match="max_tokens"):
+        transport.complete(_payload().to_dict())
+
+
+def _rate_limit_error(message: str) -> anthropic.RateLimitError:
+    """A real 429 from the SDK. The fast-mode limit arrives as this class."""
+    request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    return anthropic.RateLimitError(
+        message, response=httpx2.Response(429, request=request), body=None
+    )
+
+
+FAST_LIMIT = "rate limit of 0 fast mode input tokens per minute"
+
+
+def _two_speed_client(
+    recorded: dict, calls: list[dict], *, fast_error: Exception
+) -> SimpleNamespace:
+    """A client whose fast path always fails and whose standard path answers.
+
+    Records one row per call so a test can see which path ran, in order, and
+    with which retry setting. `with_options` returns the same object, the way
+    the SDK's does for our purposes.
+    """
+
+    class _Fast:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            calls.append({"speed": kwargs.get("speed"), **kwargs})
+            raise fast_error
+
+    class _Standard:
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            calls.append({"speed": kwargs.get("speed"), **kwargs})
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(recorded))],
+                stop_reason="end_turn",
+            )
+
+    client = SimpleNamespace(
+        beta=SimpleNamespace(messages=_Fast()), messages=_Standard()
+    )
+    client.options: list[dict] = []
+
+    def with_options(**kwargs: object) -> SimpleNamespace:
+        client.options.append(kwargs)
+        return client
+
+    client.with_options = with_options
+    return client
+
+
+def test_fast_mode_rate_limit_falls_back_to_standard_speed() -> None:
+    """A delivery setting never fails the answer. #76."""
+    recorded = _recorded()
+    calls: list[dict] = []
+    client = _two_speed_client(
+        recorded, calls, fast_error=_rate_limit_error(FAST_LIMIT)
+    )
+    transport = AnthropicTransport(client=client, fast=True)
+    assert transport.complete(_payload().to_dict()) == recorded
+    assert [call["speed"] for call in calls] == ["fast", None]
+
+
+def test_fast_mode_fallback_latches_off_for_the_rest_of_the_run() -> None:
+    """The org limit is 0. No wait clears it, so do not probe every pick."""
+    recorded = _recorded()
+    calls: list[dict] = []
+    client = _two_speed_client(
+        recorded, calls, fast_error=_rate_limit_error(FAST_LIMIT)
+    )
+    transport = AnthropicTransport(client=client, fast=True)
+    for _ in range(3):
+        assert transport.complete(_payload().to_dict()) == recorded
+    assert [call["speed"] for call in calls] == ["fast", None, None, None]
+
+
+def test_the_fast_probe_does_not_burn_the_clock_on_sdk_retries() -> None:
+    """`retry-after` on a 0 limit would outlast the pick. Fail and fall back."""
+    recorded = _recorded()
+    calls: list[dict] = []
+    client = _two_speed_client(
+        recorded, calls, fast_error=_rate_limit_error(FAST_LIMIT)
+    )
+    AnthropicTransport(client=client, fast=True).complete(_payload().to_dict())
+    assert {"max_retries": 0} in client.options
+
+
+def test_a_standard_speed_rate_limit_still_raises() -> None:
+    """Only speed degrades. Standard is the answer path, and it raises."""
+
+    class _Messages:
+        def create(self, **kwargs: object) -> None:
+            raise _rate_limit_error("rate limit of 40000 input tokens per minute")
+
+    transport = AnthropicTransport(
+        client=SimpleNamespace(messages=_Messages()), fast=False
+    )
+    with pytest.raises(PlatformError, match="40000 input tokens"):
+        transport.complete(_payload().to_dict())
+
+
+def test_a_fast_mode_failure_that_is_not_a_rate_limit_still_raises() -> None:
+    """The carve-out is the limit, not every fast-path error."""
+    recorded = _recorded()
+    calls: list[dict] = []
+    client = _two_speed_client(recorded, calls, fast_error=RuntimeError("network down"))
+    transport = AnthropicTransport(client=client, fast=True)
+    with pytest.raises(PlatformError, match="network down"):
         transport.complete(_payload().to_dict())
