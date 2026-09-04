@@ -5,7 +5,7 @@ Three fixture families, four policies on each board:
 
 - **golden** — 12 hand-built boards with a human forbid/require. Floor:
   did the rec avoid a mistake a stranger can name in one sentence?
-- **regret** — 4 seats on completed public drafts. Wait-or-take: could
+- **regret** — 6 seats on completed public drafts. Wait-or-take: could
   we have had both names? Fail iff rec survived to our next pick and a
   listed alternative did not.
 - **human** — 28 turns from the operator's own mocks. Agreement with
@@ -591,7 +591,7 @@ def write_report(runs: list[FixtureRun]) -> str:
     lines.append("")
     lines.append("## Four-column table")
     lines.append("")
-    lines.append("Fixtures: 12 golden cases + 4 regret seats. Pass rate ignores")
+    lines.append("Fixtures: 12 golden cases + 6 regret seats. Pass rate ignores")
     lines.append("`NOT_PERFORMED`. `s=N` is the skip count. A matching model and")
     lines.append("`argmax_vols` rate is marked `NO DISCRIMINATING POWER`.")
     lines.append("")

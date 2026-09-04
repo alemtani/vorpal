@@ -51,6 +51,7 @@ REGRET_SOURCES = {
     "draft_snake_redraft": ("snake_redraft", "snake_redraft"),
     "draft_superflex": ("superflex", "superflex"),
     "draft_mock_standalone": ("mock_standalone", None),
+    "draft_mock_std14": ("mock_std14", None),
 }
 
 # Mock has no league. Borrow the recorded PPR table. The mock's own label is

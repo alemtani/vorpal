@@ -6,10 +6,12 @@ The committed JSON is derived, never hand-edited. `test_regret.py`
 rebuilds every fixture and compares byte for byte, so an edit here that
 does not come from the recorded picks fails the suite.
 
-Four seats across three completed drafts. Breadth of situation over
-volume: an early-round tier drain, a late round where the board is flat,
-a superflex second round, and a mock with CPU autopick — which is a
-weaker record on purpose, and says so in its own `provenance` field.
+Six seats across four completed drafts, four independent rooms. Breadth
+of situation over volume: an early-round tier drain, a late round where
+the board is flat, a superflex second round, a mock with CPU autopick,
+and a seat next to the turn frozen in consecutive rounds so the two-pick
+and twenty-pick wait sit side by side. The two mocks are weaker records
+on purpose, and say so in their own `provenance` fields.
 """
 
 from __future__ import annotations

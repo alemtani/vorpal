@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import fields
+from pathlib import Path
 
 import pytest
 from build import SPECS, build
@@ -208,3 +209,16 @@ def test_load_fixture_round_trips() -> None:
     one = load_fixture(SPECS[0]["name"])
     assert one.name == SPECS[0]["name"]
     assert isinstance(one.drafted_before, tuple)
+
+
+def test_every_fixture_has_a_recorded_source() -> None:
+    """`evals.run --only regret` looks each fixture's draft up in
+    REGRET_SOURCES. A fixture with no entry raises KeyError there, and CI
+    never runs the model, so nothing else in this suite would catch it."""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "evals"))
+    from board import REGRET_SOURCES
+
+    for fixture in all_fixtures():
+        assert fixture.draft_id in REGRET_SOURCES, fixture.name
