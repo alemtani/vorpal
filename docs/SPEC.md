@@ -598,6 +598,7 @@ Local display, documented draft API only.
 - Error backoff: 5s, 15s, 45s, hold. Reset on success.
 - Always show data age. Past 15s, degrade. Grey-out at `pick_timer` (skip grey-out if timer is 0/null).
 - `status` from `draft.status`, not `start_time`. Observed: `pre_draft`, `drafting`, `complete`.
+- The board opens itself. The first page written — board, platform error, or refusal — opens in the default browser, once per run. Later polls rewrite the same file and the open tab follows it. `--no-open` suppresses it for a headless box or a tab that is already up. A browser that will not start prints to stderr and the draft continues.
 - The model runs only when `picks_until_next == 0` (this seat is on the clock) or when `picks_until_next` is omitted (unknown seat, or past the last pick). Off the clock, the page shows the calculator (`hint_argmax_vols`) and "Not your pick." There is no one-shot flag: a complete draft writes one board and returns.
 
 ### Feedback capture (#29)

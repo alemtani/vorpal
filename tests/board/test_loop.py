@@ -563,3 +563,115 @@ def test_loop_persists_skip_then_opens_issue_on_complete(
     assert len(issues) == 1
     assert "p9" in issues[0][1]
     assert "board.snapshot.local.json" in issues[0][1]
+
+
+def test_the_first_board_opens_once_and_no_poll_opens_another(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    """The tab is opened once. The loop rewrites the file the tab already has.
+
+    Three polls, three writes, one open. Opening per poll would bury the
+    operator in tabs on the one screen they are trying to read.
+    """
+    from vorpal.board import run_loop
+
+    clock = FakeClock()
+    client = FakeClient(make_draft(status="drafting"))
+    path = tmp_path / "board.html"
+    opened: list[Path] = []
+    run_loop(
+        client,
+        _recompute(make_payload(), make_proposal()),
+        path,
+        now=clock.now,
+        sleep=clock.sleep,
+        should_stop=_stop_after_polls(client, 3),
+        on_first_board=opened.append,
+    )
+    assert opened == [path]
+
+
+def test_an_error_page_is_still_the_first_board_and_opens(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    """A first poll that fails writes a loud page. That page must open too.
+
+    This is the case where an unopened file hurts most: nothing on screen
+    and nothing saying why.
+    """
+    from vorpal.board import run_loop
+
+    clock = FakeClock()
+    client = FakeClient(
+        make_draft(status="drafting"),
+        errors=[PlatformError("sleeper 500")],
+    )
+    path = tmp_path / "board.html"
+    opened: list[Path] = []
+    run_loop(
+        client,
+        _recompute(make_payload(), make_proposal()),
+        path,
+        now=clock.now,
+        sleep=clock.sleep,
+        should_stop=_stop_after_polls(client, 1),
+        on_first_board=opened.append,
+    )
+    assert opened == [path]
+    assert "sleeper 500" in path.read_text(encoding="utf-8")
+
+
+def test_a_refusal_page_opens_before_the_loop_re_raises(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    """A permanent refusal writes a page and re-raises. Show the page first."""
+    from vorpal.board import run_loop
+
+    clock = FakeClock()
+    client = FakeClient(
+        make_draft(status="drafting"),
+        errors=[UnsupportedLeague("auction is out of v1")],
+    )
+    path = tmp_path / "board.html"
+    opened: list[Path] = []
+    with pytest.raises(UnsupportedLeague):
+        run_loop(
+            client,
+            _recompute(make_payload(), make_proposal()),
+            path,
+            now=clock.now,
+            sleep=clock.sleep,
+            on_first_board=opened.append,
+        )
+    assert opened == [path]
+
+
+def test_no_opener_writes_the_same_board(
+    tmp_path: Path,
+    make_draft: Callable[..., Draft],
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    """`on_first_board` is optional. Omitting it changes nothing on disk."""
+    from vorpal.board import run_loop
+
+    clock = FakeClock()
+    client = FakeClient(make_draft(status="complete"))
+    path = tmp_path / "board.html"
+    run_loop(
+        client,
+        _recompute(make_payload(status="complete"), make_proposal()),
+        path,
+        now=clock.now,
+        sleep=clock.sleep,
+    )
+    assert "A Back" in path.read_text(encoding="utf-8")

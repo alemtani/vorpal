@@ -11,6 +11,7 @@ import argparse
 import os
 import sys
 import time
+import webbrowser
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -128,6 +129,13 @@ def build_parser() -> argparse.ArgumentParser:
         "Falls back to standard speed if your org has no fast-mode allocation",
     )
     parser.add_argument(
+        "--no-open",
+        dest="open_board",
+        action="store_false",
+        help="do not open the board in a browser. The page still writes to "
+        "--out; use this on a headless box, or when the tab is already up",
+    )
+    parser.add_argument(
         "--trace",
         action="store_true",
         help="send propose traces to LangSmith. Needs LANGSMITH_API_KEY. "
@@ -145,6 +153,7 @@ def main(
     now=time.monotonic,
     open_issue=None,
     why_not_form=None,
+    open_board=None,
 ) -> int:
     """Run one draft. Returns 0, or 2 with a refusal on stderr."""
     args = build_parser().parse_args(argv)
@@ -159,6 +168,7 @@ def main(
             now=now,
             open_issue=open_issue,
             why_not_form=why_not_form,
+            open_board=open_board,
         )
     except VorpalError as exc:
         print(f"{_label(exc)}: {exc.message}", file=sys.stderr)
@@ -189,6 +199,7 @@ def _run(
     now,
     open_issue=None,
     why_not_form=None,
+    open_board=None,
 ) -> None:
     draft = client.get_draft(args.draft_id)
     picks = client.get_picks(args.draft_id)
@@ -268,6 +279,7 @@ def _run(
         now=now,
         sleep=sleep,
         feedback=feedback,
+        on_first_board=(open_board or _open_board) if args.open_board else None,
     )
 
 
@@ -498,6 +510,14 @@ def _frame(
     payload = build_payload(config, state, values.replacement, rows)
     proposal, proposal_banners = proposals.for_payload(payload)
     return Frame(payload=payload, proposal=proposal, banners=extra + proposal_banners)
+
+
+def _open_board(path: Path) -> None:
+    """Best-effort browser tab. A box with no browser must not fail the draft."""
+    try:
+        webbrowser.open(path.resolve().as_uri())
+    except Exception as exc:
+        print(f"open board: {exc}", file=sys.stderr)
 
 
 def _open_issue(title: str, body: str) -> str:
