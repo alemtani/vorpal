@@ -46,6 +46,29 @@ def write_html(path: Path, html: str) -> None:
     tmp.replace(path)
 
 
+class _WriteOnce:
+    """``write_html``, plus a one-shot callback after the first page lands.
+
+    Latches on the write, not on the poll: the callback only ever sees a file
+    that exists. A callback that raises is the caller's to handle — the loop
+    never lets it stop a draft.
+    """
+
+    __slots__ = ("_on_first", "_written")
+
+    def __init__(self, on_first: Callable[[Path], None] | None) -> None:
+        self._on_first = on_first
+        self._written = False
+
+    def __call__(self, path: Path, html: str) -> None:
+        write_html(path, html)
+        if self._written:
+            return
+        self._written = True
+        if self._on_first is not None:
+            self._on_first(path)
+
+
 def run_loop(
     client: DraftPollClient,
     recompute: Callable[[Draft, tuple[Pick, ...]], Frame],
@@ -55,6 +78,7 @@ def run_loop(
     sleep: Callable[[float], None],
     should_stop: Callable[[], bool] | None = None,
     feedback: FeedbackCollector | None = None,
+    on_first_board: Callable[[Path], None] | None = None,
 ) -> None:
     """Poll draft and picks, recompute, write ``board.html``, until complete.
 
@@ -64,9 +88,15 @@ def run_loop(
     and resets the schedule on the next success. A completed draft also
     writes a redacted JSON snapshot next to the board (#22). Skip
     records (#29) persist at click when ``feedback`` is passed.
+
+    ``on_first_board`` is called once, with ``path``, after the first page is
+    written — board, platform-error, or refusal alike. The loop rewrites the
+    same file every poll and an open tab follows it, so opening per poll would
+    only bury the operator in tabs.
     """
 
     path = Path(output_path)
+    write = _WriteOnce(on_first_board)
     last: tuple[Frame, float] | None = None
     failures = 0
     collector = SnapshotCollector()
@@ -80,16 +110,16 @@ def run_loop(
             frame = recompute(draft, picks)
         except PlatformError as exc:
             failures += 1
-            _write_platform_error(path, exc, last, fetched_at, now)
+            _write_platform_error(path, exc, last, fetched_at, now, write)
             sleep(next_backoff(failures))
             continue
         except VorpalError as exc:
-            _write_refusal(path, exc, fetched_at, now)
+            _write_refusal(path, exc, fetched_at, now, write)
             raise
         failures = 0
         last = (frame, fetched_at)
         age = now() - fetched_at
-        write_html(
+        write(
             path,
             render(frame.payload, frame.proposal, age, frame.banners),
         )
@@ -111,10 +141,11 @@ def _write_platform_error(
     last: tuple[Frame, float] | None,
     fetched_at: float,
     now: Callable[[], float],
+    write: Callable[[Path, str], None] = write_html,
 ) -> None:
     extra = (Banner(code="platform_error", message=exc.message),)
     if last is None:
-        write_html(
+        write(
             path,
             render_unavailable(
                 exc.message,
@@ -125,7 +156,7 @@ def _write_platform_error(
         return
     frame, good_at = last
     age = now() - good_at
-    write_html(
+    write(
         path,
         render(frame.payload, frame.proposal, age, extra + frame.banners),
     )
@@ -136,9 +167,10 @@ def _write_refusal(
     exc: VorpalError,
     fetched_at: float,
     now: Callable[[], float],
+    write: Callable[[Path, str], None] = write_html,
 ) -> None:
     code = _refusal_code(exc)
-    write_html(
+    write(
         path,
         render_unavailable(
             exc.message,

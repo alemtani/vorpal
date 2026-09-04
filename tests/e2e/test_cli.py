@@ -47,7 +47,7 @@ def _projections_down(api: respx.MockRouter) -> None:
         api[f"projections_{position}"].mock(return_value=httpx.Response(503))
 
 
-def _argv(tmp_path: Path, *extra: str) -> list[str]:
+def _argv_raw(tmp_path: Path, *extra: str) -> list[str]:
     return [
         "--draft-id",
         "draft_snake_redraft",
@@ -59,6 +59,11 @@ def _argv(tmp_path: Path, *extra: str) -> list[str]:
         str(tmp_path / "players.json"),
         *extra,
     ]
+
+
+def _argv(tmp_path: Path, *extra: str) -> list[str]:
+    """The suite runs with the browser off. Only the auto-open tests turn it on."""
+    return _argv_raw(tmp_path, "--no-open", *extra)
 
 
 def _run(tmp_path: Path, *extra: str, transport: Any = None) -> tuple[int, Any]:
@@ -632,3 +637,46 @@ def test_a_missing_github_token_does_not_fail_draft_night(
     monkeypatch.setattr("vorpal.cli.gh_issue_create", boom)
     assert _open_issue("t", "b") == ""
     assert "github issue" in capsys.readouterr().err
+
+
+def test_the_board_opens_itself_on_the_first_page(
+    api: respx.MockRouter, tmp_path: Path
+) -> None:
+    """Default is open. The operator should not have to find the file."""
+    opened: list[Path] = []
+    code = main(
+        _argv_raw(tmp_path),
+        transport=HintTransport(),
+        open_board=opened.append,
+    )
+    assert code == 0
+    assert opened == [tmp_path / "board.html"]
+
+
+def test_no_open_leaves_the_file_alone(api: respx.MockRouter, tmp_path: Path) -> None:
+    """--no-open is for a second terminal, a headless box, or a test."""
+    opened: list[Path] = []
+    code = main(
+        _argv_raw(tmp_path, "--no-open"),
+        transport=HintTransport(),
+        open_board=opened.append,
+    )
+    assert code == 0
+    assert opened == []
+    assert (tmp_path / "board.html").is_file()
+
+
+def test_a_browser_that_will_not_start_does_not_fail_draft_night(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    """Same rule as the GitHub issue: best-effort, never fatal on the clock."""
+    from vorpal.cli import _open_board
+
+    def boom(url: str) -> bool:
+        raise RuntimeError("no display")
+
+    monkeypatch.setattr("vorpal.cli.webbrowser.open", boom)
+    _open_board(tmp_path / "board.html")
+    err = capsys.readouterr().err
+    assert "open board" in err
+    assert "no display" in err
