@@ -1,0 +1,125 @@
+{
+  "key": "6b585f89e9070d9b103ce5bf7b2580b8df3a4d84a0891954bbeb6f7d92e82149",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 18.0, \"ecr\": 16, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-a\", \"player_id\": \"rb-a\", \"position\": \"RB\", \"vols\": 62.0}, {\"adp\": 20.0, \"ecr\": 19, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-a\", \"player_id\": \"wr-a\", \"position\": \"WR\", \"vols\": 58.0}, {\"adp\": 24.0, \"ecr\": 23, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-b\", \"player_id\": \"wr-b\", \"position\": \"WR\", \"vols\": 50.0}, {\"adp\": 30.0, \"ecr\": 29, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-a\", \"player_id\": \"te-a\", \"position\": \"TE\", \"vols\": 31.0}, {\"adp\": 35.0, \"ecr\": 34, \"legal_slots\": [\"QB\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"qb-a\", \"player_id\": \"qb-a\", \"position\": \"QB\", \"vols\": 24.0}, {\"adp\": 150.0, \"ecr\": 185, \"legal_slots\": [\"K\", \"BN\"], \"name\": \"k-early\", \"player_id\": \"k-early\", \"position\": \"K\", \"vols\": 3.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"rb-a\", \"replacement\": {\"K\": {\"player_id\": \"repl-k\", \"points\": 100.0}, \"QB\": {\"player_id\": \"repl-qb\", \"points\": 100.0}, \"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 0, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 0, \"required\": 1}, \"WR\": {\"filled\": 0, \"required\": 2}}, \"next_user_pick\": 28, \"pick_no\": 21, \"picks_until_next\": 7, \"recent\": [], \"user_roster\": [{\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on. The board is lean. Call detail(player_ids) once for the players you are deciding between to read delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, and bye. Batch every id into that one call. Ids must be on the board.",
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Heavier per-player columns for the players you are deciding between: delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, bye. Batch every id into one call. Ids must be on the board.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "player_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "player_ids"
+          ],
+          "type": "object"
+        },
+        "name": "detail",
+        "strict": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-a",
+        "wr-b"
+      ],
+      "coin_flip": true,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "rb-a",
+      "slot_filled": "RB",
+      "why": "rb-a leads the board in delta_starter_points (31.0 vs 29.0 for the next-best) and is also the top ECR name, so the calculator and the consensus agree here. Tight ECR spread (16-16, std 2.0), 17 games, 182 points, and a bye 10 that avoids my existing RB's week 8. It fills my open RB2 immediately while the two WR slots can still be addressed at pick 28 with comparable receivers likely to survive seven picks. Only real debate is taking wr-a first because both WR starters are empty, but the points edge and positional scarcity of a top-16 back win."
+    }
+  ]
+}

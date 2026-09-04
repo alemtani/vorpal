@@ -1,0 +1,123 @@
+{
+  "key": "dc86836f54871dbfdc2bf09168af545f4395e5d09c0d9be2b448682093871214",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 25.0, \"ecr\": 24, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-i\", \"player_id\": \"rb-i\", \"position\": \"RB\", \"vols\": 44.0}, {\"adp\": 26.0, \"ecr\": 25, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-i\", \"player_id\": \"wr-i\", \"position\": \"WR\", \"vols\": 42.0}, {\"adp\": 32.0, \"ecr\": 30, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-i\", \"player_id\": \"te-i\", \"position\": \"TE\", \"vols\": 27.0}, {\"adp\": 118.0, \"ecr\": 138, \"legal_slots\": [\"DEF\", \"BN\"], \"name\": \"def-unknown-seat\", \"player_id\": \"def-unknown-seat\", \"position\": \"DEF\", \"vols\": 4.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": null, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"rb-i\", \"replacement\": {\"DEF\": {\"player_id\": \"repl-def\", \"points\": 100.0}, \"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 0, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 0, \"required\": 1}, \"WR\": {\"filled\": 1, \"required\": 2}}, \"pick_no\": 24, \"recent\": [], \"user_roster\": [{\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"wr-held\", \"player_id\": \"wr-held\", \"position\": \"WR\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on. The board is lean. Call detail(player_ids) once for the players you are deciding between to read delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, and bye. Batch every id into that one call. Ids must be on the board.",
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Heavier per-player columns for the players you are deciding between: delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, bye. Batch every id into one call. Ids must be on the board.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "player_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "player_ids"
+          ],
+          "type": "object"
+        },
+        "name": "detail",
+        "strict": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-i",
+        "te-i"
+      ],
+      "coin_flip": true,
+      "flags": [],
+      "player_id": "rb-i",
+      "slot_filled": "RB",
+      "why": "rb-i is the best available by ECR, leads in VOLS (44) and delta_starter_points (+22.0), and fills the open RB2 next to rb-held with no bye overlap. wr-i is essentially even (21.0 delta, ECR 25) so a rerun could land there, but the RB edge in points and the tight ECR spread makes rb-i the pick."
+    }
+  ]
+}

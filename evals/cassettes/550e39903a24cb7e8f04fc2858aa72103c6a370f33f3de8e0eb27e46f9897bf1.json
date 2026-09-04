@@ -1,0 +1,182 @@
+{
+  "key": "550e39903a24cb7e8f04fc2858aa72103c6a370f33f3de8e0eb27e46f9897bf1",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 28.0, \"ecr\": 26, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-elite\", \"player_id\": \"te-elite\", \"position\": \"TE\", \"vols\": 55.0}, {\"adp\": 27.0, \"ecr\": 25, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-g\", \"player_id\": \"rb-g\", \"position\": \"RB\", \"vols\": 50.0}, {\"adp\": 30.0, \"ecr\": 29, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-g\", \"player_id\": \"wr-g\", \"position\": \"WR\", \"vols\": 48.0}, {\"adp\": 44.0, \"ecr\": 42, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-next\", \"player_id\": \"te-next\", \"position\": \"TE\", \"vols\": 18.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"te-elite\", \"replacement\": {\"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 0, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 0, \"required\": 1}, \"WR\": {\"filled\": 1, \"required\": 2}}, \"next_user_pick\": 45, \"pick_no\": 28, \"picks_until_next\": 17, \"recent\": [], \"user_roster\": [{\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"wr-held\", \"player_id\": \"wr-held\", \"position\": \"WR\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on. The board is lean. Call detail(player_ids) once for the players you are deciding between to read delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, and bye. Batch every id into that one call. Ids must be on the board.",
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Heavier per-player columns for the players you are deciding between: delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, bye. Batch every id into one call. Ids must be on the board.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "player_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "player_ids"
+          ],
+          "type": "object"
+        },
+        "name": "detail",
+        "strict": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "rb-g is the ECR pick, one slot ahead and a fine RB2, but the gap is a single spot while the positional edge is huge: te-elite adds 55 points over replacement versus 30, and my TE slot is empty. With 17 picks until pick 45, the only other TE here drops to an 18-point delta, so the tier break is real and RB/WR of this caliber replenish better than elite TE. Bye 10 is clean against rb-held (8) and wr-held (5)."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "rb-g is the ECR pick, one slot ahead, but the gap is a single rank and the value gap runs the other way: te-elite adds 55 points over replacement versus 30, and with 17 picks until 45 the only other tight end here falls to 18. Filling the empty TE slot with the top option and coming back for RB2/WR2 depth later is the cleaner path. Bye 10 is clean against the current roster."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "rb-g is the ECR pick, one slot ahead, but the gap is inside noise and it only adds 30 points over replacement while filling a spot I can rebuild from a deeper pool. te-elite gives 55 delta_starter_points at an empty TE slot, and the only other TE here drops to 18 delta \re17 picks before I'm back on the clock, so the fallback is a real cliff. Bye 10 stays clean against my rb-held (8) and wr-held (5)."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "rb-g is the ECR pick, one slot ahead and a fine RB2, but the TE gap on this board is the whole story: 55 points over replacement versus 18 for the next tight end, and with 17 picks until my turn at 45 that tier is gone. Passing on the running back costs about a slot of consensus value and I can still fill RB2/FLEX later from a deeper pool. Bye 10 is clean against my RB (8) and WR (5)."
+    },
+    {
+      "alternatives": [
+        "rb-g",
+        "wr-g"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "ECR_DISAGREE",
+        "EMPTY_STARTER"
+      ],
+      "player_id": "te-elite",
+      "slot_filled": "TE",
+      "why": "rb-g is the ECR pick, one slot ahead and a fine RB2, but the gap is a single rank while the positional edge is not close: te-elite delivers 55 delta starter points against 30, and the next tier at the position drops to 18. With 17 picks until my next turn, the elite TE will not survive and I would be filling that slot from the cliff, whereas RB/WR of similar value keep flowing. Bye 10 is clean against my rb-held (8) and wr-held (5)."
+    }
+  ]
+}
