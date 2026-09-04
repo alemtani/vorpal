@@ -7,6 +7,10 @@ data/cache/
 *.parquet
 .coverage
 htmlcov/
+
+# the rendered board and Claude Code's own session state
+board.html
+.claude/RESUME.md
 .pytest_cache/
 .ruff_cache/
 dist/
