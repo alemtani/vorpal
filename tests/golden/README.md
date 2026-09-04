@@ -22,9 +22,20 @@ of). No manager, no league id, no host id.
 
 ## CI
 
-pytest replays the committed cassettes and fails the build on
-`golden_forbid` or `golden_require`. It does not fail on `bye_hole`
-(#31). It does not run `evals/run.py`.
+pytest replays the committed cassettes and fails the build on any of the
+seven enforced gates: `schema`, `golden_forbid`, `golden_require`,
+`vols_dissent`, `ecr_dissent`, `ecr_sanity`, `why_contains_floor`.
+`ENFORCED` in `test_cassettes.py` is the list, and it pins how many of the
+twelve cases each gate runs on, so a gate cannot decay into a skip and stay
+green.
+
+Five gates are not enforced here, and none of them for a model reason:
+`bye_hole` is a known gate bug (#31, it fails all twelve including the picks
+the human calls correct), and `stability`, `vols_invariant`, `regret` and
+`replay` each need a fixture a hand-built board does not carry.
+
+A re-record has to clear all seven now, not two. It does not run
+`evals/run.py`.
 
 ## The cases
 
