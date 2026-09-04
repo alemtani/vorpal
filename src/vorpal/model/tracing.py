@@ -123,6 +123,12 @@ class TraceSink:
     def enabled(self) -> bool:
         return self._enabled
 
+    @property
+    def project(self) -> str:
+        """LangSmith project the runs land in. Named in the draft issue."""
+
+        return self._project
+
     def log(
         self,
         pick_no: int,

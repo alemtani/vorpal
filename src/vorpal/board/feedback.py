@@ -177,11 +177,23 @@ class FeedbackCollector:
                     self._trace_sink.patch_human_pick(skip.pick_no, skip.human_pick)
                 except Exception:
                     pass
-        title, body = issue_text(self._skips, snap)
+        title, body = issue_text(self._skips, snap, trace_ref=self._trace_ref())
         try:
             self._open_issue(title, body)
         except Exception:
             pass
+
+    def _trace_ref(self) -> str | None:
+        """Where the traces are in LangSmith, or None when tracing was off."""
+
+        sink = self._trace_sink
+        if sink is None or not getattr(sink, "enabled", lambda: False)():
+            return None
+        project = getattr(sink, "project", None)
+        session = getattr(sink, "draft_session", None)
+        if not project or not session:
+            return None
+        return f"project `{project}`, draft session `{session}`"
 
     def _persist(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
@@ -194,48 +206,34 @@ class FeedbackCollector:
         tmp.replace(self._path)
 
 
-# GitHub rejects a createIssue body over this many characters. A trace carries
-# the whole board, so a full-length draft clears it on the third or fourth skip
-# and the issue is lost after the snapshot is already on disk.
+# GitHub rejects a createIssue body over this many characters. Traces are never
+# embedded — one carries the whole board, so a full-length draft cleared this on
+# the fourth skip and the issue was lost. The full trace lives in the skips file
+# and, when --trace is on, in LangSmith.
 GITHUB_BODY_LIMIT = 65536
 
 
-def issue_text(skips: list[SkipRecord], snapshot_path: Path) -> tuple[str, str]:
-    """GitHub issue title and body. Player ids only.
-
-    Traces are dropped, not truncated, when the body will not fit: half a JSON
-    blob helps nobody, and the full trace is already on disk in the skips file
-    next to the snapshot.
-    """
-
-    title = f"draft feedback: {len(skips)} skip(s)"
-    body = _issue_body(skips, snapshot_path, with_traces=True)
-    if len(body) <= GITHUB_BODY_LIMIT:
-        return title, body
-    return title, _issue_body(skips, snapshot_path, with_traces=False)
-
-
-def _issue_body(
+def issue_text(
     skips: list[SkipRecord],
     snapshot_path: Path,
     *,
-    with_traces: bool,
-) -> str:
+    trace_ref: str | None = None,
+) -> tuple[str, str]:
+    """GitHub issue title and body. Player ids only, and no trace blobs.
+
+    `trace_ref` names where the traces actually are, e.g. the LangSmith
+    project and draft session. The skips file is always named.
+    """
+
+    title = f"draft feedback: {len(skips)} skip(s)"
+    skips_path = snapshot_path.with_name("board.skips.local.json")
     lines = [
         f"Snapshot: `{snapshot_path}`",
-        "",
+        f"Traces: `{skips_path}`",
     ]
-    if not with_traces:
-        skips_path = snapshot_path.with_name("board.skips.local.json")
-        lines.extend(
-            [
-                f"Traces omitted: the body passed GitHub's {GITHUB_BODY_LIMIT}"
-                " character limit. Full traces are in"
-                f" `{skips_path}`.",
-                "",
-            ]
-        )
-    lines.append("## Skips")
+    if trace_ref:
+        lines.append(f"LangSmith: {trace_ref}")
+    lines.extend(["", "## Skips"])
     for skip in skips:
         why = skip.why_not if skip.why_not else "(empty)"
         trace = skip.trace
@@ -253,18 +251,7 @@ def _issue_body(
                 "",
             ]
         )
-        if with_traces:
-            lines.extend(
-                [
-                    "```json",
-                    json.dumps(
-                        skip.trace, indent=2, sort_keys=True, ensure_ascii=False
-                    ),
-                    "```",
-                    "",
-                ]
-            )
-    return "\n".join(lines)
+    return title, "\n".join(lines)
 
 
 def tty_why_not_form(
