@@ -44,6 +44,13 @@ FantasyPros supplies the numbers. A league is a key mapping plus its draft
 settings. Valuation is pure functions over a table — no network, no IO, no
 host. See "A league is a table, not a branch" in `AGENTS.md`.
 
+## Draft night
+
+Running a real draft or a mock is the `draft-night` skill
+(`.claude/skills/draft-night/SKILL.md`). It holds the launch command, the
+monitor, and what every banner and error means on the clock. Read it before
+driving a draft; do not reconstruct the command from this file.
+
 ## Before you open a PR
 
 Link the GitHub issue. If the next person cannot see it from the code,
