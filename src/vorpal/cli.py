@@ -12,7 +12,7 @@ import os
 import sys
 import time
 import webbrowser
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 
@@ -56,6 +56,10 @@ FP_KEY_ENV = "FANTASYPROS_API_KEY"
 DEFAULT_OUTPUT = Path("board.html")
 FP_MIN_INTERVAL_S = 1.1
 
+# Keys live in a gitignored file the operator writes once, instead of three
+# exports retyped into every new shell. `.env` is already in .gitignore.
+DEFAULT_ENV_FILE = Path(".env")
+
 # The model runs only when this seat is on the clock (`picks_until_next == 0`).
 # A window of 2 used to pre-call on the picks in front; that is three bills
 # per operator pick and a stale rec shown as current. Other people's picks
@@ -70,6 +74,50 @@ REFUSAL_LABELS: tuple[tuple[type[VorpalError], str], ...] = (
     (PlatformError, "platform error"),
     (UserRefusal, "user refusal"),
 )
+
+
+def load_dotenv(path: Path, environ: MutableMapping[str, str]) -> tuple[str, ...]:
+    """Read ``KEY=VALUE`` lines into ``environ``. Returns the names it set.
+
+    Deliberately small. No variable expansion, no multi-line values, no
+    ``.env`` library: this file holds three API keys, and every feature past
+    reading them is a way for draft night to fail somewhere new.
+
+    An already-exported key wins, so a one-off
+    ``ANTHROPIC_API_KEY=other uv run vorpal ...`` still means what it says.
+
+    A missing file is the normal case and returns nothing. A malformed line
+    warns and is skipped: a silent skip hands the operator a missing-key
+    failure ten minutes later with nothing pointing at the file. Nothing here
+    ever prints a value.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    loaded: list[str] = []
+    for number, raw in enumerate(text.splitlines(), start=1):
+        line = raw.strip().removeprefix("export ").strip()
+        if not line or line.startswith("#"):
+            continue
+        name, sep, value = line.partition("=")
+        if not sep:
+            print(f"env: {path} line {number} has no '='; skipped", file=sys.stderr)
+            continue
+        name = name.strip()
+        if name in environ:
+            continue
+        environ[name] = _unquote(value.strip())
+        loaded.append(name)
+    return tuple(loaded)
+
+
+def _unquote(value: str) -> str:
+    """Strip one matched pair of surrounding quotes. A lone quote is data."""
+    for quote in ('"', "'"):
+        if len(value) >= 2 and value.startswith(quote) and value.endswith(quote):
+            return value[1:-1]
+    return value
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -129,6 +177,13 @@ def build_parser() -> argparse.ArgumentParser:
         "Falls back to standard speed if your org has no fast-mode allocation",
     )
     parser.add_argument(
+        "--env",
+        type=Path,
+        default=DEFAULT_ENV_FILE,
+        help=f"file of KEY=VALUE keys to load (default {DEFAULT_ENV_FILE}, "
+        "relative to where you run this). An exported key always wins",
+    )
+    parser.add_argument(
         "--no-open",
         dest="open_board",
         action="store_false",
@@ -157,6 +212,11 @@ def main(
 ) -> int:
     """Run one draft. Returns 0, or 2 with a refusal on stderr."""
     args = build_parser().parse_args(argv)
+    loaded = load_dotenv(args.env, os.environ)
+    if loaded:
+        # Names, never values. Silence here would leave the operator guessing
+        # whether the file was read at all.
+        print(f"env: loaded {args.env} ({', '.join(loaded)})", file=sys.stderr)
     owned = client is None
     host_client = client if client is not None else _client(args)
     try:
