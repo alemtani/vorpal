@@ -157,7 +157,7 @@ def _capturing_client(recorded: dict, captured: dict) -> SimpleNamespace:
     return SimpleNamespace(beta=SimpleNamespace(messages=_Messages()))
 
 
-def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
+def test_anthropic_transport_sets_the_detail_tool_and_no_temperature() -> None:
     recorded = _recorded()
     captured: dict = {}
     transport = AnthropicTransport(
@@ -167,8 +167,89 @@ def test_anthropic_transport_does_not_set_temperature_or_tools() -> None:
     assert out == recorded
     assert captured["model"] == MODEL_ID
     assert "temperature" not in captured
-    assert captured.get("tools") is None
+    assert [tool["name"] for tool in captured["tools"]] == ["detail"]
     assert "output_config" in captured
+
+
+def test_anthropic_transport_sends_the_lean_board_not_the_detail_columns() -> None:
+    recorded = _recorded()
+    captured: dict = {}
+    transport = AnthropicTransport(
+        client=_capturing_client(recorded, captured), fast=True
+    )
+    transport.complete(_payload().to_dict())
+    sent = json.loads(captured["messages"][0]["content"])
+    row = sent["board"][0]
+    assert "vols" in row and "adp" in row
+    assert "delta_starter_points" not in row
+    assert "ecr_min" not in row
+
+
+def test_anthropic_transport_answers_detail_then_finalizes() -> None:
+    """One detail round trip: answer from the board, drop the tool, finalize."""
+    recorded = _recorded()
+    requests: list[dict] = []
+
+    class _Messages:
+        def __init__(self) -> None:
+            self._turn = 0
+
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            requests.append(kwargs)
+            self._turn += 1
+            if self._turn == 1:
+                # A thinking block rides alongside the tool_use; it is skipped.
+                think = SimpleNamespace(type="thinking", text="")
+                use = SimpleNamespace(
+                    type="tool_use",
+                    id="tu_1",
+                    name="detail",
+                    input={"player_ids": ["4866"]},
+                )
+                return SimpleNamespace(content=[think, use], stop_reason="tool_use")
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(recorded))],
+                stop_reason="end_turn",
+            )
+
+    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    out = transport.complete(_payload().to_dict())
+    assert out == recorded
+    assert len(requests) == 2
+    # First turn offers the tool; the finalizing turn does not.
+    assert [tool["name"] for tool in requests[0]["tools"]] == ["detail"]
+    assert "tools" not in requests[1]
+    # The detail answer carried the board's delta column back to the model.
+    tool_result = requests[1]["messages"][-1]["content"][0]
+    assert tool_result["tool_use_id"] == "tu_1"
+    assert "delta_starter_points" in json.loads(tool_result["content"])["4866"]
+
+
+def test_anthropic_transport_errors_an_unknown_tool_but_continues() -> None:
+    recorded = _recorded()
+    requests: list[dict] = []
+
+    class _Messages:
+        def __init__(self) -> None:
+            self._turn = 0
+
+        def create(self, **kwargs: object) -> SimpleNamespace:
+            requests.append(kwargs)
+            self._turn += 1
+            if self._turn == 1:
+                use = SimpleNamespace(
+                    type="tool_use", id="tu_x", name="mystery", input={}
+                )
+                return SimpleNamespace(content=[use], stop_reason="tool_use")
+            return SimpleNamespace(
+                content=[SimpleNamespace(type="text", text=json.dumps(recorded))],
+                stop_reason="end_turn",
+            )
+
+    transport = AnthropicTransport(client=SimpleNamespace(messages=_Messages()))
+    assert transport.complete(_payload().to_dict()) == recorded
+    result = requests[1]["messages"][-1]["content"][0]
+    assert result["is_error"] is True
 
 
 def test_anthropic_transport_uses_fast_mode_when_requested() -> None:

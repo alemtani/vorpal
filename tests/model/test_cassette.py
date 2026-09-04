@@ -172,7 +172,19 @@ def test_the_key_hashes_the_request_the_transport_actually_sends() -> None:
 
     AnthropicTransport(SimpleNamespace(messages=_Messages()), fast=False).complete(body)
     assert captured == build_request(body)
-    assert captured["messages"][0]["content"] == json.dumps(body, sort_keys=True)
+    # The message carries the lean board — no detail columns on the wire.
+    sent = json.loads(captured["messages"][0]["content"])
+    assert "delta_starter_points" not in sent["board"][0]
+
+
+def test_the_key_covers_a_detail_only_difference() -> None:
+    """Two payloads with identical lean boards but a different detail column
+    ask two questions — the tool can surface that column, so the key must part.
+    """
+    body = _payload().to_dict()
+    other = _payload().to_dict()
+    other["board"][0]["delta_starter_points"] += 1.0
+    assert request_key(body) != request_key(other)
 
 
 def test_an_unserializable_payload_raises_rather_than_hashing_around_it() -> None:

@@ -33,14 +33,20 @@ from vorpal.model.call import MODEL_ID, Transport, build_request
 
 
 def request_key(payload: dict[str, Any]) -> str:
-    """`sha256` over the request the transport would send.
+    """`sha256` over the request the transport would send, plus the full board.
 
-    Not over the payload alone. Two runs that send the same board under a
+    Not over the payload alone: two runs that send the same board under a
     different system prompt are asking two questions and must not share a
-    recording.
+    recording. And not over the request alone: the request now carries only the
+    **lean** board, but the `detail` tool can surface any column the full board
+    holds — so two payloads that differ only in a detail column would ask two
+    questions from one key. Fold the full payload in so identity covers what the
+    tool can reach.
     """
     try:
-        blob = json.dumps(build_request(payload), sort_keys=True)
+        blob = json.dumps(
+            {"request": build_request(payload), "full": payload}, sort_keys=True
+        )
     except (TypeError, ValueError) as exc:
         raise PlatformError(f"payload is not serializable: {exc}") from exc
     return hashlib.sha256(blob.encode()).hexdigest()
