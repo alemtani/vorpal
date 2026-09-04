@@ -34,17 +34,15 @@ missing **and uninstalls anything not declared**. `langsmith` is an optional
 extra, so a plain `uv sync` removes it and the next `--trace` run prints
 `langsmith: No module named 'langsmith'`. Always pass `--extra tracing`.
 
-Then write your keys into `.env` at the repo root, once:
+Then copy the template and fill in your keys, once:
 
 ```sh
-cat > .env <<'KEYS'
-ANTHROPIC_API_KEY=sk-...          # the model rec; required for any real draft
-FANTASYPROS_API_KEY=...           # the forecast, or pass --override <csv> when FP is down
-LANGSMITH_API_KEY=...             # only needed with --trace
-LANGSMITH_PROJECT=vorpal-draft-night   # optional label
-KEYS
+cp .env.example .env
 chmod 600 .env
+$EDITOR .env
 ```
+
+`.env.example` lists every key, what it is for, and which are optional.
 
 `.env` is gitignored and is never committed. Every run reads it and prints the
 key **names** it loaded, never the values. An exported key beats the file, so

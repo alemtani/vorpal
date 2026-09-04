@@ -99,3 +99,43 @@ def test_no_value_is_ever_printed(
     load_dotenv(path, env)
     captured = capsys.readouterr()
     assert "sk-secret-value" not in captured.out + captured.err
+
+
+TEMPLATE = Path(__file__).resolve().parents[1] / ".env.example"
+
+# Every key the operator has to supply. `ANTHROPIC_API_KEY` is read by the
+# Anthropic SDK rather than by us, which is exactly why it belongs here: it is
+# the one nothing in this repo would otherwise name.
+REQUIRED_KEYS = ("ANTHROPIC_API_KEY", "FANTASYPROS_API_KEY")
+OPTIONAL_KEYS = ("LANGSMITH_API_KEY", "LANGSMITH_PROJECT")
+
+# A committed file with a value against one of these names is a leaked key.
+SECRET_KEYS = ("ANTHROPIC_API_KEY", "FANTASYPROS_API_KEY", "LANGSMITH_API_KEY")
+
+
+def test_the_template_names_every_key() -> None:
+    """A template missing a key is worse than no template.
+
+    Copying it then hitting a missing-key failure is the exact papercut the
+    file is here to remove.
+    """
+    parsed: dict[str, str] = {}
+    load_dotenv(TEMPLATE, parsed)
+    assert set(parsed) == set(REQUIRED_KEYS + OPTIONAL_KEYS)
+
+
+def test_the_template_carries_no_secret() -> None:
+    """It is committed, so every secret slot must be empty.
+
+    `LANGSMITH_PROJECT` is a label, not a credential, so it keeps its default.
+    """
+    parsed: dict[str, str] = {}
+    load_dotenv(TEMPLATE, parsed)
+    for key in SECRET_KEYS:
+        assert parsed[key] == "", f"{key} has a value in a committed file"
+
+
+def test_the_template_is_what_the_loader_reads() -> None:
+    """The template is checked with the real parser, not a second one here."""
+    assert TEMPLATE.is_file()
+    assert "cp .env.example .env" in TEMPLATE.read_text(encoding="utf-8")
