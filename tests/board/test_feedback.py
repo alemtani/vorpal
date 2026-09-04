@@ -747,3 +747,53 @@ def test_finish_swallows_a_raising_patch(
     snap.write_text("{}\n", encoding="utf-8")
     collector.finish(snap)
     assert len(issues) == 1
+
+
+def test_issue_body_drops_traces_when_it_would_exceed_the_github_limit() -> None:
+    """A real draft's traces carry the whole board and blew past 65536, so the
+    issue never got filed. Summary lines survive; the trace moves to the file."""
+    from vorpal.board.feedback import GITHUB_BODY_LIMIT, SkipRecord, issue_text
+
+    fat = {"attempts": 1, "violations": [], "payload": {"board": ["x" * 40000]}}
+    skips = [
+        SkipRecord(
+            pick_no=n,
+            human_pick=f"h{n}",
+            rec=f"r{n}",
+            alternatives=(),
+            coin_flip=False,
+            why_not=None,
+            trace=fat,
+        )
+        for n in range(4)
+    ]
+    snap = Path("/tmp/board.snapshot.local.json")
+    title, body = issue_text(skips, snap)
+
+    assert len(body) <= GITHUB_BODY_LIMIT
+    assert title == "draft feedback: 4 skip(s)"
+    assert "board.skips.local.json" in body
+    assert "```json" not in body
+    for n in range(4):
+        assert f"### pick {n}" in body
+        assert f"- rec: `r{n}`" in body
+
+
+def test_issue_body_keeps_traces_when_it_fits() -> None:
+    from vorpal.board.feedback import GITHUB_BODY_LIMIT, SkipRecord, issue_text
+
+    skips = [
+        SkipRecord(
+            pick_no=1,
+            human_pick="h1",
+            rec="r1",
+            alternatives=(),
+            coin_flip=False,
+            why_not=None,
+            trace={"attempts": 2, "violations": []},
+        )
+    ]
+    _, body = issue_text(skips, Path("/tmp/board.snapshot.local.json"))
+    assert len(body) <= GITHUB_BODY_LIMIT
+    assert "```json" in body
+    assert "Traces omitted" not in body

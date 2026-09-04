@@ -194,15 +194,48 @@ class FeedbackCollector:
         tmp.replace(self._path)
 
 
+# GitHub rejects a createIssue body over this many characters. A trace carries
+# the whole board, so a full-length draft clears it on the third or fourth skip
+# and the issue is lost after the snapshot is already on disk.
+GITHUB_BODY_LIMIT = 65536
+
+
 def issue_text(skips: list[SkipRecord], snapshot_path: Path) -> tuple[str, str]:
-    """GitHub issue title and body. Player ids only."""
+    """GitHub issue title and body. Player ids only.
+
+    Traces are dropped, not truncated, when the body will not fit: half a JSON
+    blob helps nobody, and the full trace is already on disk in the skips file
+    next to the snapshot.
+    """
 
     title = f"draft feedback: {len(skips)} skip(s)"
+    body = _issue_body(skips, snapshot_path, with_traces=True)
+    if len(body) <= GITHUB_BODY_LIMIT:
+        return title, body
+    return title, _issue_body(skips, snapshot_path, with_traces=False)
+
+
+def _issue_body(
+    skips: list[SkipRecord],
+    snapshot_path: Path,
+    *,
+    with_traces: bool,
+) -> str:
     lines = [
         f"Snapshot: `{snapshot_path}`",
         "",
-        "## Skips",
     ]
+    if not with_traces:
+        skips_path = snapshot_path.with_name("board.skips.local.json")
+        lines.extend(
+            [
+                f"Traces omitted: the body passed GitHub's {GITHUB_BODY_LIMIT}"
+                " character limit. Full traces are in"
+                f" `{skips_path}`.",
+                "",
+            ]
+        )
+    lines.append("## Skips")
     for skip in skips:
         why = skip.why_not if skip.why_not else "(empty)"
         trace = skip.trace
@@ -218,13 +251,20 @@ def issue_text(skips: list[SkipRecord], snapshot_path: Path) -> tuple[str, str]:
                 f"- violations: `{codes}`",
                 f"- why-not: {why}",
                 "",
-                "```json",
-                json.dumps(skip.trace, indent=2, sort_keys=True, ensure_ascii=False),
-                "```",
-                "",
             ]
         )
-    return title, "\n".join(lines)
+        if with_traces:
+            lines.extend(
+                [
+                    "```json",
+                    json.dumps(
+                        skip.trace, indent=2, sort_keys=True, ensure_ascii=False
+                    ),
+                    "```",
+                    "",
+                ]
+            )
+    return "\n".join(lines)
 
 
 def tty_why_not_form(
