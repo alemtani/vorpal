@@ -188,7 +188,9 @@ def _board_inner(payload: Payload, proposal: Proposal) -> str:
         "<th>Name</th><th>Pos</th>"
         '<th class="vols">VOLS</th>'
         '<th class="delta">delta</th>'
-        "<th>Pts</th><th>ADP</th><th>GP</th>"
+        "<th>Pts</th>"
+        '<th class="ecr">ECR</th>'
+        "<th>ADP</th><th>GP</th>"
         "</tr>\n"
         "</thead>\n"
         f"<tbody>\n{rows}\n</tbody>\n"
@@ -202,22 +204,43 @@ def _why_on_screen(
     proposal: Proposal,
     by_id: dict[str, BoardRow],
 ) -> str:
-    """Operator-facing why. Dissent names the VOLS / ECR pick; #20 owns the prompt."""
+    """Operator-facing why. Dissent names the VOLS / ECR pick; #20 owns the prompt.
+
+    Both flags can fire on one pick, so the clause is built once and joined,
+    never prepended twice. Two prefixes each ending in "because" nest, and the
+    first "because" then reads onto the second name instead of onto a reason.
+    """
 
     why = proposal.why
+    dissents: list[tuple[str, str]] = []
     if Flag.VOLS_DISSENT in proposal.flags:
         row = by_id.get(payload.hint_argmax_vols)
         if row is not None and row.player_id != proposal.player_id:
-            form = f"{row.name} is the VOLS pick; we are not taking {row.name} because"
-            if form not in why:
-                why = f"{form} {why}"
+            dissents.append((row.name, "VOLS pick"))
     if Flag.ECR_DISAGREE in proposal.flags:
         row = _ecr_best_row(payload.board)
         if row is not None and row.player_id != proposal.player_id:
-            form = f"{row.name} is the ECR pick; we are not taking {row.name} because"
-            if form not in why:
-                why = f"{form} {why}"
-    return why
+            dissents.append((row.name, "ECR pick"))
+
+    # The model often names the dissent itself. Match the eval contains-floor
+    # (name and label, §5) rather than the exact sentence: an exact match misses
+    # every rewording and we print the clause twice.
+    dissents = [(n, lab) for n, lab in dissents if n not in why or lab not in why]
+    if not dissents:
+        return why
+
+    if len(dissents) == 1:
+        name, label = dissents[0]
+        return f"{name} is the {label}; we are not taking {name} because {why}"
+
+    (vols_name, _), (ecr_name, _) = dissents
+    if vols_name == ecr_name:
+        lead = f"{vols_name} is the VOLS pick and the ECR pick"
+        tail = vols_name
+    else:
+        lead = f"{vols_name} is the VOLS pick and {ecr_name} is the ECR pick"
+        tail = f"{vols_name} or {ecr_name}"
+    return f"{lead}; we are not taking {tail} because {why}"
 
 
 def _ecr_best_row(board: Sequence[BoardRow]) -> BoardRow | None:
@@ -260,6 +283,7 @@ def _board_row(row: BoardRow) -> str:
         f'<td class="vols">{_fmt_num(row.vols)}</td>'
         f'<td class="delta">{_fmt_num(row.delta_starter_points)}</td>'
         f"<td>{_fmt_num(row.points)}</td>"
+        f'<td class="ecr">{"" if row.ecr is None else row.ecr}</td>'
         f"<td>{_fmt_num(row.adp)}</td>"
         f'<td class="gp">{gp_cell}</td>'
         "</tr>"

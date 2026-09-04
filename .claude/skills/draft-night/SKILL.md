@@ -141,6 +141,11 @@ The loop writes the board once more and returns. It then:
 - persists skip records for picks that differed from the rec,
 - opens a why-not form, then a GitHub issue linking both.
 
+**The why-not form never appears under the launch above.** It needs a TTY on
+stdin, and backgrounding through `tee` does not give it one. That is not a
+failure — the skips file still records every divergence, and the issue still
+files. To answer the form, rerun the completed draft in the foreground.
+
 Confirm the snapshot exists. It is the artifact that becomes a golden or regret
 case later (`docs/PROOF.md`, "The unit of proof"). Never commit it — `private/`
 and `*.local.json` are gitignored for a reason.

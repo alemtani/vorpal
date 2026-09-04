@@ -630,3 +630,115 @@ def test_json_array_platform_error_is_not_dumped() -> None:
     html = render_unavailable(raw, 0, ())
     assert raw not in html
     assert "platform error" in html
+
+
+def test_both_dissents_do_not_nest_because(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    """Two prefixes each ending in "because" used to nest, so the first read
+    onto the second name instead of onto a reason. One clause, one because."""
+    from vorpal.board import render
+
+    board = (
+        make_row(player_id="p1", name="A Back", ecr=40, vols=90.0),
+        make_row(player_id="p3", name="C Passer", position="QB", ecr=1, vols=10.0),
+        make_row(
+            player_id="p2",
+            name="B Receiver",
+            position="WR",
+            ecr=20,
+            vols=30.0,
+            legal_slots=(Slot.WR, Slot.FLEX),
+        ),
+    )
+    html = render(
+        make_payload(board=board),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT, Flag.ECR_DISAGREE),
+            why="the empty WR is the bigger hole",
+        ),
+        0,
+        (),
+    )
+    why = html[html.find('class="why"') : html.find('class="why"') + 320]
+    assert why.count("because") == 1
+    assert "A Back is the VOLS pick and C Passer is the ECR pick" in why
+    assert "we are not taking A Back or C Passer because" in why
+    assert "the empty WR is the bigger hole" in why
+
+
+def test_one_player_leading_both_is_named_once(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_row: Callable[..., BoardRow],
+) -> None:
+    """VOLS and ECR leader can be the same player. Two clauses named him twice."""
+    from vorpal.board import render
+
+    board = (
+        make_row(player_id="p1", name="A Back", ecr=1, vols=90.0),
+        make_row(
+            player_id="p2",
+            name="B Receiver",
+            position="WR",
+            ecr=20,
+            vols=30.0,
+            legal_slots=(Slot.WR, Slot.FLEX),
+        ),
+    )
+    html = render(
+        make_payload(board=board),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT, Flag.ECR_DISAGREE),
+            why="the empty WR is the bigger hole",
+        ),
+        0,
+        (),
+    )
+    why = html[html.find('class="why"') : html.find('class="why"') + 320]
+    assert "A Back is the VOLS pick and the ECR pick" in why
+    assert why.count("because") == 1
+    assert why.count("A Back") == 2
+
+
+def test_model_rewording_of_the_dissent_is_not_duplicated(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    """The old guard was exact-match, so any rewording printed the clause twice."""
+    from vorpal.board import render
+
+    why = "A Back is the VOLS pick here, but the bye stacks on the empty RB"
+    html = render(
+        make_payload(),
+        make_proposal(
+            player_id="p2",
+            slot_filled=Slot.WR,
+            flags=(Flag.VOLS_DISSENT,),
+            why=why,
+        ),
+        0,
+        (),
+    )
+    assert "we are not taking" not in html
+    assert why in html
+
+
+def test_board_shows_ecr(
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+) -> None:
+    from vorpal.board import render
+
+    html = render(make_payload(), make_proposal(), 0, ())
+    assert '<th class="ecr">ECR</th>' in html
+    assert '<td class="ecr">5</td>' in html
+    # A row with no ECR renders an empty cell, not "None".
+    assert '<td class="ecr"></td>' in html
+    assert "None" not in html
