@@ -7,7 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from vorpal.contracts import Payload, Pick, Proposal
+from vorpal.contracts import Payload, Pick, Proposal, Recommendation
 
 IDENTITY_KEYS = frozenset(
     {
@@ -604,3 +604,146 @@ def test_unknown_seat_and_other_seats_and_late_joins_are_not_skips(
     assert not (tmp_path / "board.skips.local.json").exists()
     collector.finish(tmp_path / "board.snapshot.local.json")
     assert issues == []
+
+
+class _Sink:
+    def __init__(self) -> None:
+        self.logs: list[int] = []
+        self.patches: list[tuple[int, str]] = []
+
+    def log(
+        self,
+        pick_no: int,
+        payload: Any,
+        recommendation: Recommendation,
+        samples: Any,
+        latency_ms: float,
+    ) -> None:
+        self.logs.append(pick_no)
+
+    def patch_human_pick(self, pick_no: int, human_pick: str) -> None:
+        self.patches.append((pick_no, human_pick))
+
+
+def _recommendation(proposal: Proposal) -> Recommendation:
+    return Recommendation(
+        proposal=proposal,
+        violations=(),
+        degraded=False,
+        attempts=1,
+    )
+
+
+def test_skip_fires_both_sinks(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    sink = _Sink()
+    skips_path = tmp_path / "board.skips.local.json"
+    collector = FeedbackCollector(
+        path=skips_path,
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: "https://example",
+        trace_sink=sink,
+    )
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1", alternatives=("p2",))
+    collector.record_call(
+        1,
+        payload,
+        _recommendation(proposal),
+        [({"player_id": "p1"}, 1.5)],
+        4.0,
+    )
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+    assert skips_path.is_file()
+    stored = json.loads(skips_path.read_text(encoding="utf-8"))
+    assert stored["skips"][0]["human_pick"] == "p9"
+    assert sink.logs == [1]
+    assert sink.patches == [(1, "p9")]
+
+
+def test_agreement_fires_the_trace_but_no_skip_and_no_patch(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    sink = _Sink()
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: "https://example",
+        trace_sink=sink,
+    )
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1")
+    collector.record_call(
+        1,
+        payload,
+        _recommendation(proposal),
+        [({"player_id": "p1"}, 1.5)],
+        4.0,
+    )
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p1"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+    assert not (tmp_path / "board.skips.local.json").exists()
+    assert sink.logs == [1]
+    assert sink.patches == []
+
+
+def test_finish_swallows_a_raising_patch(
+    tmp_path: Path,
+    make_payload: Callable[..., Payload],
+    make_proposal: Callable[..., Proposal],
+    make_pick: Callable[..., Pick],
+) -> None:
+    from vorpal.board import Frame
+    from vorpal.board.feedback import FeedbackCollector
+
+    class Boom(_Sink):
+        def patch_human_pick(self, pick_no: int, human_pick: str) -> None:
+            raise RuntimeError("sink exploded")
+
+    issues: list[tuple[str, str]] = []
+    collector = FeedbackCollector(
+        path=tmp_path / "board.skips.local.json",
+        why_not_form=lambda skips: None,
+        open_issue=lambda title, body: issues.append((title, body)) or "x",
+        trace_sink=Boom(),
+    )
+    payload = make_payload(pick_no=1, picks_until_next=0, next_user_pick=1)
+    proposal = make_proposal(player_id="p1")
+    collector.record_call(
+        1, payload, _recommendation(proposal), [({"player_id": "p1"}, 1.0)], 1.0
+    )
+    collector.observe(Frame(payload=payload, proposal=proposal, banners=()), ())
+    collector.observe(
+        Frame(payload=payload, proposal=proposal, banners=()),
+        (make_pick(pick_no=1, player_id="p9"),),
+    )
+    snap = tmp_path / "board.snapshot.local.json"
+    snap.write_text("{}\n", encoding="utf-8")
+    collector.finish(snap)
+    assert len(issues) == 1

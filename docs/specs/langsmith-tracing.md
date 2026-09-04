@@ -156,8 +156,9 @@ LangSmith import.
 `model/tracing.py`. The LangSmith emitter. Guarded optional import.
 
 - Construction reads config once: `enabled()` is true only when
-  `VORPAL_TRACING` is on **and** `LANGSMITH_API_KEY` is set **and**
-  `langsmith` imports. Otherwise every method is a no-op.
+  `--trace` is on **and** `LANGSMITH_API_KEY` is set **and**
+  `langsmith` imports. Otherwise every method is a no-op. A missing key
+  with `--trace` prints to stderr and continues.
 - `log(pick_no, payload, recommendation, samples, latency_ms) -> None`:
   builds one run tree and posts it best-effort.
   - Parent run: redacted `payload`, redacted `proposal`, `violations`
@@ -225,20 +226,20 @@ built.
   GitHub issue. Both patch and issue are best-effort.
 
 `cli.py` wires a `SampleRecorder` around the transport and a `TraceSink`
-built from the environment. Both default to the no-op path when tracing is
-off.
+from `--trace` plus the environment. Both default to the no-op path when
+tracing is off.
 
 ## Dependency and config
 
 - `langsmith` is optional. Add a `[project.optional-dependencies]`
   `tracing` extra. The core install stays `anthropic` + `httpx`.
+- CLI: `--trace` is the on/off gate, default off. Tracing needs the flag
+  **and** the key. A stray key in a shell does not trace; tests never
+  pass the flag.
 - Env:
   - `LANGSMITH_API_KEY`: the key. Unset means tracing is off.
   - `LANGSMITH_PROJECT`: the project. Default `vorpal-draft`.
-  - `VORPAL_TRACING`: an explicit on/off gate, default off. Tracing needs
-    the gate on **and** the key set. This stops a stray key in a shell
-    from tracing a test run.
-- CI never traces. The gate is off by default, tests do not set the key,
+- CI never traces. The flag is off by default, tests do not set the key,
   and `live` stays the only marker that touches the network. A test traces
   only when it builds a `TraceSink` around a stub on purpose.
 
@@ -264,7 +265,8 @@ Two PRs, one design. Small commits, per AGENTS.md.
    `Recommendation` and latency into the collector.
 4. Wire the collector to call `log` on every call and `patch_human_pick`
    per skip at complete.
-5. Build the `TraceSink` from the environment in `cli.py`; default no-op.
+5. Build the `TraceSink` from `--trace` and the environment in `cli.py`;
+   default no-op.
 
 ## Proof owed
 
@@ -274,7 +276,7 @@ No golden, regret, snapshot, or rehearsal.
 
 Tests to write (TDD, fail first):
 
-1. Tracing off (no key, or gate off, or `langsmith` absent) is a no-op.
+1. Tracing off (no `--trace`, or no key, or `langsmith` absent) is a no-op.
    `propose` returns the same `Recommendation` and calls the inner
    transport directly. No run tree.
 2. A `TraceSink` whose SDK raises at `log` does not fail the call. The
