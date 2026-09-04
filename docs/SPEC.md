@@ -359,22 +359,35 @@ Replacement = first player at that position **not absorbed into starting slots**
 
 ## 4. The call
 
-One call per board change. No tools. Closed world.
+One call per board change, plus at most one `detail` round trip. Closed world.
 
-**No tools is a draft-phase constraint, not an architecture.** Two reasons, both
-local to draft night: every round trip runs against the pick timer, and the
-stability gate needs identical payloads to converge. Sampling parameters cannot
-be used to force that — `temperature` is rejected on current models — so
-determinism has to come from a closed input.
+**The board ships lean; `detail` fills the rest.** Every board row carries only
+what a first scan needs — `player_id, name, position, vols, adp, ecr,
+legal_slots`. The heavier per-player columns — `delta_starter_points`, the ECR
+spread (`ecr_min, ecr_max, ecr_std`), `gp`, `points`, `bye` — move behind a
+`detail(player_ids)` tool the model calls for the handful of players it is
+deciding between. A ~60-row board stops being a wall of numbers the model reads
+none of, and the trace stops being one.
 
-Later phases have hours, not seconds. When they admit tools, the rule is a
-split by kind, not a cap on count: a tool that is a **pure function of the board**
-(depth chart, bye, any snapshot the payload could have carried) keeps the same
-payload converging on the same call and the same data, so stability survives. A
-tool that reaches into a **changing world** (live news, search) does not, and
-worse, lets the model act on data no gate ever sees — which is what hollows out
-`VOLS_DISSENT`. Admit the first kind. A tool that is down gets the `ecr_missing`
-treatment: banner and proceed, never block.
+**`detail` is a pure function of the board.** It returns columns the payload
+already holds for ids already on the board — a snapshot the payload could have
+carried. So the same board converges on the same call and the same data: the
+stability gate survives, as it would for any pure-board tool. `detail` never
+reaches a changing world (no news, no search), so it opens no channel the gates
+cannot see — `VOLS_DISSENT` still means what it meant.
+
+**The pick timer is the cost, and it is bounded.** This reverses the earlier
+"no tools" draft-phase rule, which held that every round trip runs against the
+clock. It does — so `detail` is capped at one round trip per pick: the model
+batches every id it wants into a single turn, the transport answers once, then
+re-asks without the tool so the next turn is the proposal. Worst case is two
+model turns; most picks, where the lean board is enough, are one. On a short
+clock the operator runs fast mode, which already exists for this reason.
+Determinism still comes from a closed input — `temperature` is rejected on
+current models, and `detail` adds no open input to force. A tool that reaches a
+**changing world** (live news, search) is still refused, in this phase and the
+next; a down external tool would get the `ecr_missing` treatment (banner and
+proceed), but `detail` has no outage to have — it is the payload.
 
 **The board is the world.** Rec and alternatives must be on `board` — not merely
 undrafted. Order by `vols` descending. State in the payload that the board is
@@ -431,15 +444,31 @@ Omit `next_user_pick` and `between` when the seat is unknown. Do **not** ship a 
   },
   replacement: { [pos]: { player_id, points } },
   hint_argmax_vols: player_id,                    // calculator, not the answer
-  board: [{                                       // vols desc, capped
-    player_id, name, position, bye?,
-    points, gp?, vols, delta_starter_points, adp, // vols is global; delta is vs your roster
-                                                  // gp < 17 ⇒ season points understate per-game value
-    ecr?, ecr_min?, ecr_max?, ecr_std?,           // upside = wide std late
-    legal_slots[]
+  board: [{                                       // vols desc, capped — lean
+    player_id, name, position,                    // vols is global; adp/ecr are
+    vols, adp, ecr?, legal_slots[]                // inputs the model reads, not the pick
   }]
 }
 ```
+
+**`detail` tool** (pure function of the board, one round trip, capped)
+
+```
+detail(player_ids: [player_id ∈ board]) → {          // off-board ids dropped, not errored
+  [player_id]: {
+    bye?, points, gp?,             // gp < 17 ⇒ season points understate per-game value
+    delta_starter_points,          // vs your roster
+    ecr_min?, ecr_max?, ecr_std?   // upside = wide std late
+  }
+}
+```
+
+The model pulls `detail` for its shortlist — the players near the pick, or a
+wide-spread `ecr` it wants to test for upside. The columns are the same the
+board used to carry inline; moving them behind a call is what makes the board
+and the trace legible. The validator still reads `ecr_min`/`ecr_std` off the
+full board object, so the ECR floor below is unchanged whether or not the model
+pulled them.
 
 **Out** (schema-constrained)
 
@@ -504,6 +533,13 @@ Append:
 > or name, in the form: "X is the VOLS pick; we are not taking X because
 > …". When you set ECR_DISAGREE, why must name ecr_best's player the same
 > way: "X is the ECR pick; we are not taking X because …".
+
+And the `detail` tool, likewise appended to `SYSTEM`:
+
+> The board is lean. Call detail(player_ids) once for the players you are
+> deciding between to read delta_starter_points, the ECR spread
+> (ecr_min/max/std), gp, points, and bye. Batch every id into that one
+> call. Ids must be on the board.
 
 **Draft night:** one retry on a violation, then fall back to `hint_argmax_vols`
 — the calculator answer — with a banner naming what the model got wrong. A

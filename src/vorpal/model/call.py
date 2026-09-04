@@ -1,4 +1,9 @@
-"""One closed-world model call per board change. No tools. No temperature."""
+"""One closed-world model call per board change, plus one `detail` round trip.
+
+The board ships lean. The model calls `detail(player_ids)` for the players it is
+deciding between, and the transport answers once from the same board — a pure
+function of the payload, so stability survives. No temperature. See SPEC.md §4.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +22,7 @@ from vorpal.contracts import (
     Violation,
 )
 from vorpal.errors import PlatformError
+from vorpal.model.detail import lean_view, resolve_detail
 from vorpal.model.validate import validate_proposal
 
 # claude-api skill current-models table (cached 2026-06-24): use this exact id.
@@ -60,8 +66,33 @@ SYSTEM = (
     'as "<player> is the VOLS pick", then say why you pass. When you set '
     'ECR_DISAGREE, name ecr_best\'s player once as "<player> is the ECR pick", '
     "then say why you pass. Write each label one time. Do not repeat the "
-    "phrase or restate the pick you passed on."
+    "phrase or restate the pick you passed on. "
+    "The board is lean. Call detail(player_ids) once for the players you are "
+    "deciding between to read delta_starter_points, the ECR spread "
+    "(ecr_min/max/std), gp, points, and bye. Batch every id into that one call. "
+    "Ids must be on the board."
 )
+
+# `detail` is the one tool. A pure function of the board: it returns columns the
+# payload already holds for ids already on it. SPEC.md §4 admits this kind at
+# draft; a changing-world tool (news, search) stays refused.
+DETAIL_TOOL: dict[str, Any] = {
+    "name": "detail",
+    "description": (
+        "Heavier per-player columns for the players you are deciding between: "
+        "delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, "
+        "bye. Batch every id into one call. Ids must be on the board."
+    ),
+    "strict": True,
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "player_ids": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["player_ids"],
+        "additionalProperties": False,
+    },
+}
 
 PROPOSAL_JSON_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -89,19 +120,23 @@ PROPOSAL_JSON_SCHEMA: dict[str, Any] = {
 
 
 def build_request(payload: dict[str, Any]) -> dict[str, Any]:
-    """The exact Messages request for this payload, as a plain dict.
+    """The first Messages request for this payload, as a plain dict.
 
-    One place assembles the request, so the cassette key can hash the same
-    object the transport sends. A key built from a request nobody sends is
-    a key that misses forever. Transport settings (retries, deadlines) are
-    not here: they cannot change the answer.
+    The message carries the **lean** board — what the model reads first. The
+    `detail` columns ride behind the tool, so they are not here; the cassette
+    key folds the full payload back in (see `cassette.request_key`) so identity
+    still covers what the tool can surface. Transport settings (retries,
+    deadlines, fast mode) are not here: they cannot change the answer.
     """
     return {
         "model": MODEL_ID,
         "max_tokens": MAX_TOKENS,
         "system": SYSTEM,
         "thinking": {"type": "adaptive"},
-        "messages": [{"role": "user", "content": json.dumps(payload, sort_keys=True)}],
+        "tools": [DETAIL_TOOL],
+        "messages": [
+            {"role": "user", "content": json.dumps(lean_view(payload), sort_keys=True)}
+        ],
         "output_config": {
             "effort": EFFORT,
             "format": {"type": "json_schema", "schema": PROPOSAL_JSON_SCHEMA},
@@ -138,7 +173,12 @@ class StubTransport:
 
 
 class AnthropicTransport:
-    """Claude Messages API. Do not pass temperature or tools.
+    """Claude Messages API. One tool: `detail`. No temperature.
+
+    The model may call `detail` for its shortlist. The transport answers once
+    from the same board, then re-asks with the tool removed so the next turn is
+    the proposal — one round trip, per SPEC.md §4. Worst case is two model turns;
+    most picks are one.
 
     ``fast`` opts into fast mode: quicker rec, premium rate. It is off by
     default so no path bills the premium unasked. The CLI turns it on with
@@ -150,16 +190,38 @@ class AnthropicTransport:
         self._fast = fast
 
     def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
-        request = build_request(payload)
+        base = build_request(payload)
+        messages = list(base["messages"])
+        offer_tools = True
+        while True:
+            request = {**base, "messages": messages}
+            if not offer_tools:
+                request.pop("tools", None)
+            response = self._create(request)
+            self._check_stop(response)
+            if offer_tools and getattr(response, "stop_reason", None) == "tool_use":
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append(
+                    {"role": "user", "content": self._answer_tools(response, payload)}
+                )
+                offer_tools = False  # one detail round trip, then finalize
+                continue
+            return self._read_proposal(response)
+
+    def _create(self, request: dict[str, Any]) -> Any:
+        """One Messages call, fast or standard. Wraps transport faults."""
         try:
             if self._fast:
-                response = self._client.beta.messages.create(
+                return self._client.beta.messages.create(
                     **request, betas=[FAST_MODE_BETA], speed="fast"
                 )
-            else:
-                response = self._client.messages.create(**request)
+            return self._client.messages.create(**request)
         except Exception as exc:
             raise PlatformError(f"model call failed: {exc}") from exc
+
+    @staticmethod
+    def _check_stop(response: Any) -> None:
+        """A refusal or a truncation is the host failing, not a proposal."""
         stop_reason = getattr(response, "stop_reason", None)
         if stop_reason == "refusal":
             raise PlatformError("model refusal")
@@ -167,6 +229,40 @@ class AnthropicTransport:
             raise PlatformError(
                 f"model response hit max_tokens ({MAX_TOKENS}); raise the cap"
             )
+
+    @staticmethod
+    def _answer_tools(response: Any, payload: dict[str, Any]) -> list[dict[str, Any]]:
+        """One `tool_result` per `tool_use` block. `detail` is answered from the
+        board; any other tool gets an error result so the turn can still close.
+        """
+        results: list[dict[str, Any]] = []
+        for block in response.content:
+            if getattr(block, "type", None) != "tool_use":
+                continue
+            if block.name == "detail":
+                ids = block.input.get("player_ids", [])
+                content = json.dumps(resolve_detail(payload, ids), sort_keys=True)
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": content,
+                    }
+                )
+            else:
+                results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.id,
+                        "content": f"unknown tool: {block.name}",
+                        "is_error": True,
+                    }
+                )
+        return results
+
+    @staticmethod
+    def _read_proposal(response: Any) -> dict[str, Any]:
+        """The terminal turn: one text block, the schema-constrained proposal."""
         text = next(
             (
                 block.text

@@ -1,0 +1,164 @@
+{
+  "key": "c6609c315f79ee76bf2dd2b5aeaf60cae62b59508fcb6e0187b4eb47ef1690ec",
+  "model": "claude-opus-5",
+  "request": {
+    "max_tokens": 16000,
+    "messages": [
+      {
+        "content": "{\"board\": [{\"adp\": 52.0, \"ecr\": 50, \"legal_slots\": [\"RB\", \"FLEX\", \"WRRB_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"rb-d\", \"player_id\": \"rb-d\", \"position\": \"RB\", \"vols\": 38.0}, {\"adp\": 55.0, \"ecr\": 53, \"legal_slots\": [\"WR\", \"FLEX\", \"WRRB_FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"wr-c\", \"player_id\": \"wr-c\", \"position\": \"WR\", \"vols\": 35.0}, {\"adp\": 58.0, \"ecr\": 57, \"legal_slots\": [\"QB\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"qb-backup\", \"player_id\": \"qb-backup\", \"position\": \"QB\", \"vols\": 30.0}, {\"adp\": 61.0, \"ecr\": 60, \"legal_slots\": [\"TE\", \"FLEX\", \"REC_FLEX\", \"SUPER_FLEX\", \"OP\", \"BN\"], \"name\": \"te-c\", \"player_id\": \"te-c\", \"position\": \"TE\", \"vols\": 20.0}], \"config\": {\"banners\": [{\"code\": \"board_capped\", \"message\": \"board is capped\"}], \"rounds\": 15, \"scoring_summary\": \"PPR, 4pt pass TD\", \"slot\": 4, \"slots\": [\"QB\", \"RB\", \"RB\", \"WR\", \"WR\", \"TE\", \"FLEX\", \"K\", \"DEF\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\", \"BN\"], \"teams\": 12}, \"hint_argmax_vols\": \"rb-d\", \"replacement\": {\"QB\": {\"player_id\": \"repl-qb\", \"points\": 100.0}, \"RB\": {\"player_id\": \"repl-rb\", \"points\": 100.0}, \"TE\": {\"player_id\": \"repl-te\", \"points\": 100.0}, \"WR\": {\"player_id\": \"repl-wr\", \"points\": 100.0}}, \"state\": {\"needs\": {\"DEF\": {\"filled\": 0, \"required\": 1}, \"FLEX\": {\"filled\": 0, \"required\": 1}, \"K\": {\"filled\": 0, \"required\": 1}, \"QB\": {\"filled\": 1, \"required\": 1}, \"RB\": {\"filled\": 1, \"required\": 2}, \"TE\": {\"filled\": 1, \"required\": 1}, \"WR\": {\"filled\": 1, \"required\": 2}}, \"next_user_pick\": 69, \"pick_no\": 52, \"picks_until_next\": 17, \"recent\": [], \"user_roster\": [{\"bye\": 6, \"name\": \"qb-held\", \"player_id\": \"qb-held\", \"position\": \"QB\"}, {\"bye\": 8, \"name\": \"rb-held\", \"player_id\": \"rb-held\", \"position\": \"RB\"}, {\"bye\": 5, \"name\": \"wr-held\", \"player_id\": \"wr-held\", \"position\": \"WR\"}, {\"bye\": 12, \"name\": \"te-held\", \"player_id\": \"te-held\", \"position\": \"TE\"}], \"weekly\": []}}",
+        "role": "user"
+      }
+    ],
+    "model": "claude-opus-5",
+    "output_config": {
+      "effort": "medium",
+      "format": {
+        "schema": {
+          "additionalProperties": false,
+          "properties": {
+            "alternatives": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "coin_flip": {
+              "type": "boolean"
+            },
+            "flags": {
+              "items": {
+                "enum": [
+                  "ECR_DISAGREE",
+                  "BYE_STACK",
+                  "POSITION_RUN",
+                  "EMPTY_STARTER",
+                  "UPSIDE",
+                  "VOLS_DISSENT"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "player_id": {
+              "type": "string"
+            },
+            "slot_filled": {
+              "enum": [
+                "QB",
+                "RB",
+                "WR",
+                "TE",
+                "K",
+                "DEF",
+                "FLEX",
+                "SUPER_FLEX",
+                "OP",
+                "BN",
+                "WRRB_FLEX",
+                "REC_FLEX",
+                "DL",
+                "LB",
+                "DB",
+                "IDP_FLEX"
+              ],
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "player_id",
+            "alternatives",
+            "slot_filled",
+            "coin_flip",
+            "why",
+            "flags"
+          ],
+          "type": "object"
+        },
+        "type": "json_schema"
+      }
+    },
+    "system": "You recommend one pick from this draft board. The board is the world: player_id and every alternative must be a player_id on board. hint_argmax_vols is a calculator, not the answer. If you pick someone else you must set VOLS_DISSENT. If you are not the best available ECR you must set ECR_DISAGREE, and do not pick beyond ecr_best + margin. The board is capped; do not read scarcity from its length. Wait versus take is yours. Set coin_flip when a rerun of this same board could reasonably name a different player. flags is a closed set: ECR_DISAGREE, BYE_STACK, POSITION_RUN, EMPTY_STARTER, UPSIDE, VOLS_DISSENT. When you set VOLS_DISSENT, name hint_argmax_vols's player once in why as \"<player> is the VOLS pick\", then say why you pass. When you set ECR_DISAGREE, name ecr_best's player once as \"<player> is the ECR pick\", then say why you pass. Write each label one time. Do not repeat the phrase or restate the pick you passed on. The board is lean. Call detail(player_ids) once for the players you are deciding between to read delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, and bye. Batch every id into that one call. Ids must be on the board.",
+    "thinking": {
+      "type": "adaptive"
+    },
+    "tools": [
+      {
+        "description": "Heavier per-player columns for the players you are deciding between: delta_starter_points, the ECR spread (ecr_min/max/std), gp, points, bye. Batch every id into one call. Ids must be on the board.",
+        "input_schema": {
+          "additionalProperties": false,
+          "properties": {
+            "player_ids": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "player_ids"
+          ],
+          "type": "object"
+        },
+        "name": "detail",
+        "strict": true
+      }
+    ]
+  },
+  "samples": [
+    {
+      "alternatives": [
+        "wr-c"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-d",
+      "slot_filled": "RB",
+      "why": "rb-d is the best available by ECR, tops the board in VOLS, and adds the most starter value (+19) filling the open RB2 slot. wr-c is close on delta (+17.5) but the RB2 hole is the harder one to backfill 17 picks from now, and rb-d's bye 7 is clean against the current roster."
+    },
+    {
+      "alternatives": [
+        "wr-c"
+      ],
+      "coin_flip": false,
+      "flags": [
+        "EMPTY_STARTER"
+      ],
+      "player_id": "rb-d",
+      "slot_filled": "RB",
+      "why": "rb-d is the best available by ECR and the top VOLS value, and he fills the open RB2 slot with the largest starter upgrade on the board (+19 vs +17.5 for wr-c). With 17 picks until my next turn, waiting on this tier is risky, and his bye 7 doesn't stack with anything on my roster. wr-c stays the clear fallback since WR2 is also open and can be addressed later or in FLEX."
+    },
+    {
+      "alternatives": [
+        "wr-c"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-d",
+      "slot_filled": "RB",
+      "why": "rb-d is both the best available by ECR and the top VOLS value, and he fills the open RB2 slot with the largest starter upgrade on the board (+19). With 17 picks until my next turn, waiting on RB2 risks nothing better coming back. wr-c is close (+17.5) and would also fill a starting hole, but rb-d edges him in projection and rank with a clean bye 7 against my roster."
+    },
+    {
+      "alternatives": [
+        "wr-c"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-d",
+      "slot_filled": "RB",
+      "why": "rb-d is the best available by ECR, tops the board in VOLS, and fills the open RB2 with the largest starter gain (+19). wr-c is close behind at +17.5 and stays a real option, but with 17 picks until my next turn I take the bigger immediate starter upgrade and can address WR2/FLEX later. Bye 7 adds no conflict with the current roster."
+    },
+    {
+      "alternatives": [
+        "wr-c"
+      ],
+      "coin_flip": false,
+      "flags": [],
+      "player_id": "rb-d",
+      "slot_filled": "RB",
+      "why": "rb-d is both the best available by ECR and the top VOLS value, and he fills the open RB2 slot with the largest starter upgrade on the board (+19 vs +17.5 for wr-c). With 17 picks until my next turn, waiting on this tier is not realistic, and his bye 7 does not stack with any current starter."
+    }
+  ]
+}
