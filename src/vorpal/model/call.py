@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from typing import Any, Protocol
 
+import anthropic
 from anthropic import Anthropic
 
 from vorpal.contracts import (
@@ -40,6 +42,13 @@ MAX_TOKENS = 16000
 # (toggling it never invalidates a recording). Fast mode needs the beta
 # endpoint and a top-level `speed`, and is Claude API only.
 FAST_MODE_BETA = "fast-mode-2026-02-01"
+
+# Fast mode has its own rate limit, separate from standard. An org with no
+# allocation reads `0 fast mode input tokens per minute` — a permanent 429 that
+# no wait clears, not an outage. Speed is delivery, so it degrades to standard
+# instead of raising (SPEC §4). The probe runs with retries off: the SDK would
+# honor a `retry-after` that outlasts the pick.
+FAST_FALLBACK = "fast mode unavailable ({reason}); falling back to standard speed"
 
 DEGRADED = Banner(
     code="model_degraded",
@@ -142,22 +151,35 @@ class AnthropicTransport:
 
     ``fast`` opts into fast mode: quicker rec, premium rate. It is off by
     default so no path bills the premium unasked. The CLI turns it on with
-    ``--fast`` for a short mock clock.
+    ``--fast`` for a short mock clock. A fast-mode rate limit drops the run to
+    standard speed rather than failing the pick — see ``_call``.
     """
 
     def __init__(self, client: Anthropic | None = None, *, fast: bool = False) -> None:
         self._client = client if client is not None else Anthropic()
         self._fast = fast
 
+    def _call(self, request: dict[str, Any]) -> Any:
+        """One request at the speed we still have. Latches fast mode off on 429.
+
+        The fallback is per run, not per pick: the fast limit that stopped us is
+        an org setting, so probing it again only spends the next pick's clock.
+        """
+        if not self._fast:
+            return self._client.messages.create(**request)
+        try:
+            return self._client.with_options(max_retries=0).beta.messages.create(
+                **request, betas=[FAST_MODE_BETA], speed="fast"
+            )
+        except anthropic.RateLimitError as exc:
+            self._fast = False
+            print(FAST_FALLBACK.format(reason=exc), file=sys.stderr)
+        return self._client.messages.create(**request)
+
     def complete(self, payload: dict[str, Any]) -> dict[str, Any]:
         request = build_request(payload)
         try:
-            if self._fast:
-                response = self._client.beta.messages.create(
-                    **request, betas=[FAST_MODE_BETA], speed="fast"
-                )
-            else:
-                response = self._client.messages.create(**request)
+            response = self._call(request)
         except Exception as exc:
             raise PlatformError(f"model call failed: {exc}") from exc
         stop_reason = getattr(response, "stop_reason", None)

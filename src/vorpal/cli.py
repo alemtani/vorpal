@@ -124,7 +124,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--fast",
         action="store_true",
         help="fast mode: ~2.5x quicker rec at premium price. Worth it on a "
-        "short mock clock; a real draft with a longer timer does not need it",
+        "short mock clock; a real draft with a longer timer does not need it. "
+        "Falls back to standard speed if your org has no fast-mode allocation",
     )
     parser.add_argument(
         "--trace",
