@@ -23,13 +23,36 @@ ECR from FantasyPros. Nothing about any league is hardcoded.
 One command reads the draft, values the pool, asks the model, and writes
 `board.html`. The API is read-only. You still click in Sleeper.
 
-First, install and set the two keys once:
+### Setup, once
 
 ```sh
-uv sync
-export ANTHROPIC_API_KEY=...     # the model rec; required for any real draft
-export FANTASYPROS_API_KEY=...   # the forecast, or pass --override <csv> when FP is down
+uv sync --extra tracing
 ```
+
+`uv sync` makes `.venv` match `pyproject.toml` exactly — it installs what is
+missing **and uninstalls anything not declared**. `langsmith` is an optional
+extra, so a plain `uv sync` removes it and the next `--trace` run prints
+`langsmith: No module named 'langsmith'`. Always pass `--extra tracing`.
+
+Then copy the template and fill in your keys, once:
+
+```sh
+cp .env.example .env
+chmod 600 .env
+$EDITOR .env
+```
+
+`.env.example` lists every key, what it is for, and which are optional.
+
+`.env` is gitignored and is never committed. Every run reads it and prints the
+key **names** it loaded, never the values. An exported key beats the file, so
+`ANTHROPIC_API_KEY=other uv run vorpal ...` still overrides for one run.
+
+The path is relative to where you run the command, so run from the repo root
+or pass `--env /path/to/.env`. Exporting by hand still works and needs no file.
+
+GitHub needs no token: the draft-complete issue shells out to `gh`, which uses
+your existing `gh auth login`.
 
 **Live draft.** A real league draft carries its own `league_id`, so scoring
 resolves on its own. Pass only the draft id and your Sleeper name:
@@ -62,14 +85,10 @@ is written. The page refreshes itself from there, so leave the tab up. Pass
 `--no-open` on a headless box, or when the tab is already open.
 
 **Trace to LangSmith (optional).** Add `--trace` to send propose calls to
-LangSmith. It needs `LANGSMITH_API_KEY`; without the key the run prints a
-warning and continues untraced, so it never blocks a draft. `LANGSMITH_PROJECT`
-is an optional label.
+LangSmith. It needs `LANGSMITH_API_KEY` and the `tracing` extra; without either
+the run prints a warning and continues untraced, so it never blocks a draft.
 
 ```sh
-export LANGSMITH_API_KEY=...
-export LANGSMITH_PROJECT=vorpal-draft-night   # optional
-
 # live, traced
 uv run vorpal --draft-id 1234567890 --operator your_sleeper_name --trace
 

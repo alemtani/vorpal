@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -680,3 +681,28 @@ def test_a_browser_that_will_not_start_does_not_fail_draft_night(
     err = capsys.readouterr().err
     assert "open board" in err
     assert "no display" in err
+
+
+def test_an_env_file_is_loaded_and_named_but_never_echoed(
+    api: respx.MockRouter,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The run says which keys it read, so a bad path is not a silent miss.
+
+    A harmless name is used here on purpose: setting a real key would change
+    which forecast path the run takes.
+    """
+    monkeypatch.delenv("VORPAL_TEST_KEY", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text("VORPAL_TEST_KEY=super-secret\n", encoding="utf-8")
+    code = main(
+        _argv(tmp_path, "--env", str(env_file)),
+        transport=HintTransport(),
+    )
+    assert code == 0
+    assert os.environ["VORPAL_TEST_KEY"] == "super-secret"
+    err = capsys.readouterr().err
+    assert "VORPAL_TEST_KEY" in err
+    assert "super-secret" not in err
