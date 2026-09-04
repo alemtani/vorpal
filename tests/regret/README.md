@@ -1,6 +1,6 @@
 # Regret fixtures
 
-**Four seats across three completed drafts.** Each one freezes a real
+**Six seats across four completed drafts.** Each one freezes a real
 board at one seat's pick and records who was still there at that seat's
 next turn.
 
@@ -15,6 +15,8 @@ survived twenty picks is arithmetic on that list.
 | `snake_redraft_seat02_r09` | same draft, later | 2025 | 2 | 98 | 119 | 20 |
 | `superflex_seat07_r02` | 12-team superflex | 2026 | 7 | 18 | 31 | 12 |
 | `mock_standalone_seat06_r05` | standalone mock | 2026 | 6 | 54 | 67 | 12 |
+| `mock_std14_seat11_r05` | 14-round standalone mock | 2026 | 11 | 59 | 62 | 2 |
+| `mock_std14_seat11_r06` | same mock, next round | 2026 | 11 | 62 | 83 | 20 |
 
 ## Derived, not written
 
@@ -57,12 +59,31 @@ The superflex fixture is the sharpest case. Quarterback survival in
 superflex is the most format-specific number in this directory and means
 nothing in a one-QB league.
 
-The mock is the weakest record, and says so in its own `provenance`: 32
+The mock is a weak record, and says so in its own `provenance`: 32
 of its 192 picks were made by the platform's autopick rather than by a
 person, so it partly measures the platform's ranking rather than a room.
 It is kept because a room drafting close to raw ADP is a different
 failure mode to measure against, not because it is as good as the other
 two.
+
+## Seat 11 sits next to the turn
+
+The `mock_std14` pair is the only seat in this directory that is not in
+the middle of the order. Seat 11 of 12 waits two picks after an odd round
+and twenty after an even one, so the two fixtures are the same seat in
+consecutive rounds with the cost of waiting swinging by an order of
+magnitude. That contrast is the reason they are here; neither is
+interesting alone.
+
+**They are the weakest record in the directory and it is not close.** 84
+of 168 picks were the platform's autopick, and only 6 of the 12 seats
+were ever claimed by a person. Half this room is Sleeper's ranking, so
+the twenty-pick survival number is closer to an ADP readout than to a
+room's behaviour. Read it as a floor on a floor.
+
+The draft's `metadata.scoring_type` is `ppr`. vorpal ran this mock with
+std scoring lent by the operator, which is a fact about our run and not
+about the room. Nothing here is a standard-scoring market.
 
 ## The frozen-board assumption
 
@@ -78,15 +99,17 @@ available. That is deliberate and
 
 ## What these fixtures do not cover
 
-- **Three drafts.** Two of them are the same draft at two picks, so the
-  independent rooms number is three, not four. Nothing here supports
-  fitting anything. Spec section 7 says VONA waits until the regret set
-  holds enough drafts to fit survival; four seats is not that, and it is
-  not close.
+- **Four drafts.** Two pairs are one draft at two picks each, so the
+  independent rooms number is four, not six — and one of those four is
+  half CPU. Nothing here supports fitting anything. Spec section 7 says
+  VONA waits until the regret set holds enough drafts to fit survival;
+  six seats is not that, and it is not close.
 - **One host, one sport, snake only.** No auction, no linear, no
   reversal round, no keeper.
 - **Two seasons.** 2025 and 2026 preseason. No older era, so nothing
   here shows how fast a market's survival pattern goes stale.
+- **No standard scoring.** PPR, half-PPR and superflex only. The
+  `mock_std14` name refers to its 14 rounds, not to std scoring.
 - **Mid-round picks only.** No round one, where nothing has happened yet,
   and no final round, where there is no next turn to survive to.
 - **Nothing about whether the pick was good.** The gate fails one shape

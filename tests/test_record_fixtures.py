@@ -1,5 +1,7 @@
 """Redaction happens on the way in. Fixtures must not identify a league."""
 
+import json
+
 from record_fixtures import (
     OPERATOR_USER_ID,
     redact_draft,
@@ -277,3 +279,29 @@ def test_redact_fantasypros_drops_image_urls() -> None:
     assert "player_square_image_url" not in row
     assert row["player_yahoo_id"] == "30977"
     assert row["player_bye_week"] == "7"
+
+
+def test_redact_draft_hides_a_league_id_nested_in_metadata() -> None:
+    """A mock spun off a league carries the real league id in metadata even
+    when the top-level field is null. Redacting only the top level leaks it."""
+    out = redact_draft(
+        {
+            "draft_id": MOCK_DRAFT_ID,
+            "league_id": None,
+            "status": "complete",
+            "metadata": {
+                "name": "Example Mock Draft",
+                "scoring_type": "ppr",
+                "league_id": "1398369376385675264",
+            },
+            "creators": None,
+            "draft_order": {MOCK_OPERATOR_ID: 1},
+            "settings": {"teams": 12},
+        },
+        synthetic_draft_id="draft_mock_std14",
+        synthetic_league_id=None,
+        operator_real_id=MOCK_OPERATOR_ID,
+        user_map={},
+    )
+    assert out["metadata"]["league_id"] is None
+    assert "1398369376385675264" not in json.dumps(out)

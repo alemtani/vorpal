@@ -6,6 +6,7 @@ Re-run:
     uv run python tools/record_fixtures.py \\
       --snake-draft DRAFT_ID --snake-league LEAGUE_ID \\
       --mock-draft DRAFT_ID \\
+      --std-mock-draft DRAFT_ID \\
       --superflex-draft DRAFT_ID --superflex-league LEAGUE_ID \\
       --mid-draft DRAFT_ID \\
       --operator-username USERNAME
@@ -106,6 +107,10 @@ def redact_draft(
     metadata = dict(out.get("metadata") or {})
     if "name" in metadata:
         metadata["name"] = "Draft"
+    # A mock spun off a league carries the real league id down here even when
+    # the top-level `league_id` is null. Redacting only the top level leaks it.
+    if "league_id" in metadata:
+        metadata["league_id"] = synthetic_league_id
     out["metadata"] = metadata
     order = out.get("draft_order") or {}
     if isinstance(order, dict):
@@ -389,6 +394,13 @@ def record(args: argparse.Namespace) -> list[str]:
                 None,
             ),
             (
+                "mock_std14",
+                args.std_mock_draft,
+                None,
+                "draft_mock_std14",
+                None,
+            ),
+            (
                 "superflex",
                 args.superflex_draft,
                 args.superflex_league,
@@ -591,6 +603,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--snake-league", default=os.environ.get("VORPAL_SNAKE_LEAGUE"))
     parser.add_argument("--mock-draft", default=os.environ.get("VORPAL_MOCK_DRAFT"))
     parser.add_argument(
+        "--std-mock-draft", default=os.environ.get("VORPAL_STD_MOCK_DRAFT")
+    )
+    parser.add_argument(
         "--superflex-draft", default=os.environ.get("VORPAL_SUPERFLEX_DRAFT")
     )
     parser.add_argument(
@@ -619,6 +634,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         args.snake_league, "VORPAL_SNAKE_LEAGUE", "--snake-league"
     )
     args.mock_draft = _env_or_arg(args.mock_draft, "VORPAL_MOCK_DRAFT", "--mock-draft")
+    args.std_mock_draft = _env_or_arg(
+        args.std_mock_draft, "VORPAL_STD_MOCK_DRAFT", "--std-mock-draft"
+    )
     args.superflex_draft = _env_or_arg(
         args.superflex_draft, "VORPAL_SUPERFLEX_DRAFT", "--superflex-draft"
     )

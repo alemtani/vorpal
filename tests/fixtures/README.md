@@ -9,6 +9,7 @@ not stored here. Player ids are Sleeper ids (NFL players, not managers).
 |---|---|
 | `sleeper/draft_snake_redraft.json` + `league_snake_redraft.json` + `picks_snake_redraft.json` | League-attached snake redraft. Has K and DEF slots. |
 | `sleeper/draft_mock_standalone.json` + `picks_mock_standalone.json` | Standalone mock. `league_id` is JSON `null`. |
+| `sleeper/draft_mock_std14.json` + `picks_mock_std14.json` | 14-round standalone mock, 12 teams. Half the picks are platform autopick and only 6 seats were claimed. |
 | `sleeper/draft_superflex.json` + `league_superflex.json` + `picks_superflex.json` | Superflex (`SUPER_FLEX` / `slots_super_flex`). Has K, no DEF. |
 | `sleeper/draft_mid_draft.json` + `picks_mid_draft.json` | Mid-draft picks. Status on the wire was `paused`. |
 | `sleeper/user_operator.json` | Synthetic operator only. |

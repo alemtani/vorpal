@@ -82,6 +82,48 @@ SPECS: tuple[dict, ...] = (
             "measurement of that ranking rather than of a room."
         ),
     },
+    {
+        "name": "mock_std14_seat11_r05",
+        "draft": "mock_std14",
+        "draft_slot": 11,
+        "round_no": 5,
+        "provenance": (
+            "Standalone mock, league_id null, 14 rounds. Seat 11 of 12 sits "
+            "next to the turn, so its wait alternates: two picks after an odd "
+            "round, twenty after an even one. No other fixture is near the "
+            "turn. This is the cheap half of that pair — pick 59 to 62, two "
+            "picks between — where waiting costs almost nothing. The weakest "
+            "record here: 84 of 168 picks were the platform's autopick and "
+            "only 6 of 12 seats were ever claimed by a person."
+        ),
+        "era": (
+            "2026 preseason ADP. The draft's metadata.scoring_type is 'ppr'; "
+            "the room drafted under the platform's ppr-labelled mock default. "
+            "The std scoring vorpal ran with was lent by the operator and is "
+            "not what this room drafted under. Survival here is a fact about "
+            "a half-CPU ppr mock, and must not be read as a standard-scoring "
+            "market."
+        ),
+    },
+    {
+        "name": "mock_std14_seat11_r06",
+        "draft": "mock_std14",
+        "draft_slot": 11,
+        "round_no": 6,
+        "provenance": (
+            "Same mock, same seat, one round later: the expensive half of the "
+            "turn pair. Pick 62 to 83, twenty picks between, against two after "
+            "the round before. The pair is the point — one seat, consecutive "
+            "rounds, wait cost swinging by an order of magnitude. It is one "
+            "room, so it adds one independent room to the set, not two."
+        ),
+        "era": (
+            "2026 preseason ADP, same ppr-labelled half-CPU mock as "
+            "mock_std14_seat11_r05. Half this room is the platform's ranking, "
+            "so a twenty-pick survival number here is closer to an ADP "
+            "readout than to a room's behaviour."
+        ),
+    },
 )
 
 
