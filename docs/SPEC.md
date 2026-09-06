@@ -464,12 +464,18 @@ caller decides what they mean.
 - Ids not on `board` → violation.
 - Rec ≠ `hint_argmax_vols` → `VOLS_DISSENT` must be set. Silent dissent → violation.
 - Rec is not the best available ECR → `ECR_DISAGREE`. Beyond `ecr_best + margin`
-  → violation. The flag does not save it. **One exception:** a rec whose
-  `ecr_min` is inside the ceiling passes. `ecr` is the consensus median, and the
-  margin rule exists to catch a rec no expert would make — not to punish the
-  wide-spread upside pick that some experts rank inside the ceiling and others
-  far outside. `ecr_std` is the upside input; a floor that ignores `ecr_min`
-  would discard exactly the picks that input is for.
+  → violation, unless `ECR_DISAGREE` is set. **Two escapes.** A rec whose
+  `ecr_min` is inside the ceiling passes regardless of the flag: `ecr` is the
+  consensus median, and the margin rule exists to catch a rec no expert would
+  make — not to punish the wide-spread upside pick that some experts rank
+  inside the ceiling and others far outside. `ecr_std` is the upside input; a
+  floor that ignores `ecr_min` would discard exactly the picks that input is
+  for. And `ECR_DISAGREE`, named, waives the ceiling outright: consensus can be
+  wrong about a specific room, not just a specific player, and a table that is
+  genuinely ignoring a position sitting on real value is a live signal no
+  static CSV carries. The margin still catches *silent* deviation — a rec this
+  far out with the flag unset gets no pass, so a model cannot reach this far
+  without saying so.
 - Late picks: `vols` compress; prefer wider `ecr_std` (and `adp_stdev` if the
   override has it). Not a second scorer.
 

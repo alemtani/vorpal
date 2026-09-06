@@ -4,7 +4,7 @@
 model's answer: replay the committed cassette and fail the build on any
 gate in `ENFORCED`. The live runner is not imported.
 
-Seven of the twelve gates are enforced. The other five are not blocked on
+Six of the twelve gates are enforced. The other six are not blocked on
 the model — they are blocked on something this set does not carry, and
 `NOT_ENFORCED` says which, so a skip can never read as a pass.
 """
@@ -46,17 +46,22 @@ ENFORCED: dict[Gate, int] = {
     Gate.GOLDEN_REQUIRE: 12,
     Gate.VOLS_DISSENT: 12,
     Gate.ECR_DISSENT: 12,
-    Gate.ECR_SANITY: 12,
     Gate.WHY_CONTAINS_FLOOR: 4,
 }
 
 # Why each remaining gate is not a build failure. These are missing inputs and
-# one known gate bug, never a model verdict we chose to look away from.
+# two known gate bugs, never a model verdict we chose to look away from.
 NOT_ENFORCED: dict[Gate, str] = {
     # The gate compares alternatives inside the rec's own bye week only, so a
     # symmetric board fails whichever player you take. It fails all 12 cases
     # here, including the ones the human calls correct.
     Gate.BYE_HOLE: "gate bug, #31",
+    # The window is `ecr_best + margin` over the whole board, so it is
+    # position-blind. A list that inflates one position (superflex, TE-premium)
+    # anchors the window to that position and puts every other position out of
+    # reach. Live on 2026-09-04 it failed a correct RB at ECR 57 against a QB
+    # ecr_best of 8. Position-aware bounds are the fix.
+    Gate.ECR_SANITY: "gate bug, #126",
     # Five runs against a byte-identical payload. The cassette holds one.
     Gate.STABILITY: "no five-run fixture on a golden board",
     # Needs the two-pass replacement-rank deltas; a hand-built board has no pool.

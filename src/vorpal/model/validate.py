@@ -97,7 +97,8 @@ def validate_proposal(
                 "rec is not hint_argmax_vols and VOLS_DISSENT is not set",
             )
         )
-    violations.extend(_check_ecr_floor(payload, rec))
+    if Flag.ECR_DISAGREE not in flags:
+        violations.extend(_check_ecr_floor(payload, rec))
 
     proposal = Proposal(
         player_id=player_id,
@@ -116,6 +117,12 @@ def _check_ecr_floor(payload: Payload, rec: BoardRow) -> tuple[Violation, ...]:
     The margin is one round of picks in the first half of the draft and two
     rounds after it, measured off the best ECR still on the board. It exists to
     catch a rec no expert would make.
+
+    Skipped entirely when the model sets `ECR_DISAGREE` (checked by the caller).
+    Consensus can be wrong about a specific room, not just a specific player —
+    a table that is genuinely ignoring a position sitting on real value is a live
+    signal no static CSV carries. The margin still catches *silent* deviation:
+    a model that reaches this far without naming the disagreement gets no pass.
 
     Two escapes, both deliberate. A rec with no ECR is not checked at all —
     FantasyPros can be down, and SPEC says a missing ECR skips the ECR rule
