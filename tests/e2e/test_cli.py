@@ -68,8 +68,14 @@ def _argv(tmp_path: Path, *extra: str) -> list[str]:
 
 
 def _run(tmp_path: Path, *extra: str, transport: Any = None) -> tuple[int, Any]:
+    """The stub opener stands in for `gh`. A test never files a real issue."""
     transport = transport if transport is not None else HintTransport()
-    code = main(_argv(tmp_path, *extra), transport=transport)
+    code = main(
+        _argv(tmp_path, *extra),
+        transport=transport,
+        open_issue=lambda title, body: "https://example/issue",
+        why_not_form=lambda skips: None,
+    )
     return code, transport
 
 
@@ -638,6 +644,20 @@ def test_a_missing_github_token_does_not_fail_draft_night(
     monkeypatch.setattr("vorpal.cli.gh_issue_create", boom)
     assert _open_issue("t", "b") == ""
     assert "github issue" in capsys.readouterr().err
+
+
+def test_the_suite_never_reaches_a_live_github_opener(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The autouse guard, proved.
+
+    Any completed draft with a skip opens an issue. Without the guard a
+    local pytest run filed one on the repo every time.
+    """
+    from vorpal.cli import _open_issue
+
+    assert _open_issue("t", "b") == ""
+    assert "gh issue create ran under pytest" in capsys.readouterr().err
 
 
 def test_the_board_opens_itself_on_the_first_page(
