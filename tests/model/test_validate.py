@@ -152,8 +152,25 @@ def test_vols_dissent_with_the_flag_is_accepted() -> None:
     assert Flag.VOLS_DISSENT in proposal.flags
 
 
-def test_rec_beyond_ecr_best_plus_margin_violates_even_with_ecr_disagree() -> None:
-    # first half, T=12, ecr_best=1, rec ecr=20, ecr_min=18
+def test_rec_beyond_ecr_best_plus_margin_violates_when_silent() -> None:
+    # first half, T=12, ecr_best=1, rec ecr=20, ecr_min=18. VOLS_DISSENT is set
+    # (rec is not hint_argmax_vols) but ECR_DISAGREE is not: the model never
+    # named its disagreement with consensus, so the ceiling still holds.
+    raw = {
+        **_recorded(),
+        "player_id": "4034",
+        "flags": ["VOLS_DISSENT"],
+    }
+    proposal, violations = validate_proposal(_payload(pick_no=48), raw)
+    assert proposal is not None
+    assert "ecr_beyond_margin" in [v.code for v in violations]
+
+
+def test_ecr_disagree_waives_the_margin_ceiling() -> None:
+    # Same shape as the silent case above, but ECR_DISAGREE is set: naming the
+    # disagreement waives the ceiling. Consensus can be wrong about a specific
+    # room reaching for something else, not just a specific player, and that
+    # live signal has no CSV to check against.
     raw = {
         **_recorded(),
         "player_id": "4034",
@@ -161,10 +178,12 @@ def test_rec_beyond_ecr_best_plus_margin_violates_even_with_ecr_disagree() -> No
     }
     proposal, violations = validate_proposal(_payload(pick_no=48), raw)
     assert proposal is not None
-    assert "ecr_beyond_margin" in [v.code for v in violations]
+    assert "ecr_beyond_margin" not in [v.code for v in violations]
 
 
 def test_ecr_min_escape_keeps_a_rec_inside_the_floor() -> None:
+    # No ECR_DISAGREE: the ecr_min escape holds on its own, without the model
+    # needing to name a disagreement.
     board = (
         _row("4866", vols=40.0, ecr=1, ecr_min=1),
         _row("4034", vols=20.0, ecr=14, ecr_min=10),
@@ -173,7 +192,7 @@ def test_ecr_min_escape_keeps_a_rec_inside_the_floor() -> None:
         **_recorded(),
         "player_id": "4034",
         "alternatives": [],
-        "flags": ["VOLS_DISSENT", "ECR_DISAGREE"],
+        "flags": ["VOLS_DISSENT"],
     }
     proposal, violations = validate_proposal(_payload(board=board), raw)
     assert violations == ()
@@ -190,7 +209,7 @@ def test_second_half_margin_is_two_rounds() -> None:
         **_recorded(),
         "player_id": "late",
         "alternatives": [],
-        "flags": ["VOLS_DISSENT", "ECR_DISAGREE"],
+        "flags": ["VOLS_DISSENT"],
     }
     _, violations = validate_proposal(_payload(pick_no=91, board=board), raw)
     assert [v.code for v in violations] == ["ecr_beyond_margin"]
