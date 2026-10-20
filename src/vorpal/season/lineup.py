@@ -5,7 +5,9 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
+from vorpal.season.blend import FULL_ROLE_GAMES
 from vorpal.season.context import Season
+from vorpal.season.forecast import Forecast, return_label
 from vorpal.season.report import Report, Table, pts
 from vorpal.season.sim import SLOT_POSITIONS, best_lineup
 
@@ -34,6 +36,17 @@ def _ir_eligible(status: str | None, settings: dict) -> bool:
         return True
     key = _IR_SETTING.get(status or "")
     return bool(key and settings.get(key))
+
+
+def _model_cell(f: Forecast) -> str:
+    """Model points, marked when the role check leaves them out of the blend."""
+    if f.model is None:
+        return "-"
+    if f.role_games == 0:
+        return f"{pts(f.model)} (unused: fill-in role)"
+    if f.role_games < FULL_ROLE_GAMES:
+        return f"{pts(f.model)} (part: {f.role_games} role games)"
+    return pts(f.model)
 
 
 def _why_sit(s: Season, pid: str) -> str:
@@ -136,7 +149,7 @@ def lineup_report(
             s.name(p),
             s.now[p].team or "",
             pts(points[p]),
-            pts(s.now[p].model) if s.now[p].model is not None else "-",
+            _model_cell(s.now[p]),
             " / ".join(f"{k} {pts(v)}" for k, v in sorted(s.now[p].vendors.items())),
             s.now[p].status or "",
         )
@@ -151,10 +164,25 @@ def lineup_report(
     bench_rows = [
         (s.name(p), pts(points[p]), "" if points[p] else _why_sit(s, p)) for p in sat
     ]
+    ir_rows = [
+        (
+            s.name(p),
+            " ".join(x for x in (f.status, f.injury and f"({f.injury})") if x)
+            or "healthy",
+            pts(f.rate),
+            return_label(f, s.week),
+        )
+        for p in me.get("reserve") or []
+        if (f := s.now.get(p)) is not None
+    ]
     moves = [ln for ln in lines if ln.startswith(("Move", "Activate"))]
     return Report(
         subject=subject,
         lines=lines,
-        tables=[table, Table("Bench", ("Player", "Proj", "Why"), bench_rows)],
+        tables=[
+            table,
+            Table("Bench", ("Player", "Proj", "Why"), bench_rows),
+            Table("IR", ("Player", "Status", "Proj if active", "Back"), ir_rows),
+        ],
         key="|".join([*sorted(best_ids), *moves]),
     )

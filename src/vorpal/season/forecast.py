@@ -45,6 +45,7 @@ class Forecast:
     points: float
     plays: bool
     rising: bool
+    injury: str | None = None
 
 
 def _vendor_mean(v: Mapping[str, float] | None) -> float:
@@ -104,6 +105,7 @@ def forecast_week(
             points=rate * status_factor(status) if plays else 0.0,
             plays=plays,
             rising=rising(mine, week),
+            injury=p.get("injury_body_part"),
         )
     return out
 
@@ -113,12 +115,19 @@ def back_week(f: Forecast, week: int) -> int:
     return week + RETURN_WEEKS.get(f.status or "", 0)
 
 
+def return_label(f: Forecast, week: int) -> str:
+    """'week 8' or 'now'. Body part alone never means out for the season."""
+    back = back_week(f, week)
+    return f"week {back}" if back > week else "now"
+
+
 def assumed_returns(
     forecasts: Mapping[str, Forecast], pids: Sequence[str], week: int
 ) -> str:
-    """'Mike Evans (Out) week 8, ...' for hurt players among ``pids``."""
+    """'Mike Evans (Out, Achilles) week 8, ...' for hurt players."""
     hurt = [
-        f"{f.name} ({f.status}) week {back_week(f, week)}"
+        f"{f.name} ({', '.join(x for x in (f.status, f.injury) if x)})"
+        f" {return_label(f, week)}"
         for p in pids
         if (f := forecasts.get(p)) is not None and back_week(f, week) > week
     ]

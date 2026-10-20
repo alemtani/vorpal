@@ -25,7 +25,8 @@ def test_week_7_suggests_ir_for_out_players(season7) -> None:
 
 
 def test_tables_show_best_lineup_and_bench(season7) -> None:
-    best, bench = lineup_report(season7).tables
+    best, bench, ir = lineup_report(season7).tables
+    assert ir.rows == [("T.J. Hockenson", "Out", ir.rows[0][2], "week 8")]
     assert len(best.rows) == 9
     assert best.rows[0][0] == "QB"
     why = {row[0]: row[2] for row in bench.rows}
@@ -112,3 +113,24 @@ def test_ir_status_is_always_ir_eligible(season7) -> None:
     r = lineup_report(replace(season7, now=now))
     ir = next(ln for ln in r.lines if ln.startswith("Move to IR"))
     assert "Bhayshul Tuten (IR)" in ir
+
+
+def test_model_column_marks_unused_and_partial_models(season7) -> None:
+    from vorpal.season.lineup import _model_cell
+
+    assert _model_cell(season7.now["maye"]) == "-"
+    assert _model_cell(season7.now["pierce"]).endswith("(unused: fill-in role)")
+    two = replace(season7.now["pierce"], role_games=2)
+    assert _model_cell(two).endswith("(part: 2 role games)")
+    assert "(" not in _model_cell(season7.now["london"])
+
+
+def test_ir_table_with_injury_and_healthy_reserve(season7) -> None:
+    now = dict(season7.now)
+    now["hock"] = replace(now["hock"], injury="Concussion")
+    now["tuten"] = replace(now["tuten"], status=None)
+    me = dict(season7.me, reserve=["hock", "tuten", "ghost"])
+    ir = lineup_report(replace(season7, now=now, me=me)).tables[2]
+    assert ir.rows[0][1] == "Out (Concussion)"
+    assert ir.rows[1][1:] == ("healthy", ir.rows[1][2], "now")
+    assert len(ir.rows) == 2

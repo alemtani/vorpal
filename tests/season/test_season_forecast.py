@@ -119,3 +119,17 @@ def test_season_points_use_this_week_when_next_week_is_missing() -> None:
     assert pts("tuten", 8) == pytest.approx(now["tuten"].rate)
     only_next = season_points({}, _week7(), 7, {8: PLAYING})
     assert only_next("maye", 8) == pytest.approx(_week7()["maye"].rate)
+
+
+def test_body_part_is_shown_but_does_not_change_the_return_week() -> None:
+    from dataclasses import replace
+
+    from vorpal.season.forecast import assumed_returns, return_label
+
+    now = _week7()
+    now["evans"] = replace(now["saquon"], name="Mike Evans", injury="Achilles")
+    assert return_label(now["evans"], 7) == "week 8"
+    assert return_label(now["maye"], 7) == "now"
+    assert assumed_returns(now, ["evans", "saquon", "maye"], 7) == (
+        "Mike Evans (Out, Achilles) week 8, Saquon Barkley (Out) week 8"
+    )
