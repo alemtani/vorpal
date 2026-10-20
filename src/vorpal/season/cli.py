@@ -7,7 +7,7 @@ import os
 import smtplib
 import sys
 from collections.abc import Callable, Mapping, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TextIO
 
@@ -25,6 +25,7 @@ from vorpal.season.waivers import median_winning_bid, waiver_report
 
 DEFAULT_SIMS = 1500
 DEFAULT_STATE = Path(".season-state")
+TOKEN_WARNING = timedelta(days=3)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -108,6 +109,7 @@ class Runner:
             smtp,
         )
         self.log = SentLog(cfg.state / "sent.json")
+        self.now = datetime.now(UTC)
         self._season: Season | None = None
 
     @property
@@ -179,6 +181,20 @@ class Runner:
         if not self.cfg.token:
             print("trades: SLEEPER_TOKEN not set; inbox watch is off", file=self.out)
             return
+        expires = inbox.token_expiry(self.cfg.token)
+        if expires is not None and expires - self.now < TOKEN_WARNING:
+            when = expires.strftime("%Y-%m-%d %H:%M UTC")
+            warn = Report(
+                subject=f"vorpal: Sleeper token expires {when}",
+                lines=[
+                    "The hourly trade check stops working when it expires.",
+                    "Copy a fresh token from sleeper.com and run:"
+                    " gh secret set SLEEPER_TOKEN",
+                    "Until then: Actions > season > Run workflow, job trade.",
+                ],
+                key=when,
+            )
+            self.deliver("trades-expiry", warn, False)
         s = self.season
         try:
             offers = inbox.pending_offers(
@@ -248,9 +264,10 @@ def main(
     args = build_parser().parse_args(argv)
     cfg = Config(os.environ if env is None else env)
     runner = Runner(args, cfg, source or Source(), out, smtp)
+    runner.now = now()
     try:
         if args.job == "auto":
-            runner.auto(now())
+            runner.auto(runner.now)
         else:
             getattr(runner, args.job)()
     except VorpalError as exc:

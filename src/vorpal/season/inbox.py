@@ -6,8 +6,11 @@ token (``league_transactions_filtered``, captured 2026-10-20). Read-only.
 
 from __future__ import annotations
 
+import base64
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from vorpal.season.fetch import Source
@@ -65,3 +68,16 @@ def pending_offers(
         headers={"authorization": token, "x-sleeper-graphql-op": OP},
     )
     return parse_offers(data["data"][OP], roster_id, user_id)
+
+
+def token_expiry(token: str) -> datetime | None:
+    """Expiry from a JWT's ``exp`` claim. None if the token is not a JWT."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+    try:
+        pad = "=" * (-len(parts[1]) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(parts[1] + pad))
+        return datetime.fromtimestamp(int(claims["exp"]), UTC)
+    except (ValueError, KeyError, TypeError):
+        return None

@@ -1,12 +1,23 @@
 """Pending offers from Sleeper's web GraphQL. respx stands in for Sleeper."""
 
+import base64
+import json
+from datetime import UTC, datetime
+
 import httpx
 import pytest
 import respx
 
 from vorpal.errors import PlatformError
 from vorpal.season.fetch import Source
-from vorpal.season.inbox import GRAPHQL, OP, Offer, parse_offers, pending_offers
+from vorpal.season.inbox import (
+    GRAPHQL,
+    OP,
+    Offer,
+    parse_offers,
+    pending_offers,
+    token_expiry,
+)
 
 ROWS = [
     {
@@ -64,3 +75,20 @@ def test_http_failure_is_a_platform_error(source) -> None:
     respx.post(GRAPHQL).respond(status_code=401)
     with pytest.raises(PlatformError, match="401"):
         pending_offers(source, "bad", "L", 7, "me")
+
+
+def jwt(claims) -> str:
+    body = base64.urlsafe_b64encode(json.dumps(claims).encode()).decode().rstrip("=")
+    return f"hdr.{body}.sig"
+
+
+def test_token_expiry_reads_exp() -> None:
+    assert token_expiry(jwt({"exp": 1793000000})) == datetime.fromtimestamp(
+        1793000000, UTC
+    )
+
+
+def test_token_expiry_none_for_non_jwt_or_bad_claims() -> None:
+    assert token_expiry("opaque") is None
+    assert token_expiry(jwt({"user": 1})) is None
+    assert token_expiry("a.!!!.c") is None

@@ -218,3 +218,21 @@ def test_draft_cli_routes_season(monkeypatch) -> None:
     monkeypatch.setattr(draft_cli, "load_dotenv", lambda path, env: ())
     assert draft_cli.main(["season", "lineup"]) == 0
     assert seen["argv"] == ["lineup"]
+
+
+def test_token_near_expiry_warns_once(make_source, tmp_path, monkeypatch) -> None:
+    import base64
+    import json
+
+    exp = int(datetime(2026, 10, 22, tzinfo=UTC).timestamp())
+    body = base64.urlsafe_b64encode(json.dumps({"exp": exp}).encode()).decode()
+    env = {
+        "SLEEPER_TOKEN": f"h.{body}.s",
+        "EMAIL_TO": "a@x.com",
+        "GMAIL_APP_PASSWORD": "p",
+    }
+    monkeypatch.setattr(cli.inbox, "pending_offers", lambda *a: [])
+    code, out = run(["trades", "--send"], make_source, tmp_path, env=env)
+    assert "Sleeper token expires 2026-10-22 00:00 UTC" in out
+    code, out = run(["trades", "--send"], make_source, tmp_path, env=env)
+    assert "trades-expiry: unchanged since last send" in out
