@@ -211,6 +211,12 @@ def main(
     open_board=None,
 ) -> int:
     """Run one draft. Returns 0, or 2 with a refusal on stderr."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["season"]:
+        from vorpal.season.cli import main as season_main
+
+        load_dotenv(DEFAULT_ENV_FILE, os.environ)
+        return season_main(argv[1:])
     args = build_parser().parse_args(argv)
     loaded = load_dotenv(args.env, os.environ)
     if loaded:

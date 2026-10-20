@@ -1,0 +1,70 @@
+name: season
+
+# One hourly run. `vorpal season auto` decides in Pacific time what is due:
+# waivers Tue 06:45, lineup Wed-Mon (see src/vorpal/season/schedule.py),
+# trade inbox every hour. Manual runs pick a job.
+on:
+  schedule:
+    - cron: "45 * * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: Job to run
+        type: choice
+        options: [auto, lineup, waivers, trade, trades, fit]
+        default: lineup
+      give:
+        description: "trade: your players, comma separated"
+        default: ""
+      get:
+        description: "trade: their players, comma separated"
+        default: ""
+      send:
+        description: Email the result
+        type: boolean
+        default: true
+
+concurrency:
+  group: season
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - id: day
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Sleeper /players, once a day
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/vorpal/season
+          key: season-players-${{ steps.day.outputs.today }}
+      - name: What was already sent
+        uses: actions/cache@v4
+        with:
+          path: .season-state
+          key: season-state-${{ github.run_id }}
+          restore-keys: season-state-
+      - name: Run
+        env:
+          SLEEPER_LEAGUE_ID: ${{ secrets.SLEEPER_LEAGUE_ID }}
+          SLEEPER_USER_ID: ${{ secrets.SLEEPER_USER_ID }}
+          SLEEPER_TOKEN: ${{ secrets.SLEEPER_TOKEN }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          JOB: ${{ inputs.job || 'auto' }}
+          GIVE: ${{ inputs.give }}
+          GET: ${{ inputs.get }}
+          SEND: ${{ github.event_name == 'schedule' || inputs.send }}
+        run: |
+          args=("$JOB")
+          if [ "$SEND" = "true" ]; then args+=(--send); fi
+          if [ "$JOB" = "trade" ]; then args+=(--give "$GIVE" --get "$GET"); fi
+          if [ "$JOB" = "fit" ]; then args+=(--season 2025); fi
+          uv run vorpal season "${args[@]}"
