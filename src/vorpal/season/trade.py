@@ -121,19 +121,46 @@ def trade_report(
         f"Your lineup: week {w0} {pts(b0)} -> {pts(a0)} ({signed(a0 - b0)});"
         f" {signed(avg)} a week through week {s.playoff_start - 1}.",
     )
-    # Each player's own part: lineup points per regular-season week he adds
-    # (get) or takes away (give), on today's roster, nobody newly hurt.
+    # The trade as like-for-like swaps (same position first), each measured on
+    # the roster left by the step before. The steps add up to the total.
     reg = [w for w, *_ in regular_weeks]
 
-    def per_week(with_ids: Sequence[str], without_ids: Sequence[str]) -> float:
-        diff = sum(
-            s.lineup_for(with_ids, w)[0] - s.lineup_for(without_ids, w)[0] for w in reg
-        )
-        return diff / max(len(reg), 1)
+    def avg_lineup(ids: Sequence[str]) -> float:
+        return sum(s.lineup_for(ids, w)[0] for w in reg) / max(len(reg), 1)
 
-    parts = [
-        (p, -per_week(base_roster, [q for q in base_roster if q != p])) for p in give
-    ] + [(p, per_week([*base_roster, p], base_roster)) for p in get]
+    def rate(p: str) -> float:
+        f = s.now.get(p) or s.nxt.get(p)
+        return f.rate if f else 0.0
+
+    outs = sorted(give, key=rate, reverse=True)
+    ins = sorted(get, key=rate, reverse=True)
+    plan: list[tuple[list[str], list[str]]] = []
+    for g in list(ins):
+        same = next((o for o in outs if s.positions.get(o) == s.positions.get(g)), None)
+        if same is not None:
+            plan.append(([same], [g]))
+            outs.remove(same)
+            ins.remove(g)
+    if outs or ins:
+        plan.append((outs, ins))
+    running = list(base_roster)
+    steps = []
+    for out, inn in plan:
+        nxt_roster = [p for p in running if p not in out] + inn
+        steps.append((out, inn, avg_lineup(nxt_roster) - avg_lineup(running)))
+        running = nxt_roster
+    fill_in = [p for p in new if p not in running]
+    fill_out = [p for p in running if p not in new]
+    if fill_in or fill_out:
+        steps.append((fill_out, fill_in, avg_lineup(new) - avg_lineup(running)))
+
+    def step_name(out: list[str], inn: list[str]) -> str:
+        i = " + ".join(s.name(p) for p in inn)
+        if not out:
+            kept = all(p in roster for p in inn)
+            return f"Open roster spot: {'keep' if kept else 'add'} {i}"
+        o = " + ".join(s.name(p) for p in out)
+        return f"{o} -> {i}" if inn else f"Drop {o}"
 
     def flip_at(p: str) -> str:
         """Weekly average above which losing him turns the verdict to DECLINE."""
@@ -236,18 +263,16 @@ def trade_report(
                 week_rows,
             ),
             Table(
-                f"Each player's part (lineup points a week, weeks {s.week}"
-                f"-{s.playoff_start - 1})",
-                ("Side", "Player", "Per week", "DECLINE if he averages over"),
-                [
-                    (
-                        "give" if p in give else "get",
-                        s.name(p),
-                        signed(v),
-                        flips.get(p, ""),
-                    )
-                    for p, v in parts
-                ],
+                f"The trade in steps (lineup points a week, weeks {s.week}"
+                f"-{s.playoff_start - 1}, damped, nobody newly hurt)",
+                ("Swap", "Per week"),
+                [(step_name(o, i), signed(v)) for o, i, v in steps]
+                + [("Total", signed(sum(v for *_, v in steps)))],
+            ),
+            Table(
+                "If a player you give beats his projection",
+                ("Player", "Damped", "DECLINE if he averages over"),
+                [(s.name(p), pts(rate(p)), flips[p]) for p in give if flips[p]],
             ),
             table,
         ],
