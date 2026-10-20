@@ -167,10 +167,7 @@ def test_closest_call_names_the_flip_threshold(season7, sim) -> None:
     line = next(ln for ln in r.lines if ln.startswith("Closest call:"))
     assert "Dameon Pierce. DECLINE if he averages more than" in line
     steps, flips = r.tables[2], r.tables[3]
-    assert (
-        steps.rows[0][0] == "Dameon Pierce -> D'Andre Swift + Chuba Hubbard"[:0]
-        or steps.rows
-    )
+    assert steps.rows[-1][0] == "Total"
     assert flips.header[-1] == "DECLINE if he averages over"
     assert flips.rows[0][0] == "Dameon Pierce"
     assert any(row[0].startswith("Drop ") for row in steps.rows)
