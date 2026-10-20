@@ -3,6 +3,10 @@
 `docs/SPEC.md` is the contract. Do not invent behavior it does not specify.
 
 Personal NFL redraft tool. A `LeagueHost` adapter reads the platform.
+
+Two modes. **Draft mode** (everything except `src/vorpal/season/`) follows
+every rule in this file. **Season mode** (`src/vorpal/season/`) follows
+only the "Season mode" section at the end and the shared rules it names.
 v1 implements Sleeper. ESPN would be another adapter, not a rewrite.
 Forecast (stats, ADP, ECR, bye) is FantasyPros. It stays in ingest.
 In v1 it arrives as CSV exports the operator saves from the website by
@@ -104,7 +108,7 @@ If the next person cannot see it from the code, put it in the PR body.
 - Match a wire name by prefix, or keep a second copy of a host's key table.
 - Add an executor. The human clicks in the host UI.
 - Fit a market model on this league's draft history.
-- Build lineup, waiver, or trade policy in v1.
+- Build lineup, waiver, or trade policy in draft mode. Season mode owns it.
 - Add a chance-to-last-until-the-next-pick number.
 
 ## Facts agents miss
@@ -152,3 +156,24 @@ uv run ruff format .
 
 Python >= 3.12. CI is 3.12 and 3.13. Marker `live` is off in CI.
 `invariant` / `golden` failures are model problems, not code bugs.
+
+## Season mode
+
+`src/vorpal/season/` sends the in-season emails: lineup (Wed–Mon),
+waivers (Tue), trade review (hourly). Spec: `docs/specs/season.md`.
+
+What changes from draft mode:
+
+- It reads vendor projections: Sleeper and ESPN. It reads FantasyCalc
+  trade values. It does not read FantasyPros.
+- It builds lineup, waiver, and trade advice.
+- It pushes straight to main. Tests, the 99% gate, and ruff still run
+  before every push.
+
+What stays:
+
+- Never write to Sleeper. No executor. The human clicks.
+- Never commit `private/`, league ids, user ids, emails, or tokens. They
+  are GitHub secrets. State lives in the Actions cache, not in git.
+- `/players` at most once a day. Sleeper under 1000 calls a minute.
+- TDD and the 99% coverage gate.
