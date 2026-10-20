@@ -80,6 +80,25 @@ def test_trades_every_hour_and_nothing_else_at_night() -> None:
     assert jobs_due(_utc(2026, 10, 21, 9, 45)) == [Due("trades", False)]
 
 
+def test_a_missed_slot_stays_due_for_its_pt_day(tmp_path) -> None:
+    log = SentLog(tmp_path / "sent.json")
+    late = jobs_due(_utc(2026, 10, 20, 15, 7), log)  # Tue 08:07 PDT
+    assert [d.slot for d in late if d.job == "waivers"] == ["2026-10-20T06"]
+    assert Due("waivers", True) not in jobs_due(_utc(2026, 10, 20, 12, 13))  # 05:13
+    assert Due("waivers", True) not in jobs_due(_utc(2026, 10, 21, 7, 0))  # Wed 00:00
+
+
+def test_a_recorded_slot_is_not_due_again(tmp_path) -> None:
+    log = SentLog(tmp_path / "sent.json")
+    log.record("slot:waivers", "2026-10-20T06")
+    assert jobs_due(_utc(2026, 10, 20, 16, 45), log) == [Due("trades", False)]
+
+
+def test_the_latest_lineup_slot_replaces_a_missed_one() -> None:
+    due = jobs_due(_utc(2026, 10, 25, 19, 45))  # Sun 12:45 PDT; 08:00 and 11:00 passed
+    assert [(d.job, d.slot) for d in due[1:]] == [("lineup", "2026-10-25T11")]
+
+
 def test_sent_log_round_trip(tmp_path) -> None:
     path = tmp_path / "state" / "sent.json"
     log = SentLog(path)

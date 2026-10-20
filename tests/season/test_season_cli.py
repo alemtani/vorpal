@@ -185,6 +185,9 @@ def test_auto_only_if_changed_lineup(make_source, tmp_path) -> None:
     sun = datetime(2026, 10, 25, 15, 45, tzinfo=UTC)
     run(["auto", "--send"], make_source, tmp_path, env=env, when=sun)
     code, out = run(["auto", "--send"], make_source, tmp_path, env=env, when=sun)
+    assert "Week 7 lineup" not in out and "lineup:" not in out
+    later = datetime(2026, 10, 25, 18, 45, tzinfo=UTC)  # Sun 11:45, the next slot
+    code, out = run(["auto", "--send"], make_source, tmp_path, env=env, when=later)
     assert "lineup: unchanged since last send" in out
 
 

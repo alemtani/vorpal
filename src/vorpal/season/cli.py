@@ -232,13 +232,15 @@ class Runner:
             self.deliver(f"trade:{offer.id}", report, False)
 
     def auto(self, now: datetime) -> None:
-        for due in jobs_due(now):
+        for due in jobs_due(now, self.log):
             if due.job == "lineup":
                 self.lineup(always=due.always)
             elif due.job == "waivers":
                 self.waivers()
             else:
                 self.trades()
+            if due.slot and self.args.send:
+                self.log.record(f"slot:{due.job}", due.slot)
 
     def fit(self) -> None:
         season = self.args.season

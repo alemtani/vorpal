@@ -1,13 +1,15 @@
 """Which jobs run at a given Pacific time, and what was already sent.
 
 One hourly cron calls ``jobs_due``. Deciding in PT here means the clock
-change on 11/1 never shifts a send.
+change on 11/1 never shifts a send. GitHub delays and drops scheduled
+runs, so a slot stays due for the rest of its PT day until a run records
+it. A later slot of the same job replaces an earlier one.
 """
 
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -21,6 +23,8 @@ class Due:
     job: str
     always: bool
     """False: send only when the advice changed since the last send."""
+    slot: str = field(default="", compare=False)
+    """The PT slot this run covers, e.g. ``2026-10-20T06``. Empty for trades."""
 
 
 # (weekday, PT hour) -> lineup run. Runs at about :45 past the hour.
@@ -40,14 +44,26 @@ LINEUP: dict[tuple[int, int], bool] = {
 WAIVERS = (TUE, 6)
 
 
-def jobs_due(now: datetime) -> list[Due]:
+def _slot(local: datetime, hours: list[int]) -> str | None:
+    """Today's latest slot hour that has started, as a key."""
+    started = [h for h in hours if h <= local.hour]
+    return f"{local:%Y-%m-%d}T{max(started):02d}" if started else None
+
+
+def jobs_due(now: datetime, log: SentLog | None = None) -> list[Due]:
+    """Jobs to run now. With ``log``, a slot it already holds is skipped."""
     local = now.astimezone(PT)
-    slot = (local.weekday(), local.hour)
+    day = local.weekday()
     due = [Due("trades", always=False)]
-    if slot == WAIVERS:
-        due.append(Due("waivers", always=True))
-    if slot in LINEUP:
-        due.append(Due("lineup", always=LINEUP[slot]))
+    slots = {
+        "waivers": ({WAIVERS[1]: True} if day == WAIVERS[0] else {}),
+        "lineup": {h: always for (d, h), always in LINEUP.items() if d == day},
+    }
+    for job, hours in slots.items():
+        slot = _slot(local, list(hours))
+        if slot is None or (log is not None and not log.changed(f"slot:{job}", slot)):
+            continue
+        due.append(Due(job, always=hours[int(slot[-2:])], slot=slot))
     return due
 
 
