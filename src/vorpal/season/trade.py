@@ -121,6 +121,43 @@ def trade_report(
         f"Your lineup: week {w0} {pts(b0)} -> {pts(a0)} ({signed(a0 - b0)});"
         f" {signed(avg)} a week through week {s.playoff_start - 1}.",
     )
+    # Each player's own part: lineup points per regular-season week he adds
+    # (get) or takes away (give), on today's roster, nobody newly hurt.
+    reg = [w for w, *_ in regular_weeks]
+
+    def per_week(with_ids: Sequence[str], without_ids: Sequence[str]) -> float:
+        diff = sum(
+            s.lineup_for(with_ids, w)[0] - s.lineup_for(without_ids, w)[0] for w in reg
+        )
+        return diff / max(len(reg), 1)
+
+    parts = [
+        (p, -per_week(base_roster, [q for q in base_roster if q != p])) for p in give
+    ] + [(p, per_week([*base_roster, p], base_roster)) for p in get]
+
+    def flip_at(p: str) -> str:
+        """Weekly average above which losing him turns the verdict to DECLINE."""
+        f = s.now.get(p) or s.nxt.get(p)
+        lineup_weeks = sum(
+            1 for w in reg if p in {q for _, q in s.lineup_for(base_roster, w)[1]}
+        )
+        if f is None or regular <= 0 or not lineup_weeks:
+            return ""
+        return pts(f.rate + regular / lineup_weeks)
+
+    flips = {p: flip_at(p) for p in give}
+    closest = min(
+        (p for p in give if flips[p]),
+        key=lambda p: float(flips[p]) - (s.now.get(p) or s.nxt[p]).rate,
+        default=None,
+    )
+    if closest is not None:
+        f = s.now.get(closest) or s.nxt[closest]
+        lines.insert(
+            3,
+            f"Closest call: {s.name(closest)}. DECLINE if he averages more than"
+            f" {flips[closest]} a week (damped: {pts(f.rate)}).",
+        )
     healthy = sum(a - b for w, b, _, a, _ in weekly if w >= s.playoff_start)
     if healthy - playoffs > DEPTH_GAP:
         lines.append(
@@ -197,6 +234,20 @@ def trade_report(
                 "Week by week (damped projections, no new injuries)",
                 ("Week", "Now", "After", "Change", "Starts", "Leaves lineup"),
                 week_rows,
+            ),
+            Table(
+                f"Each player's part (lineup points a week, weeks {s.week}"
+                f"-{s.playoff_start - 1})",
+                ("Side", "Player", "Per week", "DECLINE if he averages over"),
+                [
+                    (
+                        "give" if p in give else "get",
+                        s.name(p),
+                        signed(v),
+                        flips.get(p, ""),
+                    )
+                    for p, v in parts
+                ],
             ),
             table,
         ],

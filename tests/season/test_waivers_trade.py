@@ -93,7 +93,7 @@ def test_trade_jacobs_for_hall_and_pitts_is_declined(season7, sim) -> None:
     assert "Market (FantasyCalc): you give 3514, get 2733." in r.lines
     assert "Trade deadline: week 9." in r.lines
     assert "Assumed back: Breece Hall (Out) week 8." in r.lines
-    assert [row[0] for row in r.tables[2].rows] == ["give", "give", "get"]
+    assert [row[0] for row in r.tables[3].rows] == ["give", "give", "get"]
 
 
 def test_two_for_one_forces_a_drop(season7, sim) -> None:
@@ -111,7 +111,7 @@ def test_trade_row_for_an_unknown_player_and_no_deadline(season7, sim) -> None:
     league = dict(season7.league, settings={})
     s = replace(season7, league=league)
     r = trade_report(s, sim, ["pierce"], ["ghost"], "x", {})
-    assert r.tables[2].rows[1] == ("get", "ghost", "-", "", "")
+    assert r.tables[3].rows[1] == ("get", "ghost", "-", "", "")
     assert not any(ln.startswith("Trade deadline") for ln in r.lines)
 
 
@@ -131,7 +131,11 @@ def test_open_spot_stays_open_without_free_agents(season7, sim) -> None:
 
 def test_trade_shows_the_lineup_slot_by_slot_and_week_by_week(season7, sim) -> None:
     r = trade_report(season7, sim, ["rodgers"], ["allen"], "Rohan312", {})
-    slots, weeks, _ = r.tables
+    slots, weeks, parts, _ = r.tables
+    assert [row[:2] for row in parts.rows] == [
+        ("give", "Aaron Rodgers"),
+        ("get", "Josh Allen"),
+    ]
     sf = next(row for row in slots.rows if row[0] == "SUPER_FLEX")
     assert sf[1] == "Aaron Rodgers" and sf[3] == "Tanner McKee" and sf[5] == "changed"
     assert next(row for row in slots.rows if row[0] == "QB")[5] == ""
@@ -157,3 +161,20 @@ def test_depth_loss_is_explained(season7, sim, monkeypatch) -> None:
     monkeypatch.setattr(trade, "DEPTH_GAP", -100.0)
     r = trade_report(season7, sim, ["rodgers"], ["allen"], "x", {})
     assert any(ln.startswith("Playoffs: ") for ln in r.lines)
+
+
+def test_closest_call_names_the_flip_threshold(season7, sim) -> None:
+    r = trade_report(season7, sim, ["pierce"], ["swift", "hubbard"], "Nuyen", {})
+    assert r.subject.startswith("Trade from Nuyen: ACCEPT")
+    line = next(ln for ln in r.lines if ln.startswith("Closest call:"))
+    assert "Dameon Pierce. DECLINE if he averages more than" in line
+    parts = r.tables[2]
+    assert parts.header[-1] == "DECLINE if he averages over"
+    assert parts.rows[0][3] != "" and parts.rows[1][3] == ""
+
+
+def test_no_flip_line_when_the_trade_already_loses(season7, sim) -> None:
+    r = trade_report(season7, sim, ["gibbs"], ["tucker"], "x", {})
+    assert r.subject.startswith("Trade from x: DECLINE")
+    assert not any(ln.startswith("Closest call") for ln in r.lines)
+    assert r.tables[2].rows[0][3] == ""
