@@ -24,8 +24,10 @@ on:
         type: boolean
         default: true
 
+# Hourly runs queue behind each other. A manual run gets its own group, so
+# an hourly run can never replace a trade review you asked for.
 concurrency:
-  group: season
+  group: season-${{ github.event_name == 'schedule' && 'hourly' || github.run_id }}
   cancel-in-progress: false
 
 jobs:
