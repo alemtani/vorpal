@@ -41,7 +41,7 @@ def test_waivers_add_an_rb_and_never_drop_rising_pitts(season7, sim) -> None:
     assert all(row[3] != "Kyle Pitts" for row in adds.rows)
     pitts = next(row for row in drops.rows if row[0] == "Kyle Pitts")
     assert pitts[2] == "hold (rising)"
-    assert "FAAB left: $151" in r.lines[-1]
+    assert "FAAB left: $151" in r.lines[-2]
     assert "Assumed back: Breece Hall (Out) week 8, Mike Evans (Out) week 8." in r.lines
     assert r.key.startswith("harvey|")
 
@@ -58,7 +58,7 @@ def test_waivers_no_move_when_nothing_helps(season7, sim) -> None:
     r = waiver_report(replace(season7, now=now, nxt=nxt, notes=["n"]), sim, 20.0)
     assert r.subject == "Waivers: no move this week"
     assert r.lines[0].startswith("No add beats 3.0 points. Best:")
-    assert r.lines[-1] == "n"
+    assert r.lines[-2] == "n"
 
 
 def test_waivers_with_an_empty_pool(season7, sim) -> None:
@@ -93,7 +93,7 @@ def test_trade_jacobs_for_hall_and_pitts_is_declined(season7, sim) -> None:
     assert "Market (FantasyCalc): you give 3514, get 2733." in r.lines
     assert "Trade deadline: week 9." in r.lines
     assert "Assumed back: Breece Hall (Out) week 8." in r.lines
-    assert [row[0] for row in r.tables[0].rows] == ["give", "give", "get"]
+    assert [row[0] for row in r.tables[2].rows] == ["give", "give", "get"]
 
 
 def test_two_for_one_forces_a_drop(season7, sim) -> None:
@@ -111,7 +111,7 @@ def test_trade_row_for_an_unknown_player_and_no_deadline(season7, sim) -> None:
     league = dict(season7.league, settings={})
     s = replace(season7, league=league)
     r = trade_report(s, sim, ["pierce"], ["ghost"], "x", {})
-    assert r.tables[0].rows[1] == ("get", "ghost", "-", "", "")
+    assert r.tables[2].rows[1] == ("get", "ghost", "-", "", "")
     assert not any(ln.startswith("Trade deadline") for ln in r.lines)
 
 
@@ -127,3 +127,33 @@ def test_open_spot_stays_open_without_free_agents(season7, sim) -> None:
     s = replace(season7, rosters=rosters)
     r = trade_report(s, sim, ["rodgers", "hall"], ["swift"], "Nuyen", {})
     assert not any(ln.startswith("Counts adding") for ln in r.lines)
+
+
+def test_trade_shows_the_lineup_slot_by_slot_and_week_by_week(season7, sim) -> None:
+    r = trade_report(season7, sim, ["rodgers"], ["allen"], "Rohan312", {})
+    slots, weeks, _ = r.tables
+    sf = next(row for row in slots.rows if row[0] == "SUPER_FLEX")
+    assert sf[1] == "Aaron Rodgers" and sf[3] == "Tanner McKee" and sf[5] == "changed"
+    assert next(row for row in slots.rows if row[0] == "QB")[5] == ""
+    wk7 = weeks.rows[0]
+    assert wk7[0] == "7" and wk7[3] == "-3.5"  # Allen on bye: McKee for Rodgers
+    assert wk7[4] == "Tanner McKee" and wk7[5] == "Aaron Rodgers"
+    wk8 = weeks.rows[1]
+    assert wk8[4] == "Josh Allen" and wk8[5] == "Aaron Rodgers"
+    assert weeks.rows[-1][0] == "17 (playoffs)"
+    assert r.lines[2].startswith("Your lineup: week 7 ")
+
+
+def test_empty_slot_shows_a_dash(season7, sim) -> None:
+    me = dict(season7.me, players=["maye", "pitts", "gibbs"], reserve=[])
+    r = trade_report(replace(season7, me=me), sim, ["pitts"], ["swift"], "x", {})
+    te = next(row for row in r.tables[0].rows if row[0] == "TE")
+    assert te[1] == "Kyle Pitts" and te[3] == "-"
+
+
+def test_depth_loss_is_explained(season7, sim, monkeypatch) -> None:
+    import vorpal.season.trade as trade
+
+    monkeypatch.setattr(trade, "DEPTH_GAP", -100.0)
+    r = trade_report(season7, sim, ["rodgers"], ["allen"], "x", {})
+    assert any(ln.startswith("Playoffs: ") for ln in r.lines)

@@ -9,7 +9,7 @@ from typing import Any
 from vorpal.errors import PlatformError, UserRefusal
 from vorpal.season.fetch import Source
 from vorpal.season.forecast import Forecast, forecast_week, season_points
-from vorpal.season.sim import SeasonSim, Value, lineup_slots
+from vorpal.season.sim import SeasonSim, Value, best_lineup, lineup_slots
 from vorpal.season.usage import Games, position_rates
 from vorpal.season.vendors import PlayerIndex, espn_lines, sleeper_lines, vendor_points
 
@@ -71,6 +71,18 @@ class Season:
     def value(self, roster: Sequence[str], sim: SeasonSim) -> Value:
         pts = season_points(self.now, self.nxt, self.week, self.plays)
         return sim.value(roster, pts, self.positions, self.slots)
+
+    def lineup_for(
+        self, roster: Sequence[str], week: int
+    ) -> tuple[float, list[tuple[str, str]]]:
+        """Best lineup for one week, damped projections, nobody newly hurt."""
+        pts = season_points(self.now, self.nxt, self.week, self.plays)
+        return best_lineup(
+            {p: pts(p, week) for p in roster}, self.positions, self.slots
+        )
+
+    def lineup_points(self, pid: str, week: int) -> float:
+        return season_points(self.now, self.nxt, self.week, self.plays)(pid, week)
 
     def name(self, pid: str) -> str:
         return self.players.get(pid, {}).get("full_name", pid)

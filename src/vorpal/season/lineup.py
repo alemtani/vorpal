@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from vorpal.season.blend import FULL_ROLE_GAMES
 from vorpal.season.context import Season
 from vorpal.season.forecast import Forecast, return_label
-from vorpal.season.report import Report, Table, pts
+from vorpal.season.report import DAMPED_NOTE, Report, Table, pts
 from vorpal.season.sim import SLOT_POSITIONS, best_lineup
 
 # Weekly points spread: sigma = 0.45 x projection (fit on 2025 game logs).
@@ -135,6 +135,7 @@ def lineup_report(
             f" ({pts(best_total)} vs {pts(opp_total)})."
         )
     lines.extend(s.notes)
+    lines.append(DAMPED_NOTE)
 
     n = len(starts)
     subject = (
@@ -157,7 +158,7 @@ def lineup_report(
     ]
     table = Table(
         "Best lineup",
-        ("Slot", "Player", "Team", "Proj", "Model", "Vendors", "Status"),
+        ("Slot", "Player", "Team", "Damped", "Model", "Vendors", "Status"),
         rows,
     )
     sat = sorted((p for p in active if p not in best_ids), key=lambda p: -points[p])
@@ -181,7 +182,7 @@ def lineup_report(
         lines=lines,
         tables=[
             table,
-            Table("Bench", ("Player", "Proj", "Why"), bench_rows),
+            Table("Bench", ("Player", "Damped", "Why"), bench_rows),
             Table("IR", ("Player", "Status", "Proj if active", "Back"), ir_rows),
         ],
         key="|".join([*sorted(best_ids), *moves]),

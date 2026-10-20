@@ -27,3 +27,9 @@ def pts(x: float) -> str:
 
 def signed(x: float) -> str:
     return f"{x:+.1f}"
+
+
+DAMPED_NOTE = (
+    "Damped projection = 25% touches model + 75% Sleeper/ESPN average."
+    " The model drops out for fill-in roles."
+)

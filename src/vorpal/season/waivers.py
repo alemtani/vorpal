@@ -8,7 +8,7 @@ from typing import Any
 
 from vorpal.season.context import LAST_WEEK, Season
 from vorpal.season.forecast import assumed_returns
-from vorpal.season.report import Report, Table, pts, signed
+from vorpal.season.report import DAMPED_NOTE, Report, Table, pts, signed
 from vorpal.season.sim import SeasonSim
 
 MIN_GAIN = 3.0
@@ -106,6 +106,7 @@ def waiver_report(s: Season, sim: SeasonSim, median_bid: float) -> Report:
         f"FAAB left: ${remaining}. League median winning bid: ${median_bid:.0f}."
     )
     lines.extend(s.notes)
+    lines.append(DAMPED_NOTE)
 
     add_rows = [
         (
@@ -126,7 +127,7 @@ def waiver_report(s: Season, sim: SeasonSim, median_bid: float) -> Report:
         subject=subject,
         lines=lines,
         tables=[
-            Table("Adds", ("Add", "Pos", "Proj/wk", "Drop", "Gain", "Bid"), add_rows),
+            Table("Adds", ("Add", "Pos", "Damped/wk", "Drop", "Gain", "Bid"), add_rows),
             Table("Cost to drop", ("Player", "Season points lost", ""), drop_rows),
         ],
         key=f"{top[1]}|{top[2]}" if top else "",

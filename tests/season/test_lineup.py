@@ -104,7 +104,8 @@ def test_sit_reason_for_a_low_projection_and_teamless_player(season7) -> None:
 
 def test_notes_are_appended(season7) -> None:
     r = lineup_report(replace(season7, notes=["ESPN projections missing"]))
-    assert r.lines[-1] == "ESPN projections missing"
+    assert r.lines[-2] == "ESPN projections missing"
+    assert r.lines[-1].startswith("Damped projection = 25% touches model")
 
 
 def test_ir_status_is_always_ir_eligible(season7) -> None:
