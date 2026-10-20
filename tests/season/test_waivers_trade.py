@@ -113,3 +113,17 @@ def test_trade_row_for_an_unknown_player_and_no_deadline(season7, sim) -> None:
     r = trade_report(s, sim, ["pierce"], ["ghost"], "x", {})
     assert r.tables[0].rows[1] == ("get", "ghost", "-", "", "")
     assert not any(ln.startswith("Trade deadline") for ln in r.lines)
+
+
+def test_three_for_two_fills_the_open_spot_from_free_agency(season7, sim) -> None:
+    give = ["rodgers", "hall", "boston"]
+    r = trade_report(season7, sim, give, ["swift", "olave"], "Nuyen", {})
+    assert "Counts adding Geno Smith from free agency to the open spot." in r.lines
+
+
+def test_open_spot_stays_open_without_free_agents(season7, sim) -> None:
+    rosters = [dict(r) for r in season7.rosters]
+    rosters.append({"roster_id": 99, "players": ["harvey", "geno", "tucker"]})
+    s = replace(season7, rosters=rosters)
+    r = trade_report(s, sim, ["rodgers", "hall"], ["swift"], "Nuyen", {})
+    assert not any(ln.startswith("Counts adding") for ln in r.lines)

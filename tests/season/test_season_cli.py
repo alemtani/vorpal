@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from vorpal import cli as draft_cli
 from vorpal.errors import PlatformError
 from vorpal.season import cli
-from vorpal.season.inbox import Offer, pending_offers
+from vorpal.season.inbox import Offer
 
 ENV = {"SLEEPER_LEAGUE_ID": "L", "SLEEPER_USER_ID": "me"}
 
@@ -148,10 +148,27 @@ def test_trades_reviews_each_new_offer_once(make_source, tmp_path, monkeypatch) 
     assert "trade:t1: unchanged since last send" in out
 
 
-def test_trades_with_no_offers(make_source, tmp_path) -> None:
+def test_trades_with_no_offers(make_source, tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(cli.inbox, "pending_offers", lambda *a: [])
     code, out = run(["trades"], make_source, tmp_path, env={"SLEEPER_TOKEN": "t"})
     assert code == 0 and out == ""
-    assert pending_offers(make_source(), "t", "L", 7) == []
+
+
+def test_rejected_token_warns_once(make_source, tmp_path, monkeypatch) -> None:
+    def rejected(*a):
+        raise PlatformError("POST https://sleeper.com/graphql: 401")
+
+    monkeypatch.setattr(cli.inbox, "pending_offers", rejected)
+    env = {"SLEEPER_TOKEN": "old", "EMAIL_TO": "a@x.com", "GMAIL_APP_PASSWORD": "p"}
+    code, out = run(["trades", "--send"], make_source, tmp_path, env=env)
+    assert code == 0 and "Sleeper token rejected" in out
+    code, out = run(["trades", "--send"], make_source, tmp_path, env=env)
+    assert "trades-token: unchanged since last send" in out
+    monkeypatch.setattr(cli.inbox, "pending_offers", lambda *a: [])
+    run(["trades", "--send"], make_source, tmp_path, env=env)
+    monkeypatch.setattr(cli.inbox, "pending_offers", rejected)
+    code, out = run(["trades", "--send"], make_source, tmp_path, env=env)
+    assert "Sleeper token rejected" in out
 
 
 def test_auto_runs_what_is_due(make_source, tmp_path) -> None:

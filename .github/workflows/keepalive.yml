@@ -1,0 +1,24 @@
+name: keepalive
+
+# GitHub pauses scheduled workflows in a public repo after 60 days with no
+# commits. One small commit a month keeps the season emails running.
+on:
+  schedule:
+    - cron: "17 12 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          date -u +%F > .github/keepalive
+          git config user.name "vorpal-bot"
+          git config user.email "vorpal-bot@users.noreply.github.com"
+          git add .github/keepalive
+          git commit -m "chore: keepalive $(date -u +%F)"
+          git push

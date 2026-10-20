@@ -55,6 +55,17 @@ class Source:
         except (httpx.HTTPError, ValueError) as e:
             raise PlatformError(f"GET {url}: {e}") from e
 
+    def post(self, url: str, body: Any, headers: dict[str, str]) -> Any:
+        try:
+            r = self._http.post(url, json=body, headers=headers)
+            r.raise_for_status()
+            data = r.json()
+        except (httpx.HTTPError, ValueError) as e:
+            raise PlatformError(f"POST {url}: {e}") from e
+        if not isinstance(data, dict) or data.get("errors") or "data" not in data:
+            raise PlatformError(f"POST {url}: {str(data)[:200]}")
+        return data
+
     def state(self) -> dict[str, Any]:
         return self.get(f"{SLEEPER}/state/nfl")
 

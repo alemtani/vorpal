@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TextIO
 
-from vorpal.errors import UserRefusal, VorpalError
+from vorpal.errors import PlatformError, UserRefusal, VorpalError
 from vorpal.season import email, inbox
 from vorpal.season.context import Season, build_season
 from vorpal.season.fetch import Source
@@ -180,9 +180,29 @@ class Runner:
             print("trades: SLEEPER_TOKEN not set; inbox watch is off", file=self.out)
             return
         s = self.season
-        offers = inbox.pending_offers(
-            self.source, self.cfg.token, self.cfg.league_id, s.me["roster_id"]
-        )
+        try:
+            offers = inbox.pending_offers(
+                self.source,
+                self.cfg.token,
+                self.cfg.league_id,
+                s.me["roster_id"],
+                self.cfg.user_id,
+            )
+        except PlatformError as e:
+            warn = Report(
+                subject="vorpal: Sleeper token rejected; trade watch is paused",
+                lines=[
+                    "The hourly trade check could not read your offers.",
+                    "Copy a fresh token from sleeper.com and run:"
+                    " gh secret set SLEEPER_TOKEN",
+                    f"Detail: {e.message}",
+                ],
+                key="token-error",
+            )
+            self.deliver("trades-token", warn, False)
+            return
+        if self.args.send:
+            self.log.record("trades-token", "ok")
         values = market(self.source, s) if offers else {}
         for offer in offers:
             report = trade_report(

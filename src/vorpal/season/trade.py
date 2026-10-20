@@ -10,6 +10,9 @@ from vorpal.season.report import Report, Table, signed
 from vorpal.season.sim import SeasonSim
 
 ACCEPT_GAIN = 5.0
+# Free agents tried for each roster spot a trade opens.
+FILL_CANDIDATES = 6
+UNAVAILABLE = frozenset({"Out", "IR", "Sus", "PUP"})
 
 
 def verdict(regular: float, playoffs: float) -> str:
@@ -45,6 +48,27 @@ def trade_report(
         )
         new.remove(cut)
         dropped.append(cut)
+    added: list[str] = []
+    pool = sorted(
+        (p for p in s.free_agents() if s.now[p].status not in UNAVAILABLE),
+        key=lambda p: -s.now[p].rate,
+    )[:FILL_CANDIDATES]
+    while len(new) < len(roster) and pool:
+        pick = max(pool, key=lambda p: s.value([*new, p], sim).total)
+        pool.remove(pick)
+        new.append(pick)
+        added.append(pick)
+    if added:
+        # Without the trade you could still add them by cutting your weakest
+        # players. Compare against that, not against standing pat.
+        here = base.total
+        cuts = sorted(
+            roster,
+            key=lambda p: here - s.value([q for q in roster if q != p], sim).total,
+        )[: len(added)]
+        alt = s.value([*(p for p in roster if p not in cuts), *added], sim)
+        if alt.total > base.total:
+            base = alt
     after = s.value(new, sim)
     regular = after.regular - base.regular
     playoffs = after.playoffs - base.playoffs
@@ -59,6 +83,9 @@ def trade_report(
     ]
     if dropped:
         lines.append(f"You must drop {', '.join(s.name(p) for p in dropped)}.")
+    if added:
+        names = ", ".join(s.name(p) for p in added)
+        lines.append(f"Counts adding {names} from free agency to the open spot.")
     returns = assumed_returns({**s.nxt, **s.now}, [*give, *get], s.week)
     if returns:
         lines.append(f"Assumed back: {returns}.")
