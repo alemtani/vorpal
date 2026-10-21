@@ -66,8 +66,8 @@ def _utc(*a) -> datetime:
 
 
 def test_tuesday_morning_pt_runs_waivers_in_pdt_and_pst() -> None:
-    pdt = jobs_due(_utc(2026, 10, 20, 13, 45))  # Tue 06:45 PDT
-    pst = jobs_due(_utc(2026, 11, 3, 14, 45))  # Tue 06:45 PST
+    pdt = jobs_due(_utc(2026, 10, 20, 12, 45))  # Tue 05:45 PDT
+    pst = jobs_due(_utc(2026, 11, 3, 13, 45))  # Tue 05:45 PST
     assert Due("waivers", True) in pdt and Due("waivers", True) in pst
 
 
@@ -83,14 +83,14 @@ def test_trades_every_hour_and_nothing_else_at_night() -> None:
 def test_a_missed_slot_stays_due_for_its_pt_day(tmp_path) -> None:
     log = SentLog(tmp_path / "sent.json")
     late = jobs_due(_utc(2026, 10, 20, 15, 7), log)  # Tue 08:07 PDT
-    assert [d.slot for d in late if d.job == "waivers"] == ["2026-10-20T06"]
-    assert Due("waivers", True) not in jobs_due(_utc(2026, 10, 20, 12, 13))  # 05:13
+    assert [d.slot for d in late if d.job == "waivers"] == ["2026-10-20T05"]
+    assert Due("waivers", True) not in jobs_due(_utc(2026, 10, 20, 11, 13))  # 04:13
     assert Due("waivers", True) not in jobs_due(_utc(2026, 10, 21, 7, 0))  # Wed 00:00
 
 
 def test_a_recorded_slot_is_not_due_again(tmp_path) -> None:
     log = SentLog(tmp_path / "sent.json")
-    log.record("slot:waivers", "2026-10-20T06")
+    log.record("slot:waivers", "2026-10-20T05")
     assert jobs_due(_utc(2026, 10, 20, 16, 45), log) == [Due("trades", False)]
 
 

@@ -24,24 +24,25 @@ class Due:
     always: bool
     """False: send only when the advice changed since the last send."""
     slot: str = field(default="", compare=False)
-    """The PT slot this run covers, e.g. ``2026-10-20T06``. Empty for trades."""
+    """The PT slot this run covers, e.g. ``2026-10-20T05``. Empty for trades."""
 
 
 # (weekday, PT hour) -> lineup run. Runs at about :45 past the hour.
+# Morning slots start at 05:00 so a delayed run still lands before 08:00.
 LINEUP: dict[tuple[int, int], bool] = {
-    (WED, 6): True,
-    (THU, 6): False,
+    (WED, 5): True,
+    (THU, 5): False,
     (THU, 15): False,  # TNF inactives
-    (FRI, 6): False,
-    (SAT, 6): False,
-    (SUN, 6): False,
+    (FRI, 5): False,
+    (SAT, 5): False,
+    (SUN, 5): False,
     (SUN, 8): False,  # early-game inactives
     (SUN, 11): False,  # late-game inactives
     (SUN, 15): False,  # SNF
-    (MON, 6): False,
+    (MON, 5): False,
     (MON, 15): False,  # MNF
 }
-WAIVERS = (TUE, 6)
+WAIVERS = (TUE, 5)
 
 
 def _slot(local: datetime, hours: list[int]) -> str | None:
